@@ -89,6 +89,12 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
 
     const pluginInfo = [
         {
+            condition: Boolean((plugin as any).isFan),
+            src: "https://raw.githubusercontent.com/Maybeme01/fanc/main/video/ico.png",
+            alt: "Fan",
+            title: "Fan Plugin"
+        },
+        {
             condition: isModifiedPlugin,
             src: "https://raw.githubusercontent.com/Equicord/Equibite/main/public/assets/icons/equicord/modified.png",
             alt: "Modified",
@@ -152,3 +158,4 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
             } />
     );
 }
+
