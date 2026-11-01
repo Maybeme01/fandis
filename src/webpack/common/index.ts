@@ -1,3 +1,4 @@
+import * as TextModule from "@components/Text";
 /*
  * Vencord, a modification for Discord's desktop app
  * Copyright (c) 2023 Vendicated and contributors
@@ -24,5 +25,7 @@ const dummyProxy: any = new Proxy(() => null, {
 });
 
 export const Button: any = typeof findByPropsLazy === "function" ? (findByPropsLazy("Sizes", "Colors", "Looks") ?? dummyProxy) : dummyProxy;
-export const Text: any = typeof findByPropsLazy === "function" ? (findByPropsLazy("Sizes", "Weights") ?? dummyProxy) : dummyProxy;
+const ResolvedText: any = (TextModule as any).default ?? (TextModule as any).Text ?? TextModule;
+export const Text: any = ResolvedText;
 export const Forms: any = typeof findByPropsLazy === "function" ? (findByPropsLazy("FormItem", "FormTitle") ?? dummyProxy) : dummyProxy;
+
