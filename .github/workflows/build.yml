@@ -1,84 +1,68 @@
-name: Release
-on:
-    push:
-        branches:
-            - main
+name: FanCord Auto Release
 
-env:
-    FORCE_COLOR: true
-    GITHUB_TOKEN: ${{ secrets.ETOKEN }}
-    REPO: Equicord/Equibored
-    USERNAME: GitHub-Actions
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
-    contents: write
+  contents: write
 
 jobs:
-    Build:
-        name: Build Equicord
-        runs-on: ubuntu-latest
+  build-and-release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-            - name: Setup PNPM
-              uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
-              with:
-                  runtime: node@v24
-                  require-lockfile: true
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 12.15.0
 
-            - name: Build web
-              run: pnpm buildWebStandalone
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
 
-            - name: Build
-              run: pnpm buildStandalone
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-            - name: Generate plugin lists
-              run: |
-                  pnpm generatePluginJson dist/plugins.json
-                  pnpm generateEquicordPluginJson dist/equicordplugins.json
-                  pnpm generateVencordPluginJson dist/vencordplugins.json
-                  pnpm generateDevsList dist/devs.json
+      - name: Build Web Standalone
+        run: pnpm buildWebStandalone
 
-            - name: Collect files to be released
-              run: |
-                  cd dist
-                  mkdir release
+      - name: Build Desktop & Equibop Standalone
+        run: pnpm buildStandalone
 
-                  cp browser/browser.* release
-                  cp Equicord.user.{js,js.LEGAL.txt} release
+      - name: Get Short Commit Hash
+        id: vars
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-                  # copy the plugin data jsons, the extension zips and the desktop/equibop asars
-                  cp *.{json,zip,asar} release
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHORT_SHA="${{ steps.vars.outputs.short_sha }}"
+          TAG_NAME="v-${SHORT_SHA}"
+          RELEASE_TITLE="FanCord ${SHORT_SHA}"
 
-                  # legacy un-asared files
-                  cp desktop/* release
-                  for file in equibop/*; do
-                    filename=$(basename "$file")
-                    cp "$file" "release/equibop${filename^}"
-                  done
+          echo "Publishing release: $RELEASE_TITLE with tag: $TAG_NAME"
 
-                  find release -size 0 -delete
-                  rm release/package.json
-                  rm release/*.map
+          # حذف أي release أو tag قديم يحمل نفس الاسم إن وجد
+          gh release delete "$TAG_NAME" --yes || true
+          git tag -d "$TAG_NAME" || true
+          git push origin :refs/tags/"$TAG_NAME" || true
 
-            - name: Upload Equicord Stable
-              if: ${{ vars.ACT == 'false' }}
-              run: |
-                  gh release upload latest --clobber dist/release/*
-
-            - name: Upload Plugin JSONs to Equibored repo
-              if: github.repository == 'Equicord/Equicord' && vars.ACT == 'false'
-              run: |
-                  git config --global user.name "GitHub-Actions"
-                  git config --global user.email actions@github.com
-                  git clone https://$USERNAME:$GITHUB_TOKEN@github.com/$REPO.git plugins
-                  cd plugins
-
-                  cp ../dist/release/*plugins.json .
-                  cp ../dist/release/devs.json .
-                  git add -A
-
-                  git commit -m "Plugins for https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
-                  git push --force https://$USERNAME:$GITHUB_TOKEN@github.com/$REPO.git
+          # إنشاء Release رسمي جديد وإرفاق ملفات .asar
+          gh release create "$TAG_NAME" \
+            dist/desktop.asar \
+            dist/equibop.asar \
+            --title "$RELEASE_TITLE" \
+            --notes "Automated FanCord build for commit ${SHORT_SHA}" \
+            --latest
