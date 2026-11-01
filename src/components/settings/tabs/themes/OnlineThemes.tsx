@@ -254,14 +254,14 @@ export function OnlineThemesSection({
         if (!Settings.enabledThemeLinks.includes(url)) {
             Settings.enabledThemeLinks = [...Settings.enabledThemeLinks, url];
         }
-        showToast({ text: "تم تثبيت وتفعيل الثيم بنجاح!", variant: "success" });
+        showToast({ text: "Theme installed and applied successfully!", variant: "success" });
         forceUpdate();
     };
 
     const handleUninstall = (url: string) => {
         Settings.themeLinks = Settings.themeLinks.filter(u => u !== url);
         Settings.enabledThemeLinks = Settings.enabledThemeLinks.filter(u => u !== url);
-        showToast({ text: "تم إلغاء تثبيت الثيم", variant: "critical" });
+        showToast({ text: "Theme uninstalled successfully", variant: "critical" });
         forceUpdate();
     };
 
@@ -280,14 +280,14 @@ export function OnlineThemesSection({
 
             {enableOnlineThemes && (
                 <>
-                    <Heading className={Margins.top20}>متجر ثيمات BetterDiscord</Heading>
+                    <Heading className={Margins.top20}>FanCord Theme Store</Heading>
                     <Paragraph className={Margins.bottom16}>
-                        تصفح وحمل الثيمات الجاهزة مباشرة بضغطة زر واحدة.
+                        Browse and install community themes with a single click.
                     </Paragraph>
 
                     <div style={{ marginBottom: "16px" }}>
                         <TextInput
-                            placeholder="ابحث في المتجر بالاسم، المطور، أو التاق..."
+                            placeholder="Search themes by name, author, or tag..."
                             value={search}
                             onChange={setSearch}
                         />
@@ -295,7 +295,7 @@ export function OnlineThemesSection({
 
                     {filteredThemes.length === 0 ? (
                         <Paragraph color="text-muted" className={Margins.bottom16}>
-                            لم يتم العثور على ثيمات مطابقة لبحثك.
+                            No themes found matching your search.
                         </Paragraph>
                     ) : (
                         <div style={{
@@ -318,9 +318,9 @@ export function OnlineThemesSection({
                 </>
             )}
 
-            <Heading className={Margins.top16}>إضافة ثيم برابط مخصص</Heading>
+            <Heading className={Margins.top16}>Add Theme from URL</Heading>
             <Notice.Info className={Margins.bottom16} style={{ width: "100%" }}>
-                Looking for themes? Check out <Link href="https://betterdiscord.app/themes">BetterDiscord Themes</Link> or search on <Link href="https://github.com/search?q=discord+theme">GitHub</Link>.
+                Looking for themes? Search on <Link href="https://github.com/search?q=discord+theme">GitHub</Link> or explore community repositories.
             </Notice.Info>
 
             <div className={cl("link-row")}>
