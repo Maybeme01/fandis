@@ -1,3 +1,22 @@
+function createSafeDummy() {
+    const dummy: any = new Proxy(function DummyComponent() { return null; }, {
+        get(target, prop) {
+            if (prop === "isReactComponent" || prop === "prototype") return undefined;
+            if (prop === "$$typeof") return undefined;
+            if (prop === "displayName") return "SafeDummy";
+            return dummy;
+        },
+        apply() {
+            return null;
+        },
+        construct() {
+            return new Proxy({ render: () => null }, {
+                get: (t, p) => (p === "render" ? () => null : dummy)
+            });
+        }
+    });
+    return dummy;
+}
 /*
  * Vencord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
@@ -113,10 +132,7 @@ export function proxyLazy<T>(factory: () => T, attempts = 5, isChild = false): T
             // thus, we lazy proxy the get access to make things like destructuring work as expected
             // meow here will also be a lazy
             // `const { meow } = findByPropsLazy("meow");`
-            const dummyFallback: any = new Proxy(() => null, {
-                get: () => dummyFallback,
-                apply: () => null
-            });
+                        const dummyFallback = createSafeDummy();
 
             if (!isChild && isSameTick)
                 return proxyLazy(
@@ -138,4 +154,5 @@ export function proxyLazy<T>(factory: () => T, attempts = 5, isChild = false): T
         }
     }) as any;
 }
+
 
