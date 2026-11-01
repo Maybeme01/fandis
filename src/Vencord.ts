@@ -1,3 +1,5 @@
+import { changes } from "@utils/updater";
+import { Alerts } from "@webpack/common";
 /*!
  * Vencord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
@@ -135,33 +137,27 @@ async function runUpdateCheck() {
         }), 10_000);
     };
 
-    try {
+        try {
         const isOutdated = await checkForUpdates();
         if (!isOutdated) return;
 
-        if (Settings.autoUpdate) {
-            await update();
-            if (Settings.autoUpdateNotification) {
-                if (notifiedForUpdatesThisSession) return;
-                notifiedForUpdatesThisSession = true;
+        setTimeout(() => {
+            const changelog = (changes ?? [])
+                .map((c: any) => `• ${c.message || c.title || (typeof c === "string" ? c : c.hash?.slice(0, 7) || "New update commit")}`)
+                .slice(0, 8)
+                .join("\n");
 
-                showNotice(
-                    "FanCord has been updated!",
-                    "Restart",
-                    relaunch
-                );
-            }
-            return;
-        }
-
-        if (notifiedForUpdatesThisSession) return;
-        notifiedForUpdatesThisSession = true;
-
-        showNotice(
-            "A new version of FanCord is available!",
-            "View Update",
-            () => openSettingsTabModal(UpdaterTab!)
-        );
+            Alerts.show({
+                title: "🚀 FanCord Update Available | تحديث جديد",
+                body: `A new update is available for FanCord!\nيتوفر تحديث جديد لمشروع FanCord!\n\nWhat's new | ما تم تغييره:\n${changelog || "• General improvements, bug fixes & performance enhancements."}\n\nWould you like to update and restart now?`,
+                confirmText: "Update & Restart | تحديث وإعادة التشغيل",
+                cancelText: "Skip | تخطي",
+                onConfirm: async () => {
+                    await update();
+                    relaunch();
+                }
+            });
+        }, 2000);
     } catch (err) {
         UpdateLogger.error("Failed to check for updates", err);
     }
@@ -208,3 +204,5 @@ document.addEventListener("DOMContentLoaded", () => {
         enableStyle(nativeTitleBarStyles);
     }
 }, { once: true });
+
+

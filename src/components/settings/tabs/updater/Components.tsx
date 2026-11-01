@@ -1,3 +1,4 @@
+import { relaunch } from "@utils/native";
 /*
  * Vencord, a Discord client mod
  * Copyright (c) 2025 Vendicated and contributors
@@ -106,12 +107,7 @@ export function Updatable(props: CommonProps) {
                             if (await update()) {
                                 setUpdates([]);
 
-                                promptToRestart("relaunch", {
-                                    title: "Update Success!",
-                                    subtitle: "Successfully updated. Restart now to apply the changes?",
-                                    confirmText: "Restart",
-                                    cancelText: "Not now!"
-                                });
+                                relaunch();
                             }
                         })}
                     >
@@ -141,3 +137,5 @@ export function Updatable(props: CommonProps) {
         </>
     );
 }
+
+

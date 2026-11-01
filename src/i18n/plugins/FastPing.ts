@@ -12,3 +12,5 @@ export default definePluginI18n({
         "en": "Double-click a user ID you just typed in the chat box to instantly turn it into a <@mention>."
     }
 });
+
+

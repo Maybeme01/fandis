@@ -78,7 +78,7 @@ const globNativesPlugin = {
         });
 
         build.onLoad({ filter, namespace: "import-natives" }, async () => {
-            const pluginDirs = ["plugins", "equicordplugins", "userplugins"];
+            const pluginDirs = ["plugins", "equicordplugins", "fanplugins", "userplugins"];
             let code = "";
             let natives = "\n";
             let i = 0;
@@ -244,3 +244,4 @@ await Promise.all([
     createPackage("dist/desktop", "dist/desktop.asar"),
     createPackage("dist/equibop", "dist/equibop.asar"),
 ]);
+

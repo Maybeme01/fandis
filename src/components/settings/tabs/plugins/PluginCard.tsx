@@ -36,6 +36,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
     const isVencordPlugin = pluginMeta.folderName.startsWith("src/plugins/") ?? false;
     const isUserPlugin = pluginMeta?.userPlugin ?? false;
     const isModifiedPlugin = plugin.isModified ?? false;
+    const isFanPlugin = (pluginMeta?.folderName?.startsWith("src/fanplugins/") ?? false) || Boolean((plugin as any).isFan);
 
     const isEnabled = () => isPluginEnabled(plugin.name);
 
@@ -89,7 +90,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
 
     const pluginInfo = [
         {
-            condition: Boolean((plugin as any).isFan),
+            condition: isFanPlugin,
             src: "https://raw.githubusercontent.com/Maybeme01/fanc/main/video/ico.png",
             alt: "Fan",
             title: "Fan Plugin"
@@ -158,4 +159,5 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
             } />
     );
 }
+
 
