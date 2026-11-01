@@ -44,26 +44,56 @@ async function listUpdates() {
     const isOutdated = await fetchUpdate();
     if (!isOutdated) return [];
 
-    const data = await githubGet(`/compare/${gitHash}...HEAD`);
+    try {
+        const data = await githubGet(`/compare/${gitHash}...HEAD`);
+        if (data?.commits) {
+            return data.commits.map((c: any) => ({
+                hash: c.sha,
+                author: c.author?.login ?? c.commit?.author?.name ?? "Unknown Author",
+                message: c.commit.message.split("\n")[0]
+            }));
+        }
+    } catch {
+        // في حال وجود حظر IP على الـ API، يُعرض سجل افتراضي لمنع انهيار النافذة
+    }
 
-    return data.commits.map((c: any) => ({
-        hash: c.sha,
-        author: c.author?.login ?? c.commit?.author?.name ?? "Unknown Author",
-        message: c.commit.message.split("\n")[0]
-    }));
+    return [{
+        hash: "latest",
+        author: "FanCord",
+        message: "New FanCord update available"
+    }];
 }
 
 async function fetchUpdate() {
-    const data = await githubGet("/releases/latest");
+    try {
+        // 1. فحص الإصدار عبر صفحة Releases المباشرة (بدون أي Rate Limit)
+        const res = await fetch(`https://github.com/${gitRemote}/releases/latest`, {
+            headers: { "User-Agent": VENCORD_USER_AGENT }
+        });
+        const tag = res.url.split("/").pop() ?? "";
+        const hash = tag.replace(/^v-/, "");
 
-    const hash = data.name.slice(data.name.lastIndexOf(" ") + 1);
-    if (hash === gitHash)
+        if (hash && (hash === gitHash || gitHash.startsWith(hash) || hash.startsWith(gitHash)))
+            return false;
+
+        PendingUpdate = `https://github.com/${gitRemote}/releases/latest/download/${ASAR_FILE}`;
+        return true;
+    } catch {
+        // 2. خطة بديلة احتياطية
+        try {
+            const data = await githubGet("/releases/latest");
+            if (data?.assets) {
+                const hash = data.name?.slice(data.name.lastIndexOf(" ") + 1);
+                if (hash === gitHash) return false;
+                const asset = data.assets.find((a: any) => a.name === ASAR_FILE);
+                PendingUpdate = asset?.browser_download_url ?? `https://github.com/${gitRemote}/releases/latest/download/${ASAR_FILE}`;
+                return true;
+            }
+        } catch (err) {
+            console.error("Failed to check for updates:", err);
+        }
         return false;
-
-    const asset = data.assets.find(a => a.name === ASAR_FILE);
-    PendingUpdate = asset.browser_download_url;
-
-    return true;
+    }
 }
 
 async function applyUpdate() {
@@ -85,3 +115,4 @@ const HttpUpdater: Updater = {
 };
 
 export default HttpUpdater;
+
