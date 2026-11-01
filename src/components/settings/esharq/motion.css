@@ -1,0 +1,181 @@
+/*
+ * Esharq, a Discord client mod
+ * Copyright (c) 2026 LOSTSTR
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * حركة إشراق — `transform` و`opacity` فقط، فلا إعادة تخطيط في أي إطار.
+ * القيم مشتقّة من `motion.ts`؛ وأي تعديل يجب أن يقع في الاثنين معاً.
+ */
+
+/* دخول متتابع: يصعد قليلاً ويظهر. `backwards` تُبقيه مخفيّاً أثناء تأخيره،
+   وبدونها يومض العنصر ظاهراً ثم يختفي ثم يدخل. */
+@keyframes esharq-rise {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.985);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.esharq-rise {
+    animation: esharq-rise 220ms cubic-bezier(0.22, 1.2, 0.36, 1) backwards;
+}
+
+/* نبض هادئ لعلامة الصفحة قيد البناء — يقول «حيّ» لا «انتظر». */
+@keyframes esharq-breathe {
+    0%,
+    100% {
+        opacity: 0.55;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.08);
+    }
+}
+
+.esharq-breathe {
+    animation: esharq-breathe 2600ms ease-in-out infinite;
+}
+
+/* رفع خفيف عند المرور. `will-change` مقصورة على ما يُحرَّك فعلاً: وضعها
+   على كل شيء يحجز طبقات مُركِّب بلا داعٍ ويأكل ذاكرة الرسوميات. */
+.esharq-lift {
+    transition:
+        transform 140ms cubic-bezier(0.22, 1.2, 0.36, 1),
+        box-shadow 140ms cubic-bezier(0.33, 1, 0.68, 1);
+    will-change: transform;
+}
+
+.esharq-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgb(0 0 0 / 22%);
+}
+
+/* ضغطة تُحسّ: تنكمش قليلاً تحت الإصبع فيعرف أن النقرة وقعت. */
+.esharq-press:active {
+    transform: scale(0.985);
+}
+
+/*
+ * 🔴 تُلغى الحركة لمن طلب ذلك في نظامه — لا تُخفَّف.
+ * الحركة تُسبّب دواراً حقيقياً لبعض الناس، و«حركة أبطأ» تبقى حركة.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .esharq-rise,
+    .esharq-breathe,
+    .esharq-lift,
+    .esharq-press {
+        animation: none;
+        transition: none;
+    }
+
+    .esharq-lift:hover,
+    .esharq-press:active {
+        transform: none;
+    }
+}
+
+/* حلقة تقدّم: يتحرّك طول الشرطة لا العرض، فلا إعادة تخطيط.
+   المنحنى يتجاوز هدفه قليلاً ثم يستقرّ — يُحسّ حيّاً لا آلياً. */
+.esharq-ring circle {
+    transition: stroke-dashoffset 900ms cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+
+/* وميض ماسح فوق هيكل التحميل: يقول «قادم» بدل فراغ يقول «انتهى». */
+@keyframes esharq-shimmer {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(200%);
+    }
+}
+
+.esharq-shimmer {
+    position: relative;
+    overflow: hidden;
+}
+
+.esharq-shimmer::after {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, var(--esharq-tint-strong), transparent);
+    animation: esharq-shimmer 1400ms ease-in-out infinite;
+    content: "";
+}
+
+/* تبديل الأيقونة: الخارجة تتلاشى صاعدة، والداخلة تستقرّ. */
+@keyframes esharq-pop {
+    from {
+        opacity: 0;
+        transform: scale(0.7);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.esharq-pop {
+    animation: esharq-pop 220ms cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+
+/* تبديل أيقونة في مكانها — يُستعمل لتأكيد النسخ داخل الزرّ نفسه.
+
+   🔴 الصندوق ثابت المقاس والأيقونتان متراكبتان بالإزاحة المطلقة: لو
+   تجاورتا لتغيّر عرض الزرّ لحظة التبديل فقفز ما بعده على الشاشة. */
+.esharq-swap {
+    position: relative;
+    display: inline-block;
+    inline-size: 16px;
+    block-size: 16px;
+    flex: 0 0 auto;
+}
+
+.esharq-swap > svg {
+    position: absolute;
+    inset: 0;
+    transition:
+        opacity 0.2s ease,
+        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.esharq-swap-to {
+    opacity: 0;
+    transform: scale(0.5);
+
+    /* أخضر النجاح من متغيّرات ديسكورد لا لوناً مثبَّتاً: القوالب تُبدّله. */
+    color: var(--status-positive, #23a55a);
+}
+
+.esharq-swap-done .esharq-swap-from {
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+.esharq-swap-done .esharq-swap-to {
+    opacity: 1;
+    transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .esharq-ring circle,
+    .esharq-shimmer::after,
+    .esharq-pop {
+        animation: none;
+        transition: none;
+    }
+
+    /* التبديل يبقى — يُلغى تدرّجه وحده، فالمعنى في الأيقونة لا في الحركة. */
+    .esharq-swap > svg {
+        transition: none;
+    }
+}

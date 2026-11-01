@@ -1,3 +1,3 @@
-# EquicordToolbox
+# FanCordToolbox
 
-Adds a button next to the inbox button in the channel header that houses Equicord quick actions
+Adds a button next to the inbox button in the channel header that houses FanCord quick actions

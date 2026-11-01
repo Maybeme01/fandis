@@ -28,6 +28,7 @@ import { addMessagePopoverButton, removeMessagePopoverButton } from "@api/Messag
 import { addNicknameIcon, removeNicknameIcon } from "@api/NicknameIcons";
 import { Settings, SettingsStore } from "@api/Settings";
 import { disableStyle, enableStyle } from "@api/Styles";
+import { recordPluginStart } from "@debug/esharqStartup";
 import { traceFunction } from "@debug/Tracer";
 import { Logger } from "@utils/Logger";
 import { onlyOnce } from "@utils/onlyOnce";
@@ -54,7 +55,70 @@ export const PMLogger = logger;
 let enabledPluginsSubscribedFlux = false;
 const subscribedFluxEventsPlugins = new Set<string>();
 
+/**
+ * إضافات مُخفاة لجلسة واحدة بسبب تنصيف الانهيار.
+ *
+ * 🔴 **طبقةُ إخفاءٍ فوق الإعدادات لا كتابةٌ فيها.** من يبحث عن سبب انهيار
+ * يحتمل الانهيار بتعريف المشكلة، فحلٌّ يكتب في إعداداته ثم «يُعيدها لاحقاً»
+ * يفقدها متى انقطع في المنتصف. وهذه المجموعة تعيش في الذاكرة وحدها، ومصدرها
+ * ملفٌّ مستقلّ يُحذف فينتهي كل أثر.
+ *
+ * وتُقرأ **مرّةً واحدة عند التحميل**: القراءة في كل نداء تُكلّف، والجلسة لا
+ * تتغيّر إلّا بإعادة تشغيل.
+ */
+const bisectHidden: ReadonlySet<string> = (() => {
+    try {
+        const session = (globalThis as any).VencordNative?.bisect?.get?.();
+        const list = session?.disabled;
+        return new Set<string>(Array.isArray(list) ? list : []);
+    } catch {
+        return new Set<string>();
+    }
+})();
+
+/** هل تُخفي جلسةُ تنصيفٍ جاريةٌ هذه الإضافة؟ */
+export function isHiddenByBisect(p: string) {
+    return bisectHidden.has(p);
+}
+
+/**
+ * هل الجلسة **ما زالت** قائمة في هذه اللحظة؟
+ *
+ * 🔴 `bisectHidden` أعلاه لقطةٌ لحظة الإقلاع عمداً — لا تتغيّر حتى إعادة
+ * التشغيل، وإلّا اختلف ما تراه الواجهة عمّا بدأت به الإضافات. لكنّ الجلسة
+ * نفسها قد تنتهي أثناء الجلسة نفسها (يُلغيها المستخدم ويؤجّل إعادة التشغيل).
+ * فمن يقرأ اللقطة وحدها يقول له «أنهِ الجلسة» وقد انتهت — طريقٌ مسدود.
+ * هذه تُسأل عند العرض لتُقال الجملة الصحيحة.
+ */
+let liveSessionCache = { at: 0, value: false };
+
+export function isBisectSessionLive(): boolean {
+    // 🔴 يُستعلَم حيّاً في كل عرض — لا `useMemo` عند المُستدعي.
+    //
+    // قيسته: يُلغي المستخدم الجلسة ويؤجّل إعادة التشغيل، ثمّ يفتح صفحة
+    // الإضافات، فيجد المكوّن مُركَّباً سلفاً ولا تُعاد المُذكِّرة — فيبقى
+    // النصّ يقول «أنهِ الجلسة» وقد انتهت. طريقٌ مسدود.
+    //
+    // والاستعلام متزامن عبر IPC، وصفحة الإضافات تُعاد مع كل ضغطة مفتاح في
+    // البحث — فيُقيَّد بزمن. ثانيةٌ ونصف أقصر من أن يقرأ أحدٌ سطراً.
+    const now = Date.now();
+    if (now - liveSessionCache.at < 1500) return liveSessionCache.value;
+
+    let value = false;
+    try {
+        value = !!(globalThis as any).VencordNative?.bisect?.get?.();
+    } catch {
+        value = false;
+    }
+    liveSessionCache = { at: now, value };
+    return value;
+}
+
 export function isPluginEnabled(p: string) {
+    // التنصيف يعلو على كل شيء — حتى `required`: الإضافة الضرورية قد تكون هي
+    // الجانية، واستثناؤها يجعل البحث عاجزاً عن إيجادها.
+    if (bisectHidden.has(p)) return false;
+
     return (
         Plugins[p]?.required ||
         Plugins[p]?.isDependency ||
@@ -231,12 +295,33 @@ export const startPlugin = traceFunction("startPlugin", function startPlugin(p: 
             logger.warn(`${name} already started`);
             return false;
         }
+        // 🔴 يُقاس هنا لا بـ`traceFunction`: تلك تصير بلا عمل خارج بناء
+        // التطوير، فيبقى المستخدم — وهو صاحب السؤال — بلا رقم واحد.
+        const startedAt = performance.now();
         try {
-            p.start();
+            /*
+             * 🔴 **و`start()` غير المتزامنة يُلتقط رفضُها أيضاً.**
+             *
+             * `try/catch` لا يرى إلّا ما يُرمى قبل أوّل `await`. فإضافةٌ
+             * `async start()` تفشل بعده تُسجَّل **ناجحة**: مفتاحها يبقى
+             * مُشعَلاً، و`started` تصير `true`، ولا سطر «Failed to start» في
+             * أيّ سجلّ. وقِيس أنّ ذلك يقع فعلاً في إضافاتٍ حسّاسة كقفل
+             * الدخول: يظنّ صاحبه عميله مقفلاً وهو مفتوح.
+             *
+             * ولا يُنتظَر الوعد هنا — انتظارُه يُحوّل بدء كلّ الإضافات إلى
+             * سلسلةٍ متزامنة ويُبطئ الإقلاع. يُلتقط الرفضُ ويُقال، وهذا ما
+             * يُحوّل عطلاً صامتاً إلى عطلٍ مرئيّ.
+             */
+            const maybePromise = p.start() as unknown;
+            if (maybePromise instanceof Promise) {
+                maybePromise.catch(e => logger.error(`Failed to start ${name} (async)\n`, e));
+            }
         } catch (e) {
+            recordPluginStart(name, performance.now() - startedAt, true, p.startAt ?? StartAt.WebpackReady);
             logger.error(`Failed to start ${name}\n`, e);
             return false;
         }
+        recordPluginStart(name, performance.now() - startedAt, false, p.startAt ?? StartAt.WebpackReady);
     }
 
     p.started = true;

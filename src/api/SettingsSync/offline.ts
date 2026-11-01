@@ -7,17 +7,25 @@
 import { PlainSettings } from "@api/Settings";
 import { Logger } from "@utils/Logger";
 import { chooseFile, saveFile } from "@utils/web";
-import { moment, showToast } from "@webpack/common";
+import { moment, Toasts } from "@webpack/common";
 
 import { DataStore } from "..";
+import { type DataStoreEntry, redactDataStore, redactSecrets } from "./redact";
 
 type BackupType = "all" | "plugins" | "css" | "datastore";
 
+const toast = (type: string, message: string) =>
+    Toasts.show({
+        type,
+        message,
+        id: Toasts.genId()
+    });
+
 const toastSuccess = () =>
-    showToast({ text: "Settings successfully imported. Restart to apply changes!", variant: "success" });
+    toast(Toasts.Type.SUCCESS, "Settings successfully imported. Restart to apply changes!");
 
 const toastFailure = (err: any) =>
-    showToast({ text: `Failed to import settings: ${String(err)}`, variant: "critical" });
+    toast(Toasts.Type.FAILURE, `Failed to import settings: ${String(err)}`);
 
 const logger = new Logger("SettingsSync:Offline", "#39b7e0");
 
@@ -70,7 +78,7 @@ export async function importSettings(data: string, type: BackupType = "all", clo
 
             if (parsed.settings) {
                 deepMerge(PlainSettings, parsed.settings);
-                await VencordNative.settings.set(PlainSettings);
+                await VencordNative.settings.set(JSON.stringify(PlainSettings));
             }
             if (parsed.quickCss) await VencordNative.quickCss.set(parsed.quickCss);
             if (parsed.dataStore) await DataStore.setMany(parsed.dataStore);
@@ -80,7 +88,7 @@ export async function importSettings(data: string, type: BackupType = "all", clo
             if (!parsed.settings) throw new Error("Plugin settings missing");
 
             deepMerge(PlainSettings, parsed.settings);
-            await VencordNative.settings.set(PlainSettings);
+            await VencordNative.settings.set(JSON.stringify(PlainSettings));
             break;
         }
         case "css": {
@@ -98,25 +106,58 @@ export async function importSettings(data: string, type: BackupType = "all", clo
     }
 }
 
+/** آخر تصدير: ما نُقّي منه — تقرؤه الواجهة فتُخبر المستخدم بما عليه إعادة إدخاله. */
+export let lastRedactedKeys: string[] = [];
+
 export async function exportSettings({ syncDataStore = true, type = "all", minify }: { syncDataStore?: boolean; type?: BackupType; minify?: boolean; }) {
-    const settings = VencordNative.settings.get();
-    const quickCss = await VencordNative.quickCss.get();
-    let dataStore: any;
+    // 🔴 النسخة تُشارَك — في محادثة دعم أو مشكلة على GitHub. وإعدادات
+    // الإضافات تحوي مفاتيح خدمات حقيقية، فتُنقّى قبل أن تغادر الجهاز.
+    // الأصل في المخزن لا يُمَسّ: التنقية للملف وحده.
+    const raw = VencordNative.settings.get();
+    const redaction = redactSecrets(raw);
+    const settings = redaction.value;
+    const redactedKeys = [...redaction.redacted];
+    /**
+     * 🔴 تُقرَأ **فقط لمن يحتاجها**، ويُرمى الفشل عندها وحدها.
+     *
+     * القراءة صارت ترمي عند العجز بدل أن تُعيد فراغاً كاذباً — وهذا صواب:
+     * نسخةٌ احتياطية تحمل تنسيقاتٍ فارغة تكذب على صاحبها. لكن نداءً واحداً بلا
+     * شرط كان سيمنع **نسخ الإعدادات وحدها** بسبب ملفٍّ لا تحتاجه أصلاً.
+     */
+    const needsQuickCss = type === "all" || type === "css";
+    const quickCss = needsQuickCss ? await VencordNative.quickCss.get() : "";
+    let dataStore: DataStoreEntry[] | undefined;
 
     if (syncDataStore) {
         try {
-            dataStore = (await Promise.all((await DataStore.keys<IDBValidKey>()).map(async (key): Promise<[IDBValidKey, unknown] | undefined> => { try { return [key, await DataStore.get<unknown>(key)]; } catch (error) { logger.warn(`Skipping unreadable DataStore record ${String(key)}:`, error); return undefined; } }))).filter((entry): entry is [IDBValidKey, unknown] => entry !== undefined);
+            dataStore = (await Promise.all((await DataStore.keys<IDBValidKey>()).map(async (key): Promise<DataStoreEntry | undefined> => { try { return [key, await DataStore.get<unknown>(key)]; } catch (error) { logger.warn(`Skipping unreadable DataStore record ${String(key)}:`, error); return undefined; } }))).filter((entry): entry is DataStoreEntry => entry !== undefined);
+
+            // 🔴 كان هذا المخزن يخرج **حرفياً**. والإعدادات وحدها كانت تُنقّى،
+            // بينما فيه توكنات التفويض وسرّ المزامنة ومفاتيح المنصّات — أي أنّ
+            // نسخة «الكلّ» كانت أخطر من نسخة الإضافات التي نُقّيت.
+            const dsRedaction = redactDataStore(dataStore);
+            dataStore = dsRedaction.value;
+            redactedKeys.push(...dsRedaction.redacted);
         } catch (err) {
             logger.error("Failed to read DataStore entries:", err);
 
+            // 🔴 يُطرَح المخزن **قبل** فحص السبب. لو تعثّرت التنقية نفسها لبقي
+            // في المتغيّر مخزنٌ خام غير منقّى، فالتفريغ أوّلاً يجعل الفشل
+            // يسقط دائماً في الجانب الآمن.
+            dataStore = undefined;
+
             if (type === "all") {
                 logger.warn("Skipping DataStore in backup due to size. Export DataStore separately if needed.");
-                showToast({ text: "DataStore too large - exported without it. Use 'Export DataStore' separately if needed." });
-                dataStore = undefined;
+                toast(Toasts.Type.MESSAGE, "DataStore too large - exported without it. Use 'Export DataStore' separately if needed.");
             } else if (type === "datastore") {
                 throw new Error("DataStore is too large to export. Please clear some plugin data and try again.");
             }
         }
+    }
+
+    lastRedactedKeys = redactedKeys;
+    if (redactedKeys.length > 0) {
+        logger.info(`نُقّي ${redactedKeys.length} مفتاحاً حسّاساً من النسخة:`, redactedKeys);
     }
 
     switch (type) {
@@ -139,7 +180,7 @@ export async function downloadSettingsBackup(type: BackupType = "all", { minify 
     try {
         const syncDataStore = type === "all" || type === "datastore";
         const backup = await exportSettings({ minify, type, syncDataStore });
-        const filename = `equicord-${type}-backup-${moment().format("YYYY-MM-DD")}.json`;
+        const filename = `Equicord-${type}-backup-${moment().format("YYYY-MM-DD")}.json`;
         const data = new TextEncoder().encode(backup);
 
         if (IS_DISCORD_DESKTOP) {
@@ -149,7 +190,7 @@ export async function downloadSettingsBackup(type: BackupType = "all", { minify 
         }
     } catch (err) {
         logger.error("Failed to export settings:", err);
-        showToast({ text: "Failed to export settings, check console", variant: "critical" });
+        toast(Toasts.Type.FAILURE, "Failed to export settings, check console");
         throw err;
     }
 }

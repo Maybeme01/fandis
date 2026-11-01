@@ -1,0 +1,97 @@
+/*!
+ * Questcord, a Vencord plugin that automates Discord Quests
+ * Copyright (c) 2026 zpt0
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import { settings } from "../settings";
+import { activeQuests, getProgressBarKey, isPluginStopping, progressBars } from "../core/state";
+import { questTileSelector } from "../core/utils";
+import { updateQuestPill } from "./notifications";
+
+export function getDiscordProgressPercent(questId: string): number | null {
+    try {
+        // discord exposes no progress api here, scrape the ring svg it renders
+        const questTile = document.querySelector(questTileSelector(questId));
+        if (!questTile) return null;
+        const allCircles = questTile.querySelectorAll("circle");
+        let greenCircle: Element | null = null;
+        allCircles.forEach((circle) => {
+            const stroke = circle.getAttribute("stroke");
+            const style = circle.getAttribute("style");
+            if (stroke && (stroke.includes("green") || stroke.includes("--green-330"))) {
+                greenCircle = circle;
+            } else if (style && style.includes("green")) {
+                greenCircle = circle;
+            }
+        });
+        if (!greenCircle && allCircles.length >= 2) {
+            // fallback when no green stroke is found: the ring is usually the 2nd circle
+            greenCircle = allCircles[1];
+        }
+        if (!greenCircle) return null;
+        let dashArray = greenCircle.getAttribute("stroke-dasharray");
+        let dashOffset = greenCircle.getAttribute("stroke-dashoffset");
+        if (!dashArray || !dashOffset) {
+            const style = window.getComputedStyle(greenCircle);
+            dashArray = dashArray || style.strokeDasharray;
+            dashOffset = dashOffset || style.strokeDashoffset;
+        }
+        if (!dashArray || !dashOffset || dashArray === "none" || dashOffset === "none") return null;
+        const circumferenceMatch = dashArray.match(/[\d.]+/);
+        if (!circumferenceMatch) return null;
+        const circumference = parseFloat(circumferenceMatch[0]);
+        const offset = parseFloat(dashOffset);
+        if (isNaN(circumference) || isNaN(offset)) return null;
+        const progressLength = circumference - Math.abs(offset);
+        const rawPercent = (progressLength / circumference) * 100;
+        const percent = Math.max(0, Math.min(100, rawPercent));
+        return percent >= 99.9 ? 100 : Math.min(99, Math.floor(percent));
+    } catch {
+        return null;
+    }
+}
+
+export function createProgressBar(questId: string, userId: string): HTMLElement {
+    const key = getProgressBarKey(questId, userId);
+    if (progressBars.has(key)) {
+        return progressBars.get(key)!;
+    }
+    const placeholder = document.createElement("div");
+    progressBars.set(key, placeholder);
+    return placeholder;
+}
+
+export function updateProgressBar(questId: string, userId: string, percent: number) {
+    if (isPluginStopping) return;
+    const key = getProgressBarKey(questId, userId);
+    const clampedPercent = Math.min(100, Math.max(0, percent));
+
+    const questData = activeQuests.get(key);
+    if (questData) {
+        if (clampedPercent > questData.lastProgress) {
+            questData.lastProgressAt = Date.now();
+            questData.stallWarned = false;
+        }
+        questData.lastProgress = clampedPercent;
+    }
+    if (!settings.store.showProgressBar) return;
+    updateQuestPill(questId, undefined, clampedPercent);
+}
+
+export function removeProgressBar(questId: string, userId: string) {
+    const key = getProgressBarKey(questId, userId);
+    progressBars.delete(key);
+}

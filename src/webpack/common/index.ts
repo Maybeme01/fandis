@@ -1,20 +1,9 @@
 /*
  * Vencord, a modification for Discord's desktop app
  * Copyright (c) 2023 Vendicated and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
+import { findByPropsLazy } from "../webpack";
 
 export * from "./components";
 export * from "./menu";
@@ -23,3 +12,17 @@ export * from "./react";
 export * from "./stores";
 export * from "./userSettings";
 export * from "./utils";
+
+export const Toasts = {
+    Type: { SUCCESS: 0, FAILURE: 1, INFO: 2, WARNING: 3 },
+    show: (...args: any[]) => {},
+    genId: () => Math.random().toString(36).slice(2)
+};
+
+const dummyProxy: any = new Proxy(() => null, {
+    get: () => dummyProxy
+});
+
+export const Button: any = typeof findByPropsLazy === "function" ? (findByPropsLazy("Sizes", "Colors", "Looks") ?? dummyProxy) : dummyProxy;
+export const Text: any = typeof findByPropsLazy === "function" ? (findByPropsLazy("Sizes", "Weights") ?? dummyProxy) : dummyProxy;
+export const Forms: any = typeof findByPropsLazy === "function" ? (findByPropsLazy("FormItem", "FormTitle") ?? dummyProxy) : dummyProxy;

@@ -20,7 +20,7 @@ import { SettingsStore as SettingsStoreClass } from "@shared/SettingsStore";
 import { Logger } from "@utils/Logger";
 import { mergeDefaults } from "@utils/mergeDefaults";
 import { DefinedSettings, OptionType, SettingsChecks, SettingsDefinition } from "@utils/types";
-import { useEffect, useReducer } from "@webpack/common";
+import { React, useEffect } from "@webpack/common";
 
 import plugins from "~plugins";
 
@@ -54,7 +54,6 @@ export interface Settings {
     themeLinks: string[];
     mainWindowFrameless: boolean;
     frameless: boolean;
-    noRoundCorners: boolean;
     transparent: boolean;
     winCtrlQ: boolean;
     macosVibrancyStyle:
@@ -73,7 +72,9 @@ export interface Settings {
     | undefined;
     windowsMaterial: "none" | "mica" | "tabbed" | "acrylic";
     disableMinSize: boolean;
-    nativeTitleBar: boolean;
+    winNativeTitleBar: boolean;
+    hardwareVideoAcceleration: boolean;
+    htmlFullscreenFix: boolean;
     plugins: {
         [plugin: string]: {
             enabled: boolean;
@@ -101,6 +102,43 @@ export interface Settings {
         settingsSync: boolean;
         settingsSyncVersion: number;
     };
+
+    /**
+     * تفضيلات إشراق التي لا تخصّ إضافةً بعينها — تسكن هنا لا داخل إضافة.
+     * كانت تحت `plugins.DiscordArabicizer` حين كانت واجهتها هناك؛ ويُرحّلها
+     * `esharqPrefs` مرّة واحدة.
+     *
+     * 🔴 **`migrated` ليست زينة**: `mergeDefaults` يكتب الافتراضيات في المخزن
+     * عند الإقلاع، فقيم هذه المجموعة تصير «محدَّدة» قبل أن يقرأها أحد. ولذلك
+     * لا يصلح غياب القيمة دليلاً على أن المستخدم لم يختر بعد — والعلامة هي
+     * الدليل الوحيد الصادق. بلا هذا وقع الترحيل خطأً في أوّل تجربة حيّة:
+     * قُرئت `false` بينما محفوظ المستخدم `true`، بلا خطأ يشتكي.
+     */
+    esharq: {
+        /** هل نُقلت التفضيلات من مواضعها القديمة؟ تُكتب مرّة واحدة. */
+        migrated: boolean;
+        /** لغة أوصاف الإضافات وإعداداتها ولوحة إشراق — الأسماء تبقى إنجليزية. */
+        pluginsArabic: boolean;
+        /** مفتاح الخطّ العربي المختار (`tajawal` … `off`). */
+        arabicFont: string;
+        /**
+         * إخفاء شارات إشراق **على هذا الجهاز وحده** — خريطة `"<نوع>:<موضع>"`.
+         * الغياب يعني «ظاهرة». النطاق العامّ لا يُخزَّن هنا بل على الخادم،
+         * لأنّ ما يراه الناس ليس شأن جهازٍ واحد.
+         */
+        badgeHidden: Record<string, boolean>;
+    };
+
+    /**
+     * منشئ الثيمات — حالةٌ حرّة الشكل يقرؤها ويكتبها المنشئ وحده.
+     *
+     * تُكتب `unknown` عن قصد: شكلها يتوسّع مع كل مِقبض جديد، وتثبيته هنا
+     * يعني تعديل ملفّ الإعدادات الأساسي مع كل إضافةٍ في صفحةٍ واحدة. والقارئ
+     * الوحيد (`themeCreator/state.ts`) يُصحّح ما يقرأ ويملأ ناقصه.
+     */
+    themeCreator: unknown;
+
+    ignoreResetWarning: boolean;
 }
 
 const DefaultSettings: Settings = {
@@ -118,13 +156,14 @@ const DefaultSettings: Settings = {
     enableReactDevtools: false,
     mainWindowFrameless: false,
     frameless: false,
-    noRoundCorners: false,
     transparent: false,
     winCtrlQ: false,
     macosVibrancyStyle: undefined,
     windowsMaterial: "none",
     disableMinSize: false,
-    nativeTitleBar: false,
+    winNativeTitleBar: false,
+    hardwareVideoAcceleration: true,
+    htmlFullscreenFix: true,
     plugins: {},
 
     uiElements: {
@@ -142,10 +181,21 @@ const DefaultSettings: Settings = {
 
     cloud: {
         authenticated: false,
-        url: "https://cloud.equicord.org/",
+        url: "https://cloud.Equicord.org/",
         settingsSync: false,
         settingsSyncVersion: 0
     },
+
+    esharq: {
+        migrated: false,
+        pluginsArabic: false,
+        arabicFont: "tajawal",
+        badgeHidden: {}
+    },
+
+    themeCreator: null,
+
+    ignoreResetWarning: false,
 };
 
 const settings = !IS_REPORTER ? VencordNative.settings.get() : {} as Settings;
@@ -193,8 +243,103 @@ export const SettingsStore = new SettingsStoreClass(settings, {
 if (!IS_REPORTER) {
     SettingsStore.addGlobalChangeListener((_, path) => {
         SettingsStore.plain.cloud.settingsSyncVersion = Date.now();
-        VencordNative.settings.set(SettingsStore.plain, path);
+        // 🔴 **رميان مختلفان، ولا يكفي أحد المصيدين**:
+        //
+        // 1. رفضٌ غير متزامن (فشل IPC) — يُلتقط بـ`.catch`.
+        // 2. رميٌ **متزامن**: `settings.set` يستدعي `JSON.stringify` قبل أن
+        //    يُرسل، وهي ترمي فوراً على **مرجعٍ دائريّ** تضعه إضافة. وهنا
+        //    المكيدة: `Promise.resolve(f())` يُقيّم `f()` **قبل** أن يلفّه،
+        //    فالرمي المتزامن يفلت من `.catch` كأنّه غير موجود — قِسته في node:
+        //    «أفلت من catch وانتشر». ثمّ لا يلتقطه أحد بعده، لأنّ `SettingsStore`
+        //    ينادي المستمعين عاريةً بلا try — فينتشر إلى **موضع الإسناد نفسه**،
+        //    أي أنّ كلّ كتابة إعدادٍ في الجلسة ترمي في وجه من كتبها.
+        //
+        // فالمصيدان معاً: `try` للمتزامن، و`.catch` لغير المتزامن.
+        scanSettingsOnce();
+        try {
+            const saveSettings = (VencordNative.settings as any).set.bind(VencordNative.settings);
+            Promise.resolve(saveSettings(JSON.stringify(SettingsStore.plain), path))
+                .catch(e => reportSettingsSaveFailure(e, path));
+        } catch (e) {
+            reportSettingsSaveFailure(e, path);
+        }
     });
+}
+
+/**
+ * يمشي في شجرة الإعدادات بحثاً عن قيمٍ **لا يمثّلها JSON** — دالّة أو رمز.
+ *
+ * 🔴 لماذا يلزم بعد الإصلاح: الجسر صار يُرسل نصّاً، فمثل هذه القيمة لم تعد
+ * تُوقف الحفظ — لكنّها **تُحذَف صامتةً**، وهي دليلٌ على إضافةٍ تكتب في
+ * إعداداتها ما لا يُحفَظ. تسميتُها تُنهي البحث بدل التخمين بين 489 إضافة.
+ *
+ * يُمشى مرّة واحدة في الجلسة بعد أوّل حفظ — لا مع كلّ تبديل.
+ */
+function findUnserialisable(node: any, at = "", seen = new Set<object>(), out: string[] = []): string[] {
+    if (out.length >= 10 || node === null) return out;
+    const type = typeof node;
+    if (type === "function" || type === "symbol") { out.push(`${at} (${type})`); return out; }
+    if (type !== "object") return out;
+    // 🔴 الدائريّ **مسارٌ** لا مجموعة: قيمةٌ يُشار إليها من فرعين مختلفين
+    // ليست دورةً — و`mergeDefaults` يُسند المصفوفات الافتراضية **بالمرجع**
+    // (`obj[key] ??= v`)، فمجموعةٌ مشتركة عبر الإخوة كانت تُبلّغ عن دورةٍ
+    // وهمية في تقرير الدعم وتُرسل من يقرؤه في طريقٍ مسدود.
+    if (seen.has(node)) { out.push(`${at} (مرجع دائريّ)`); return out; }
+    seen.add(node);
+    for (const key of Object.keys(node)) {
+        try {
+            findUnserialisable(node[key], at ? `${at}.${key}` : key, seen, out);
+        } catch { /* واصفٌ يرمي عند القراءة — يُتخطّى */ }
+    }
+    seen.delete(node);
+    return out;
+}
+
+/**
+ * مسارات القيم التي لا يحفظها JSON في الإعدادات — للتشخيص.
+ *
+ * 🔴 تُصدَّر كي تدخل **حزمة الدعم مباشرةً**: الفحص الداخليّ لا يعمل إلّا عند
+ * أوّل تبديل، ومن يُنشئ تقريراً بلا أن يُبدّل شيئاً كان يُرسل تقريراً صامتاً
+ * عن أهمّ سؤال. الآن يُحسَب عند بناء التقرير فيصل دائماً.
+ */
+export function getUnserialisableSettingPaths(): string[] {
+    try {
+        return findUnserialisable(SettingsStore.plain);
+    } catch {
+        return [];
+    }
+}
+
+let scannedOnce = false;
+
+function scanSettingsOnce() {
+    if (scannedOnce) return;
+    scannedOnce = true;
+    try {
+        const bad = findUnserialisable(SettingsStore.plain);
+        if (bad.length === 0) return;
+        console.warn("[Esharq] قيمٌ في الإعدادات لا يحفظها JSON:", bad);
+        (window as any).VencordNative?.settings?.reportSaveFailure?.(
+            `قيمٌ لا تُحفَظ في الإعدادات: ${bad.join(" · ")}`
+        );
+    } catch { /* الفحص تشخيصيّ محض — لا يُعطّل شيئاً */ }
+}
+
+/**
+ * إبلاغٌ عن فشل حفظ الإعدادات من جانب الواجهة.
+ *
+ * الجسر يُرسل نصّاً الآن فلا يفشل الاستنساخ، ولم يبقَ إلّا ما يُفشل
+ * `JSON.stringify` نفسه: **مرجعٌ دائريّ** تضعه إضافةٌ في إعداداتها. نادرٌ،
+ * لكنّه لو وقع لأوقف الحفظ كلّه — فلا يُترَك صامتاً.
+ */
+function reportSettingsSaveFailure(e: any, path?: string) {
+    const message = String(e?.message ?? e);
+    console.error("[Esharq] تعذّر حفظ الإعدادات", path ? `(عند ${path})` : "", e);
+    try {
+        (window as any).VencordNative?.settings?.reportSaveFailure?.(
+            `${message}${path ? ` — عند «${path}»` : ""}`
+        );
+    } catch { /* واجهةٌ أقدم — يبقى في المِعراض */ }
 }
 
 /**
@@ -222,7 +367,7 @@ export const Settings = SettingsStore.store;
  */
 // TODO: Representing paths as essentially "string[].join('.')" wont allow dots in paths, change to "paths?: string[][]" later
 export function useSettings(paths?: UseSettings<Settings>[]) {
-    const [, forceUpdate] = useReducer(() => ({}), {});
+    const [, forceUpdate] = React.useReducer(() => ({}), {});
 
     useEffect(() => {
         if (paths) {

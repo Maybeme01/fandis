@@ -36,14 +36,14 @@ export default definePlugin({
     settings,
     toolboxActions: {
         "Open Profile Sets": () => {
-            SettingsRouter.openUserSettings("equicord_profile_sets_panel");
+            SettingsRouter.openUserSettings("Equicord_profile_sets_panel");
         },
     },
 
     start() {
         loadPresets("main");
         SettingsPlugin.customEntries.push({
-            key: "equicord_profile_sets",
+            key: "Equicord_profile_sets",
             title: "Profile Sets",
             Component: require("./components/profileSetsTab").default,
             Icon: UserIcon
@@ -51,6 +51,6 @@ export default definePlugin({
     },
 
     stop() {
-        removeFromArray(SettingsPlugin.customEntries, e => e.key === "equicord_profile_sets");
+        removeFromArray(SettingsPlugin.customEntries, e => e.key === "Equicord_profile_sets");
     },
 });

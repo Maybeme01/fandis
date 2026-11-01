@@ -1,0 +1,17 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import { definePluginI18n } from "@utils/i18n/types";
+
+export default definePluginI18n({
+    "description": {
+        "ar": "يتتبع نشاطك الشخصي على Discord محلياً ويعرض لوحة إحصاءات جميلة تشمل النشاط اليومي وأكثر القنوات نشاطاً وخريطة النشاط بالساعة. يمكنك مشاركة إحصاءاتك كصورة غير قابلة للتعديل.",
+        "en": "Tracks your personal Discord activity locally and shows a beautiful stats dashboard with daily activity, most active channels and an hourly activity heatmap. Share your stats as a tamper-proof image."
+    },
+    toolboxActions: {
+        "Open Analytics": { ar: "فتح التحليلات", en: "Open Analytics" }
+    }
+});

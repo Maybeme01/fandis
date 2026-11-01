@@ -1,0 +1,558 @@
+/*
+ * Esharq, a Discord client mod
+ * Copyright (c) 2026 LOSTSTR
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+/* ── ملفّك الشخصيّ ───────────────────────────────────────────────────────── */
+
+.esharq-mp-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.esharq-mp-avatar {
+    inline-size: 72px;
+    block-size: 72px;
+    border-radius: 999px;
+    box-shadow: 0 0 0 3px var(--esharq-line), 0 6px 18px #00000059;
+}
+
+.esharq-mp-name {
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.esharq-mp-tag {
+    font-size: 13px;
+    opacity: 0.5;
+    margin-top: 2px;
+    direction: ltr;
+    text-align: start;
+}
+
+.esharq-mp-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.esharq-mp-badge {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 11px;
+    background: var(--esharq-surface-1);
+    border-inline-start: 3px solid transparent;
+    transition: background 0.16s ease, opacity 0.2s ease;
+}
+
+.esharq-mp-badge:hover {
+    background: var(--esharq-surface-1-hover);
+}
+
+/* لون الحدّ يقول مصدر الشارة بلا قراءة. */
+.esharq-mp-badge.origin-esharq {
+    border-inline-start-color: #c9a227;
+}
+
+.esharq-mp-badge.origin-upstream {
+    border-inline-start-color: #5865f2;
+}
+
+/* المُطفأة تبهت ولا تختفي — يجب أن تبقى مرئيّةً ليُعاد تشغيلها. */
+.esharq-mp-badge.off {
+    opacity: 0.42;
+}
+
+.esharq-mp-badge-art {
+    display: grid;
+    place-items: center;
+    inline-size: 46px;
+    block-size: 46px;
+    flex: 0 0 auto;
+    border-radius: 10px;
+    background: var(--esharq-tint);
+    overflow: hidden;
+}
+
+.esharq-mp-badge-art img {
+    max-inline-size: 32px;
+    max-block-size: 32px;
+}
+
+.esharq-mp-noart {
+    opacity: 0.35;
+    font-size: 18px;
+}
+
+.esharq-mp-badge-body {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+}
+
+.esharq-mp-badge-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.esharq-mp-origin {
+    margin-top: 3px;
+    font-size: 11px;
+    opacity: 0.55;
+}
+
+.esharq-mp-origin.esharq {
+    color: var(--esharq-on-accent);
+    opacity: 0.9;
+}
+
+.esharq-mp-locked {
+    flex: 0 0 auto;
+    font-size: 14px;
+    opacity: 0.32;
+    cursor: help;
+}
+
+.esharq-mp-empty {
+    padding: 30px 16px;
+    text-align: center;
+}
+
+.esharq-mp-empty-title {
+    font-size: 15px;
+    font-weight: 600;
+    opacity: 0.75;
+}
+
+.esharq-mp-empty p {
+    margin: 8px 0 0;
+    font-size: 13px;
+    line-height: 1.75;
+    opacity: 0.55;
+}
+
+/* مفتاحان لكل شارة: أين تظهر. عموديّان في المساحة الضيّقة، متجاوران في الواسعة. */
+.esharq-mp-switches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    flex: 0 0 auto;
+}
+
+.esharq-mp-surface {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    opacity: 0.75;
+    cursor: pointer;
+}
+
+/* ── عرض الشارة: دائرة كبيرة في الأعلى، والخيارات تحتها ──────────────────── */
+
+.esharq-mp-showcase {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0 4px;
+}
+
+.esharq-mp-ring {
+    display: grid;
+    place-items: center;
+    inline-size: 104px;
+    block-size: 104px;
+    border-radius: 999px;
+    background:
+        radial-gradient(circle at 50% 35%, #26262e 0%, #17171b 70%);
+    box-shadow:
+        inset 0 0 0 1px #ffffff14,
+        0 0 0 3px rgb(34 201 240 / 22%),
+        0 10px 28px #0006;
+    transition: box-shadow 0.25s ease, opacity 0.25s ease;
+}
+
+/* المخفيّة في الموضعين تبهت وتفقد حلقتها الذهبية — الحال يُرى قبل أن يُقرأ. */
+.esharq-mp-ring.off {
+    opacity: 0.4;
+    box-shadow:
+        inset 0 0 0 1px #ffffff0d,
+        0 0 0 3px #ffffff0a;
+}
+
+.esharq-mp-ring img {
+    inline-size: 64px;
+    block-size: 64px;
+    border-radius: 999px;
+    object-fit: cover;
+}
+
+.esharq-mp-tooltip {
+    margin-top: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.esharq-mp-nowhere {
+    margin-top: 8px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: rgb(242 63 67 / 12%);
+    color: var(--esharq-on-danger);
+}
+
+.esharq-mp-choices {
+    inline-size: 100%;
+    margin-top: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.esharq-mp-choice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--esharq-surface-1);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+    cursor: pointer;
+    transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.esharq-mp-choice:hover {
+    background: var(--esharq-surface-1-hover);
+}
+
+.esharq-mp-choice.on {
+    background: rgb(34 201 240 / 8%);
+    box-shadow: inset 0 0 0 1px rgb(34 201 240 / 30%);
+}
+
+.esharq-mp-choice-title {
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.esharq-mp-choice-sub {
+    margin-top: 3px;
+    font-size: 11.5px;
+    line-height: 1.6;
+    opacity: 0.55;
+}
+
+/* ── عدّة شارات ──────────────────────────────────────────────────────────────
+   بطاقةٌ لكل شارة، كلّها ظاهرة معاً. والبديل — شارةٌ كبيرة وشريط مصغّرات —
+   يُخفي خيارات ما لم يُختَر، فيظنّ صاحبه أنه ضبط الكلّ وقد ضبط واحدة. */
+
+.esharq-mp-cases {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.esharq-mp-cases.many .esharq-mp-showcase {
+    padding: 18px 16px;
+    border-radius: 14px;
+    background: var(--esharq-surface-0);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+}
+
+/* مع الكثرة تصغر الدائرة قليلاً كي تبقى الصفحة مقروءةً بلا تمرير طويل. */
+.esharq-mp-cases.many .esharq-mp-ring {
+    inline-size: 84px;
+    block-size: 84px;
+}
+
+.esharq-mp-cases.many .esharq-mp-ring img {
+    inline-size: 52px;
+    block-size: 52px;
+}
+
+.esharq-mp-cases.many .esharq-mp-choices {
+    margin-top: 16px;
+}
+
+/* ── بطاقة التحكّم بالشارات ─────────────────────────────────────────
+   النطاق شريطُ خيارٍ لا مفتاح: الفرق بين «هذا الجهاز» و«إشراق كلّه» أكبر من
+   أن يُختصر في مفتاحٍ لا يقول أيّهما مُفعَّل. */
+.esharq-mp-scope {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 11px;
+    background: var(--esharq-tint);
+}
+
+.esharq-mp-scope-btn {
+    padding: 7px 14px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-muted, #949ba4);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 140ms ease, color 140ms ease;
+}
+
+.esharq-mp-scope-btn:hover {
+    color: var(--text-default, #dbdee1);
+}
+
+.esharq-mp-scope-btn.on {
+    background: rgb(34 201 240 / 14%);
+    color: var(--esharq-on-accent);
+}
+
+.esharq-mp-scope-note {
+    margin: 10px 0 14px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--text-muted, #949ba4);
+}
+
+/* ── صفّ التحكّم بشارة واحدة ──────────────────────────────────────────
+   صفٌّ أفقيّ: الصورة كما يراها الناس، ثمّ الاسم وحالته بالكلمات، ثمّ الحالات
+   الأربع. والصورة أوّلاً عمداً — يرى صاحبها ما يُقرّر بشأنه قبل أن يُقرّر. */
+
+.esharq-mp-ctl {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 12px;
+    margin-block-start: 10px;
+    background: var(--esharq-tint);
+    border: 1px solid var(--esharq-line);
+    border-radius: 12px;
+}
+
+.esharq-mp-ctl-face {
+    flex: none;
+    inline-size: 44px;
+    block-size: 44px;
+}
+
+.esharq-mp-ctl-img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    background: var(--esharq-surface-0);
+    border-radius: 50%;
+}
+
+/* الشارة المخفيّة تُطفأ، فتُقرأ الحالة من الصورة قبل قراءة الكلام.
+   المُرشِّح على الحاوية لا على الصورة: مُحدِّدٌ بصنفٍ واحد يُبقي الترتيب سليماً. */
+.esharq-mp-ctl-face.off {
+    filter: grayscale(100%);
+    opacity: 0.4;
+}
+
+/* لا صورة (شارةٌ لم تُحمَّل صورتها بعد) — دائرةٌ بمكانها لا فراغ يقفز. */
+.esharq-mp-ctl-blank {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    background: var(--esharq-tint-strong);
+    border-radius: 50%;
+}
+
+.esharq-mp-ctl-meta {
+    flex: 1;
+    min-inline-size: 0;
+}
+
+.esharq-mp-ctl-meta b {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-strong, #f2f3f5);
+}
+
+.esharq-mp-ctl-meta small {
+    font-size: 12px;
+    color: var(--text-muted, #949ba4);
+}
+
+.esharq-mp-ctl-seg {
+    display: flex;
+    flex: none;
+    gap: 6px;
+}
+
+.esharq-mp-ctl-state {
+    padding: 7px 13px;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--text-muted, #949ba4);
+    background: var(--esharq-tint-strong);
+    border: 1px solid var(--esharq-line);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.esharq-mp-ctl-state:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.esharq-mp-ctl-state:hover:not(:disabled) {
+    color: var(--text-default, #dbdee1);
+    border-color: var(--esharq-line);
+}
+
+.esharq-mp-ctl-state.on {
+    font-weight: 700;
+    color: var(--esharq-on-cyan);
+    background: rgb(34 201 240 / 10%);
+    border-color: rgb(34 201 240 / 35%);
+}
+
+/* «مخفيّ» حالةٌ سالبة، فلونها ينذر لا يؤكّد. */
+.esharq-mp-ctl-state.hide.on {
+    color: var(--esharq-on-danger);
+    background: rgb(240 90 90 / 12%);
+    border-color: rgb(240 90 90 / 30%);
+}
+
+/* ضيّقٌ: الحالات تنزل سطراً بدل أن تُزاحم الاسم. */
+@media (width <= 640px) {
+    .esharq-mp-ctl {
+        flex-wrap: wrap;
+    }
+
+    .esharq-mp-ctl-seg {
+        flex: 1 0 100%;
+    }
+}
+
+/* ── منتقي شارات ديسكورد الرسمية ──────────────────────────────────────
+   لا مفردات جديدة: البلاطة هي `esharq-mp-badge` نفسها، وحالة الاختيار
+   بنفس السماوي المستعمل في `esharq-mp-choice.on`، والحدّ البادئ (3px
+   شفّاف أصلاً في البلاطة) هو ما يُشعَل علامةً على الاختيار. */
+
+.esharq-mp-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.esharq-mp-tab {
+    padding: 7px 15px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--esharq-surface-1);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+    color: var(--text-default, #dbdee1);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.16s ease, box-shadow 0.16s ease, color 0.16s ease;
+}
+
+.esharq-mp-tab:hover {
+    background: var(--esharq-surface-1-hover);
+}
+
+.esharq-mp-tab.on {
+    background: rgb(34 201 240 / 8%);
+    box-shadow: inset 0 0 0 1px rgb(34 201 240 / 30%);
+    color: var(--esharq-on-cyan);
+}
+
+.esharq-mp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.esharq-mp-pick {
+    inline-size: 100%;
+    border-block: 0;
+    border-inline-end: 0;
+    font: inherit;
+    color: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+
+.esharq-mp-pick.on {
+    background: rgb(34 201 240 / 8%);
+    border-inline-start-color: #22c9f0;
+}
+
+.esharq-mp-pick-name {
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--text-default, #dbdee1);
+}
+
+/* ── حقول الهويّة المحلّية ────────────────────────────────────────────
+   بخلفية `#17171b` وحدٍّ داخليّ خفيف كبقيّة عناصر الصفحة، وحالة الخطأ
+   بالأحمر نفسه المستعمل في شرائط التنبيه. */
+
+.esharq-mp-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.esharq-mp-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.esharq-mp-field-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted, #b5bac1);
+}
+
+.esharq-mp-input {
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--esharq-surface-1);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+    color: var(--text-default, #dbdee1);
+    font: inherit;
+    font-size: 13.5px;
+    transition: box-shadow 0.16s ease;
+}
+
+.esharq-mp-input::placeholder {
+    color: var(--text-muted, #949ba4);
+    opacity: 0.7;
+}
+
+.esharq-mp-input:focus {
+    outline: none;
+    box-shadow: inset 0 0 0 1px rgb(34 201 240 / 45%);
+}
+
+.esharq-mp-input.bad {
+    box-shadow: inset 0 0 0 1px rgb(242 63 67 / 55%);
+}
+
+/* ما يحكمه المفتاح يخفت حين يُطفأ — إشارةٌ بصرية أنّه معطَّل لا مفقود. */
+.esharq-mp-dimmed {
+    opacity: 0.45;
+    transition: opacity 0.18s ease;
+}

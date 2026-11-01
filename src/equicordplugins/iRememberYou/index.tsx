@@ -27,7 +27,7 @@ export default definePlugin({
 
     async start() {
         SettingsPlugin.customEntries.push({
-            key: "equicord_i_remember_you",
+            key: "Equicord_i_remember_you",
             title: "I Remember You",
             Component: () => <DataUI usersCollection={data.usersCollection} />,
             Icon: EyeIcon
@@ -45,7 +45,7 @@ export default definePlugin({
     },
 
     stop() {
-        removeFromArray(SettingsPlugin.customEntries, e => e.key === "equicord_i_remember_you");
+        removeFromArray(SettingsPlugin.customEntries, e => e.key === "Equicord_i_remember_you");
 
         const dataManager = this.dataManager as Data;
         removeMessagePreSendListener(dataManager._onMessagePreSend_preSend);

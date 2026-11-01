@@ -1,0 +1,318 @@
+/*
+ * Esharq, a Discord client mod
+ * Copyright (c) 2026 LOSTSTR
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import "./performanceBudgets.css";
+
+import { PlainSettings, Settings, useSettings } from "@api/Settings";
+import { getPluginStartups } from "@debug/esharqStartup";
+import { t } from "@utils/esharqI18n";
+import { useEffect, useMemo, useRef, useState } from "@webpack/common";
+
+import { Card, NoticeStrip, StatRow } from "./Card";
+import { stagger } from "./motion";
+
+/**
+ * **ميزانيات الأداء** — حدٌّ لكل مقياس، ومخالفةٌ حين يُتجاوَز.
+ *
+ * والفرق بينها وبين «أزمنة الإقلاع» فرقُ زمن: تلك تصف **لحظة الإقلاع** مرّةً
+ * واحدة، وهذه تقيس **الآن** ما دامت الصفحة مفتوحة.
+ *
+ * 🔴 **ولا تقيس شيئاً وهي مغلقة.** لا مؤقّت يبقى ولا مستمع: العيّنات تبدأ عند
+ * فتح الصفحة وتتوقّف بإغلاقها. مقياسٌ دائم يُكلّف كل مستخدم ثمناً ليقرأه واحد.
+ *
+ * 🔴 **وقياس المعالج لكل عملية لا لكل إضافة.** إلكترون يُعطي أرقام العمليات،
+ * ولا سبيل لنسب دورةٍ من المُصيِّر إلى إضافةٍ بعينها — كلّها تعمل في نفس
+ * العملية ونفس الخيط. والصفحة تقول هذا بدل أن يُقرأ الرقم على غير معناه.
+ */
+
+interface ProcMetric {
+    type: string;
+    pid: number;
+    cpu: number | null;
+    memMB: number;
+}
+
+/**
+ * الحدود الافتراضية — و**الصفر يُعطّل الفحص**، فمن لا يريد حدّاً يمحوه ولا
+ * يضطرّ إلى رقم كبير يخترعه.
+ */
+const DEFAULT_BUDGETS = {
+    cpuPercent: 60,
+    memoryMB: 1500,
+    heapMB: 900,
+    startupMs: 400
+} as const;
+
+type BudgetKey = keyof typeof DEFAULT_BUDGETS;
+
+const BUDGET_META: Record<BudgetKey, { ar: string; en: string; unit: string; hintAr: string; hintEn: string; }> = {
+    cpuPercent: {
+        ar: "معالج ديسكورد", en: "Discord's CPU", unit: "%",
+        hintAr: "عمليات ديسكورد وحدها لا الجهاز. و100% = نواة واحدة مشغولة بالكامل، وقد يتجاوزها على عدّة أنوية.",
+        hintEn: "Discord's own processes only, not your machine. 100% = one core fully busy; it can exceed that across multiple cores."
+    },
+    memoryMB: {
+        ar: "ذاكرة ديسكورد", en: "Discord's memory", unit: "MB",
+        hintAr: "مجموعة العمل لعمليات ديسكورد مجتمعةً — لا ذاكرة الجهاز.",
+        hintEn: "The working set of Discord's processes combined — not your machine's memory."
+    },
+    heapMB: {
+        ar: "كومة جافاسكربت", en: "JavaScript heap", unit: "MB",
+        hintAr: "ذاكرة المُصيِّر التي تشغلها الشيفرة — إشراق وديسكورد معاً.",
+        hintEn: "The renderer memory the code occupies — Esharq and Discord together."
+    },
+    startupMs: {
+        ar: "تكلفة الإضافات على الإقلاع", en: "Plugin startup cost", unit: "ms",
+        hintAr: "مجموع ما كلّفته إضافاتك عند آخر إقلاع.",
+        hintEn: "What your plugins cost in total at the last startup."
+    }
+};
+
+function readBudgets(): Record<BudgetKey, number> {
+    const stored = (Settings as any).esharq?.budgets ?? {};
+    const out = {} as Record<BudgetKey, number>;
+    for (const key of Object.keys(DEFAULT_BUDGETS) as BudgetKey[]) {
+        const v = stored[key];
+        out[key] = typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : DEFAULT_BUDGETS[key];
+    }
+    return out;
+}
+
+function writeBudget(key: BudgetKey, value: number) {
+    // 🔴 النسخ من `PlainSettings` لا من الوكيل: قراءة `Settings.esharq` تُعيد
+    // كائناً مغلَّفاً بوكيل، ونشرُه يزرع الوكيل داخل شجرة الإعدادات — والوكيل
+    // لا يُستنسَخ، فيتوقّف **كلّ** حفظ إعدادٍ بعده. نفس العطل الذي منع تفعيل
+    // الإضافات على كل تثبيتٍ أوّل.
+    const store = Settings as Record<string, any>;
+    const current = (PlainSettings as Record<string, any>).esharq ?? {};
+    store.esharq = { ...current, budgets: { ...(current.budgets ?? {}), [key]: value } };
+}
+
+function heapMB(): number | null {
+    const mem = (performance as { memory?: { usedJSHeapSize?: number; }; }).memory;
+    const used = mem?.usedJSHeapSize;
+    return typeof used === "number" ? Math.round(used / 1048576) : null;
+}
+
+/** صفّ ميزانية: القيمة الآن، الحدّ، وشريطٌ يقول كم بقي منه. */
+function BudgetRow({ label, hint, unit, value, budget, index, onBudget }: {
+    label: string; hint: string; unit: string;
+    value: number | null; budget: number; index: number;
+    onBudget: (v: number) => void;
+}) {
+    /**
+     * نصّ الحقل **مسوّدةٌ محلّية**، لا القيمة المحفوظة مباشرةً.
+     *
+     * 🔴 كان الحقل مربوطاً بالقيمة المحفوظة، والكتابة تُرفَض إن لم تُنتج رقماً
+     * صالحاً. فمن مسح «60» ليكتب «90» أنتج مسحُه نصّاً فارغاً ⇒ `parseInt("")`
+     * = `NaN` ⇒ رُفض ⇒ لم تتغيّر القيمة المحفوظة ⇒ أعاد React رسم «60» في
+     * الحقل. فبدا **أنّ المسح لا يعمل**، وما يكتبه يُضاف إلى الرقم القديم:
+     * «60» ثمّ «90» تصير **«6090»** — وهو ما وصفه المستخدم حرفياً.
+     *
+     * بالمسوّدة يكتب ما يشاء ويمسح ما يشاء؛ وتُحفظ القيمة لحظة تصير صالحة،
+     * ويُعاد المحفوظ عند مغادرة الحقل فارغاً — فلا تضيع قيمةٌ بمسحةٍ عابرة.
+     */
+    const [draft, setDraft] = useState(String(budget));
+
+    // القيمة المحفوظة قد تتغيّر من خارج الحقل (استعادة الافتراضات مثلاً).
+    useEffect(() => { setDraft(String(budget)); }, [budget]);
+
+    const off = budget === 0;
+    const over = !off && value !== null && value > budget;
+    const ratio = off || value === null || budget === 0 ? 0 : Math.min(1, value / budget);
+
+    return (
+        <div className={"esharq-pb-row esharq-rise" + (over ? " over" : "") + (off ? " off" : "")} style={stagger(index, 8)}>
+            <div className="esharq-pb-head">
+                <span className="esharq-pb-label">{label}</span>
+                <span className="esharq-pb-value">
+                    {value === null ? t("لم يُقَس", "Not measured") : `${value} ${unit}`}
+                    {!off && <span className="esharq-pb-of"> / {budget} {unit}</span>}
+                </span>
+            </div>
+
+            <div className="esharq-pb-track" aria-hidden="true">
+                <i style={{ transform: `scaleX(${ratio})` }} className={over ? "over" : ratio > 0.8 ? "near" : ""} />
+            </div>
+
+            <div className="esharq-pb-foot">
+                <span className="esharq-pb-hint">{hint}</span>
+                <label className="esharq-pb-input">
+                    {t("الحدّ", "Budget")}
+                    <input type="number" min={0} value={draft}
+                        aria-label={t(`حدّ ${label}`, `Budget for ${label}`)}
+                        onChange={e => {
+                            const text = e.currentTarget.value;
+                            setDraft(text);
+                            const n = parseInt(text, 10);
+                            if (Number.isFinite(n) && n >= 0) onBudget(n);
+                        }}
+                        onBlur={() => {
+                            const n = parseInt(draft, 10);
+                            // حقلٌ فارغ أو نصٌّ غير صالح: يعود المحفوظ كما هو.
+                            if (!Number.isFinite(n) || n < 0) setDraft(String(budget));
+                            else setDraft(String(n));
+                        }} />
+                    <span>{unit}</span>
+                </label>
+            </div>
+
+            {off && <div className="esharq-pb-note">{t("الفحص مُعطَّل — الصفر يعني «لا تُراقب هذا».", "Check disabled — zero means “don't watch this”.")}</div>}
+            {over && <div className="esharq-pb-note over">{t("تجاوز الحدّ.", "Over budget.")}</div>}
+        </div>
+    );
+}
+
+export function PerformanceBudgetsPage() {
+    useSettings(["esharq" as any]);
+
+    const [metrics, setMetrics] = useState<ProcMetric[] | null>(null);
+    const [heap, setHeap] = useState<number | null>(heapMB);
+    const [sampling, setSampling] = useState(true);
+    const [failed, setFailed] = useState(false);
+    const [budgets, setBudgets] = useState(readBudgets);
+    const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // 🔴 العيّنات تُوقَف عند الخروج من الصفحة — لا مؤقّت يبقى بعدها.
+    useEffect(() => {
+        const perf = (window as any).VencordNative?.perf;
+        if (perf?.appMetrics == null) { setFailed(true); return; }
+
+        let alive = true;
+        const tick = () => {
+            perf.appMetrics()
+                .then((m: ProcMetric[]) => { if (alive) setMetrics(m); })
+                .catch(() => { if (alive) setFailed(true); });
+            if (alive) setHeap(heapMB());
+        };
+        tick();
+        if (sampling) timer.current = setInterval(tick, 2000);
+
+        return () => {
+            alive = false;
+            if (timer.current !== null) clearInterval(timer.current);
+            timer.current = null;
+        };
+    }, [sampling]);
+
+    const startupCost = useMemo(
+        () => Math.round(getPluginStartups().reduce((n, r) => n + r.startMs + r.patchMs, 0)),
+        []
+    );
+
+    if (failed) {
+        return (
+            <NoticeStrip tone="danger">
+                {t("قياس العمليات متاح في تطبيق سطح المكتب فقط.", "Process metrics are available in the desktop app only.")}
+            </NoticeStrip>
+        );
+    }
+
+    const cpuTotal = metrics === null
+        ? null
+        : metrics.some(m => m.cpu !== null)
+            ? Math.round(metrics.reduce((n, m) => n + (m.cpu ?? 0), 0) * 10) / 10
+            : null;
+    const memTotal = metrics === null ? null : metrics.reduce((n, m) => n + m.memMB, 0);
+
+    const values: Record<BudgetKey, number | null> = {
+        cpuPercent: cpuTotal,
+        memoryMB: memTotal,
+        heapMB: heap,
+        startupMs: startupCost
+    };
+
+    const violations = (Object.keys(DEFAULT_BUDGETS) as BudgetKey[])
+        .filter(k => budgets[k] > 0 && values[k] !== null && values[k]! > budgets[k]);
+
+    const setBudget = (key: BudgetKey, value: number) => {
+        writeBudget(key, value);
+        setBudgets(b => ({ ...b, [key]: value }));
+    };
+
+    return (
+        <>
+            <NoticeStrip>
+                {t("حدٌّ لكل مقياس، ومخالفةٌ حين يُتجاوَز. كل الأرقام هنا لعمليات ديسكورد وحدها لا لجهازك. والقياس يعمل ما دامت هذه الصفحة مفتوحة ويتوقّف بإغلاقها.",
+                    "A budget for each measure, and a violation when it is exceeded. Every number here is for Discord's own processes only, not your machine. Measuring runs while this page is open and stops when you leave.")}
+            </NoticeStrip>
+
+            <Card index={0}
+                title={t("الميزانيات", "Budgets")}
+                subtitle={t("غيّر أي حدّ كما تشاء. والصفر يُعطّل فحصه.", "Change any budget as you like. Zero disables its check.")}
+                badge={violations.length === 0 ? t("ضمن الحدود", "Within budget") : t(`${violations.length} مخالفة`, `${violations.length} over`)}
+                badgeTone={violations.length === 0 ? "ok" : "danger"}>
+
+                <StatRow items={[
+                    { label: t("المعالج الآن", "CPU now"), value: cpuTotal === null ? "—" : `${cpuTotal}%` },
+                    { label: t("الذاكرة", "Memory"), value: memTotal === null ? "—" : `${memTotal} MB` },
+                    { label: t("الكومة", "Heap"), value: heap === null ? "—" : `${heap} MB` },
+                    { label: t("عمليات", "Processes"), value: metrics === null ? "—" : String(metrics.length) }
+                ]} />
+
+                <div className="esharq-pb-list">
+                    {(Object.keys(DEFAULT_BUDGETS) as BudgetKey[]).map((key, i) => (
+                        <BudgetRow key={key}
+                            label={t(BUDGET_META[key].ar, BUDGET_META[key].en)}
+                            hint={t(BUDGET_META[key].hintAr, BUDGET_META[key].hintEn)}
+                            unit={BUDGET_META[key].unit}
+                            value={values[key]}
+                            budget={budgets[key]}
+                            index={i}
+                            onBudget={v => setBudget(key, v)} />
+                    ))}
+                </div>
+
+                <button type="button" className="esharq-pb-toggle" onClick={() => setSampling(v => !v)}>
+                    {sampling ? t("أوقف القياس", "Stop measuring") : t("استأنف القياس", "Resume measuring")}
+                </button>
+            </Card>
+
+            <Card index={1}
+                title={t("عمليات ديسكورد", "Discord's processes")}
+                subtitle={t("ديسكورد ليس عمليةً واحدة — وهذه أرقام كلٍّ منها. ولا شيء هنا عن بقيّة برامج جهازك.",
+                    "Discord is not one process — these are the numbers for each. Nothing here concerns the rest of your machine.")}
+                badge={metrics === null ? t("جارٍ…", "Working…") : String(metrics.length)}
+                badgeTone="info">
+                {metrics === null ? (
+                    <div className="esharq-pb-empty">{t("أوّل عيّنة…", "First sample…")}</div>
+                ) : (
+                    <div className="esharq-pb-procs">
+                        {[...metrics].sort((a, b) => b.memMB - a.memMB).map((m, i) => (
+                            <div key={m.pid} className="esharq-pb-proc esharq-rise" style={stagger(i, 10)}>
+                                <span className="esharq-pb-ptype">{m.type}</span>
+                                <span className="esharq-pb-ppid">#{m.pid}</span>
+                                <span className="esharq-pb-pcpu">{m.cpu === null ? "—" : `${m.cpu}%`}</span>
+                                <span className="esharq-pb-pmem">{m.memMB} MB</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                <NoticeStrip>
+                    {t("أوّل عيّنة لا تعطي رقم معالج: النسبة تُشتقّ من فارق عيّنتين. انتظر ثانيتين ويظهر.",
+                        "The first sample gives no CPU figure: the percentage is derived from the difference between two samples. Wait two seconds and it appears.")}
+                </NoticeStrip>
+            </Card>
+
+            <Card index={2}
+                title={t("ما لا تقوله هذه الأرقام", "What these numbers do not say")}
+                subtitle={t("حدود القياس، مكتوبةً — رقمٌ يُقرأ على غير معناه أسوأ من لا رقم.",
+                    "The limits of the measurement, written down — a number read wrongly is worse than no number.")}>
+                <div style={{ fontSize: 13, lineHeight: 1.9 }}>
+                    <div>{t("① الأرقام لعمليات ديسكورد وحدها. لا يقرأ إشراق شيئاً عن بقيّة برامج جهازك — المصدر واجهة إلكترون التي لا تُعطي إلّا عمليات التطبيق نفسه.",
+                        "① The numbers cover Discord's own processes only. Esharq reads nothing about the rest of your machine — the source is Electron's API, which returns only the app's own processes.")}</div>
+                    <div>{t("② المعالج يُقاس لكل عملية لا لكل إضافة. كل الإضافات تعمل في عملية المُصيِّر نفسها وخيطها نفسه، فلا سبيل لنسب دورةٍ إلى إضافةٍ بعينها.",
+                        "② CPU is measured per process, not per plugin. All plugins run in the same renderer process and thread, so no cycle can be attributed to one plugin.")}</div>
+                    <div>{t("③ الرقم لحظيّ: يقفز بفتح قائمة أو تشغيل فيديو. القراءة الواحدة لا تصف جلسةً.",
+                        "③ The figure is instantaneous: it jumps when a menu opens or a video plays. One reading does not describe a session.")}</div>
+                    <div>{t("④ «تكلفة الإقلاع» وحدها منسوبة إلى الإضافات — وهي مقيسة لحظة الإقلاع لا الآن.",
+                        "④ Only “startup cost” is attributed to plugins — and it was measured at startup, not now.")}</div>
+                    <div>{t("⑤ ولا شيء يُقاس وهذه الصفحة مغلقة.", "⑤ And nothing is measured while this page is closed.")}</div>
+                </div>
+            </Card>
+        </>
+    );
+}

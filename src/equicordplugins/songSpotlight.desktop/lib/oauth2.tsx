@@ -27,7 +27,7 @@ export function presentOAuth2Modal() {
 
                 try {
                     const url = new URL(location);
-                    url.searchParams.append("whois", "equicord");
+                    url.searchParams.append("whois", "Equicord");
 
                     const res = await authFetch(url);
                     if (!res) throw "Response wasn't ok";

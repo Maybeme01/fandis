@@ -1,11 +1,11 @@
-# Equicord Types
+# FanCord Types
 
-Typings for Equicord's api, published to npm
+Typings for FanCord's api, published to npm
 
 ```sh
-npm i @equicord/types
+npm i @FanCord/types
 
-yarn add @equicord/types
+yarn add @FanCord/types
 
-pnpm add @equicord/types
+pnpm add @FanCord/types
 ```

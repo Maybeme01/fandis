@@ -73,7 +73,7 @@ window.VencordNative = {
     },
 
     updater: {
-        getRepo: async () => ({ ok: true, value: "https://github.com/Equicord/Equicord" }),
+        getRepo: async () => ({ ok: true, value: "https://github.com/FanCord/FanCord" }),
         getUpdates: async () => ({ ok: true, value: [] }),
         fetchUpdate: async () => ({ ok: true, value: false }),
         applyUpdate: async () => ({ ok: true, value: true }),
@@ -128,14 +128,14 @@ window.VencordNative = {
     settings: {
         get: () => {
             try {
-                const settings = JSON.parse(localStorage.getItem("EquicordSettings") || "{}");
+                const settings = JSON.parse(localStorage.getItem("FanCordSettings") || "{}");
                 return typeof settings === "string" ? JSON.parse(settings) : settings;
             } catch (e) {
                 console.error("Failed to parse settings from localStorage: ", e);
                 return {};
             }
         },
-        set: async (s: Settings) => localStorage.setItem("EquicordSettings", JSON.stringify(s)),
+        set: async (s: Settings) => localStorage.setItem("FanCordSettings", JSON.stringify(s)),
         getSettingsDir: async () => "LocalStorage",
         openFolder: async () => Promise.reject("settings:openFolder is not supported on web"),
     },

@@ -17,7 +17,15 @@ mkdirSync(SETTINGS_DIR, { recursive: true });
 
 function readSettings<T = object>(name: string, file: string): Partial<T> {
     try {
-        return JSON.parse(readFileSync(file, "utf-8"));
+        let data: any = JSON.parse(readFileSync(file, "utf-8"));
+        while (typeof data === "string") {
+            try {
+                data = JSON.parse(data);
+            } catch {
+                break;
+            }
+        }
+        return (data && typeof data === "object") ? data : {};
     } catch (err: any) {
         if (err?.code !== "ENOENT")
             console.error(`Failed to read ${name} settings`, err);
@@ -39,8 +47,16 @@ RendererSettings.addGlobalChangeListener(() => {
 ipcMain.handle(IpcEvents.GET_SETTINGS_DIR, () => SETTINGS_DIR);
 ipcMain.on(IpcEvents.GET_SETTINGS, e => e.returnValue = RendererSettings.plain);
 
-ipcMain.handle(IpcEvents.SET_SETTINGS, (_, data: Settings, pathToNotify?: string) => {
-    RendererSettings.setData(data, pathToNotify);
+ipcMain.handle(IpcEvents.SET_SETTINGS, (_, data: Settings | string, pathToNotify?: string) => {
+    let parsed: any = data;
+    while (typeof parsed === "string") {
+        try {
+            parsed = JSON.parse(parsed);
+        } catch {
+            break;
+        }
+    }
+    RendererSettings.setData((parsed && typeof parsed === "object") ? parsed as Settings : {} as Settings, pathToNotify);
 });
 
 export interface NativeSettings {

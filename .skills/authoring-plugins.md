@@ -1,11 +1,11 @@
 # Authoring Plugins
 
-Equicord plugins go in `src/equicordplugins`. `src/plugins` holds upstream Vencord plugins; set `isModified: true` on any you change. Use `src/userplugins` for local private plugins.
+FanCord plugins go in `src/FanCordplugins`. `src/plugins` holds upstream Vencord plugins; set `isModified: true` on any you change. Use `src/userplugins` for local private plugins.
 Folder names can be suffixed to limit scope, e.g. `myPlugin.desktop`. Scopes are `web, browser, discordDesktop, vesktop, equibop, desktop, dev`
 
-Use `Devs` or `EquicordDevs` from `@utils/constants` for `authors`, never inline objects.
+Use `Devs` or `FanCordDevs` from `@utils/constants` for `authors`, never inline objects.
 
-See `.rules` for the full Equicord rules.
+See `.rules` for the full FanCord rules.
 
 Look at existing plugins for examples. See the `PluginDef` interface for all available methods.
 

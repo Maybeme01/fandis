@@ -62,7 +62,7 @@ export default definePlugin({
 
     start() {
         SettingsPlugin.customEntries.push({
-            key: "equicord_login_with_qr",
+            key: "Equicord_login_with_qr",
             title: getIntlMessage("USER_SETTINGS_SCAN_QR_CODE"),
             Component: openQrModal,
             Icon: QrCodeIcon
@@ -71,7 +71,7 @@ export default definePlugin({
     },
 
     stop() {
-        removeFromArray(SettingsPlugin.customEntries, e => e.key === "equicord_login_with_qr");
+        removeFromArray(SettingsPlugin.customEntries, e => e.key === "Equicord_login_with_qr");
         unload();
     },
 });

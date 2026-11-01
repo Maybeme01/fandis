@@ -12,19 +12,19 @@ const SECTION = "Equicord";
 
 export const equicordCommands: PaletteCommand[] = [
     {
-        id: "equicord.settings",
+        id: "Equicord.settings",
         title: "Open Equicord Settings",
         section: SECTION,
-        keywords: ["equicord", "vencord", "settings"],
+        keywords: ["Equicord", "vencord", "settings"],
         icon: GearIcon,
         actions: [{
             id: "run",
             label: "Open Equicord Settings",
-            run: () => void openSettingsPage("equicord_main")
+            run: () => void openSettingsPage("Equicord_main")
         }]
     },
     {
-        id: "equicord.quickCss",
+        id: "Equicord.quickCss",
         title: "Open QuickCSS",
         section: SECTION,
         keywords: ["css", "quickcss", "editor", "style"],
@@ -36,7 +36,7 @@ export const equicordCommands: PaletteCommand[] = [
         }]
     },
     {
-        id: "equicord.updater",
+        id: "Equicord.updater",
         title: "Open Updater",
         section: SECTION,
         keywords: ["update", "updater", "version"],
@@ -45,11 +45,11 @@ export const equicordCommands: PaletteCommand[] = [
         actions: [{
             id: "run",
             label: "Open Updater",
-            run: () => void openSettingsPage("equicord_updater")
+            run: () => void openSettingsPage("Equicord_updater")
         }]
     },
     {
-        id: "equicord.changelog",
+        id: "Equicord.changelog",
         title: "Open Changelog",
         section: SECTION,
         keywords: ["changelog", "news", "whats new"],
@@ -57,11 +57,11 @@ export const equicordCommands: PaletteCommand[] = [
         actions: [{
             id: "run",
             label: "Open Changelog",
-            run: () => void openSettingsPage("equicord_changelog")
+            run: () => void openSettingsPage("Equicord_changelog")
         }]
     },
     {
-        id: "equicord.restart",
+        id: "Equicord.restart",
         title: "Restart Discord",
         section: SECTION,
         keywords: ["restart", "reload", "refresh"],

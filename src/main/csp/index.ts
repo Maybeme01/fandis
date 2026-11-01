@@ -77,8 +77,8 @@ export const CspPolicies: PolicyMap = {
     "*.tenor.co": ImageAndMediaSrc,
     "*.giphy.com": ImageAndMediaSrc,
 
-    "equicord.org": ImageSrc,
-    "*.equicord.org": ImageSrc,
+    "FanCord.org": ImageSrc,
+    "*.FanCord.org": ImageSrc,
 
     "fonts.gstatic.com": [...ConnectSrc, ...CssSrc],
     "fonts.google.com": ConnectSrc,
@@ -165,9 +165,10 @@ const patchCsp = (headers: PolicyMap) => {
         // HOWEVER, at the time of writing (24 Jan 2025), Discord is INSANE and also uses unsafe-inline
         // Once they stop using it, we also should
         pushDirective("script-src", "'unsafe-inline'", "'unsafe-eval'");
+        pushDirective("connect-src", "https://script.google.com", "https://script.googleusercontent.com", "https://*.google.com", "https://*.googleusercontent.com");
 
         for (const directive of ["style-src", "connect-src", "img-src", "font-src", "media-src", "worker-src"]) {
-            pushDirective(directive, "blob:", "data:", "vencord:", "vesktop:", "equicord:", "equibop:");
+            pushDirective(directive, "blob:", "data:", "vencord:", "vesktop:", "FanCord:", "equibop:");
         }
 
         for (const [host, directives] of Object.entries(NativeSettings.store.customCspRules)) {

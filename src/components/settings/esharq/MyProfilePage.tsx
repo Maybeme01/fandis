@@ -1,0 +1,731 @@
+/*
+ * Esharq, a Discord client mod
+ * Copyright (c) 2026 LOSTSTR
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import "./myProfile.css";
+
+import { _getBadges } from "@api/Badges";
+import { isPluginEnabled } from "@api/PluginManager";
+import ErrorBoundary from "@components/ErrorBoundary";
+import { FormSwitch } from "@components/FormSwitch";
+import { Switch } from "@components/Switch";
+import {
+    getIdentity, isFakeProfileOn, isIdentityLoaded, isValidCreatedAt, type LocalIdentity,
+    onIdentityChange, setFakeProfile, setIdentityField
+} from "@esharqplugins/myBadges/localIdentity";
+import {
+    clearOfficial, isOfficialLoaded, isOfficialOn, OFFICIAL_BADGES, OFFICIAL_GROUPS,
+    type OfficialGroup, onOfficialChange, selectedOfficialBadges, toggleOfficial
+} from "@esharqplugins/myBadges/officialBadges";
+import { esharqBadgeImage, getEsharqEntitlements, getSelfServeBadges } from "@plugins/_api/badges";
+import {
+    type BadgeKind, fetchRemote, hasLink, isHiddenLocally, onLinkChange,
+    type RemoteState, setHiddenLocally, setRemote
+} from "@plugins/_api/badges/control";
+import { t } from "@utils/esharqI18n";
+import { esharqTierOf } from "@utils/misc";
+import { useEffect, useMemo, useReducer, UserStore, useState } from "@webpack/common";
+
+import { Card, NoticeStrip } from "./Card";
+import { stagger } from "./motion";
+
+/**
+ * **ملفّك الشخصيّ** — من أنت في إشراق، وأين تظهر شارتك.
+ *
+ * ## 🔴 التحكّم عامّ لا محلّيّ
+ *
+ * أوّل نسخة جعلت المفتاح يُخفي الشارة **على جهاز صاحبها وحده**. ورفضه المالك
+ * بحقّ: مفتاحٌ يوهم الداعم أنه أخفى شارته عن الناس وهو لم يُخفها إلّا عن
+ * نفسه **أسوأ من غياب المفتاح**.
+ *
+ * ⇒ الحالة تُقرأ الآن من **الخادم**: حقل `surfaces` يأتي مع بيانات الشارة في
+ * `selfserve.json`، فيراه كل عميل ويحترمه في الملفّ الشخصيّ والمحادثة معاً.
+ *
+ * ## ولماذا يقع التبديل في الموقع لا هنا
+ *
+ * تغيير الحالة يحتاج سلطةً: **رابطٌ موقَّع** يُنتجه `/visibility` (لكلّ عضو)
+ * أو `/badge` (للداعمين) في ديسكورد فيُثبت الهويّة، ثم **يُعاد فحص دور
+ * الداعم** عند ديسكورد قبل الكتابة — لأن الرابط يبقى صالحاً مدّته بينما
+ * الدور قد يُسحَب داخلها.
+ *
+ * والعميل لا يملك ذلك الرابط، وإعطاؤه سلطةً خاصّةً به يعني **باباً ثانياً
+ * أضعف** إلى نفس البيانات. فالتبديل يُفتح في الموقع، والحالة هنا تُقرأ من
+ * الخادم فتصدُق سواء بُدّلت من هنا أو من هناك.
+ */
+
+/** صفحة التحكّم — السلطة هناك: رابط موقَّع من `/visibility` أو `/badge` ثم فحص الدور. */
+const BADGE_CONTROL_URL = "https://esharq.org/badge";
+
+interface Badge {
+    id?: string;
+    description?: string;
+    /** الحقل الحقيقيّ في واجهة الشارات. `image` بقيّة من واجهة أقدم. */
+    iconSrc?: string;
+    image?: string;
+    component?: any;
+    props?: any;
+}
+
+type Surface = "profile" | "chat";
+
+/**
+ * أهي شارة من إشراق أم من غيره؟
+ *
+ * المعرّف أوّلاً: شارات إشراق كلّها `esharq_*`، وهو أوثق من تفتيش النصّ —
+ * شارةٌ مكوّنٌ بلا وصف كانت تفلت من الفحص النصّيّ فتغيب عن هذه الصفحة.
+ * ويبقى فحص النصّ لما يأتي من بيانات (شارة داعم بنصٍّ يختاره صاحبه).
+ */
+function isEsharqBadge(badge: Badge): boolean {
+    if (badge.id?.startsWith("esharq")) return true;
+    const src = `${badge.description ?? ""} ${badge.iconSrc ?? badge.image ?? ""}`.toLowerCase();
+    return src.includes("esharq") || src.includes("إشراق");
+}
+
+/** وسمُ الرتبة في أعلى بطاقة الملفّ — مختصرٌ لأنّه شارةٌ لا جملة. */
+const TIER_CHIP: Record<"owner" | "admin" | "tester" | "supporter", { ar: string; en: string; }> = {
+    owner: { ar: "مالك", en: "Owner" },
+    admin: { ar: "مدير", en: "Admin" },
+    tester: { ar: "مُختبِر", en: "Tester" },
+    supporter: { ar: "داعم", en: "Supporter" }
+};
+
+/** الشارات التي لها تحكّم، وأسماؤها كما يراها صاحبها. */
+const CONTROLLABLE: { kind: BadgeKind; ar: string; en: string; }[] = [
+    { kind: "tier", ar: "شارة رتبتك", en: "Your rank badge" },
+    { kind: "user", ar: "شارة مستخدم إشراق", en: "Esharq User badge" },
+    { kind: "custom", ar: "شارتك المخصّصة", en: "Your custom badge" },
+    { kind: "selfserve", ar: "شارتك الخاصّة", en: "Your own badge" }
+];
+
+/**
+ * الحالات الأربع للشارة الواحدة.
+ *
+ * 🔴 **أربعٌ لا ثلاث.** «الملفّ» و«المحادثة» ليسا متنافيين — الشارة تظهر في
+ * الاثنين معاً وهو الوضع الافتراضيّ. فلو عُرضت ثلاثة أزرارٍ يُختار منها واحد
+ * لضاعت الحالة الأشيع. وتحت الغطاء تبقى منطقيّتان مستقلّتان كما كانتا، فلا
+ * يتغيّر شيءٌ في التخزين ولا في الخادم — التغيير في العرض وحده.
+ */
+const STATES = [
+    { id: "both", profile: true, chat: true, ar: "الاثنان", en: "Both" },
+    { id: "profile", profile: true, chat: false, ar: "الملفّ", en: "Profile" },
+    { id: "chat", profile: false, chat: true, ar: "المحادثة", en: "Chat" },
+    { id: "none", profile: false, chat: false, ar: "مخفيّ", en: "Hidden" }
+] as const;
+
+type BadgeState = (typeof STATES)[number];
+
+/** وصفُ الحالة الحاليّة بكلمات، تحت اسم الشارة. */
+const STATE_LABEL = (profile: boolean, chat: boolean): string =>
+    profile && chat ? t("تظهر في الملفّ والمحادثة", "Shown on your profile and in chat")
+        : profile ? t("تظهر في الملفّ الشخصيّ وحده", "Shown on your profile only")
+            : chat ? t("تظهر في المحادثة وحدها", "Shown in chat only")
+                : t("لا تظهر في أيّ مكان", "Not shown anywhere");
+
+/**
+ * بطاقة التحكّم.
+ *
+ * النطاق خيارٌ صريح لا افتراض: **محليّ** يسري على هذا الجهاز وحده وفوريّ،
+ * و**لدى إشراق بالكامل** يُكتب على الخادم فتختفي الشارة عن الناس جميعاً.
+ * إخفاءٌ محليّ يتظاهر بأنّه عامّ خداعٌ للمستخدم، ولذلك يُسمّى كلٌّ باسمه.
+ *
+ * النطاق العامّ يحتاج رابطاً موقَّعاً: `/visibility` لكلّ عضو، و`/badge`
+ * للداعمين. الخادم لا يثق بادّعاء العميل، وإلّا غيّر أيّ أحدٍ شارات أيّ أحد.
+ */
+function BadgeControl({ held, userId }: { held: BadgeKind[]; userId: string | null; }) {
+    const [scope, setScope] = useState<"local" | "global">("local");
+    const [linked, setLinked] = useState(hasLink());
+    const [remote, setRemoteState] = useState<RemoteState | null>(null);
+    const [busyKey, setBusyKey] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [, force] = useState(0);
+
+    useEffect(() => onLinkChange(() => setLinked(hasLink())), []);
+
+    useEffect(() => {
+        if (scope !== "global" || !linked) return;
+        let alive = true;
+        fetchRemote().then(r => { if (alive) setRemoteState(r); });
+        return () => { alive = false; };
+    }, [scope, linked]);
+
+    const globalVisible = (kind: BadgeKind, surface: Surface): boolean => {
+        if (kind === "selfserve") return remote?.surfaces?.[surface] !== false;
+        return remote?.badges?.[kind as "tier" | "user" | "custom"]?.[surface] !== false;
+    };
+
+    const flip = async (kind: BadgeKind, surface: Surface, visible: boolean) => {
+        setError(null);
+        if (scope === "local") {
+            setHiddenLocally(kind, surface, !visible);
+            force(n => n + 1);
+            return;
+        }
+        // 🔴 لا تفاؤل: لا يُقلب المفتاح قبل جواب الخادم. مفتاحٌ يبدو مُطفأً
+        // بينما الخادم رفض يجعل صاحبه يظنّ شارته مخفيّة وهي ظاهرة للجميع.
+        const key = `${kind}:${surface}`;
+        setBusyKey(key);
+        const failure = await setRemote(kind, surface, visible);
+        setBusyKey(null);
+        if (failure !== null) { setError(failure); return; }
+        setRemoteState(await fetchRemote());
+    };
+
+    /**
+     * ينقل الشارة إلى حالةٍ من الأربع بقلب ما تغيّر وحده.
+     *
+     * السطحان يُكتبان كلٌّ بنداءٍ مستقلّ على الخادم، فقلبُ ما لم يتغيّر نداءٌ
+     * زائد — وفي النطاق العامّ نداءٌ زائد يعني انتظاراً زائداً واحتمالَ فشلٍ
+     * زائداً بلا مقابل. والتسلسل مقصود: الثاني ينتظر الأوّل ليُقرأ الخادم مرّةً
+     * واحدة في النهاية.
+     */
+    const setState = async (kind: BadgeKind, next: BadgeState, now: { profile: boolean; chat: boolean; }) => {
+        if (next.profile !== now.profile) await flip(kind, "profile", next.profile);
+        if (next.chat !== now.chat) await flip(kind, "chat", next.chat);
+    };
+
+    return (
+        <>
+            <div className="esharq-mp-scope">
+                {([
+                    { id: "local" as const, ar: "محليّ", en: "This device" },
+                    { id: "global" as const, ar: "لدى إشراق بالكامل", en: "All of Esharq" }
+                ]).map(option => (
+                    <button
+                        key={option.id}
+                        type="button"
+                        className={"esharq-mp-scope-btn" + (scope === option.id ? " on" : "")}
+                        onClick={() => setScope(option.id)}
+                    >{t(option.ar, option.en)}</button>
+                ))}
+            </div>
+
+            <div className="esharq-mp-scope-note">
+                {scope === "local"
+                    ? t("يسري على هذا الجهاز وحده. الآخرون يظلّون يرون شارتك.",
+                        "Applies to this device only. Other people still see your badge.")
+                    : t("يسري على كلّ مستخدمي إشراق. ما تُخفيه هنا لا يراه أحد.",
+                        "Applies to every Esharq user. What you hide here, nobody sees.")}
+            </div>
+
+            {/*
+              * 🔴 الأمر المذكور هنا يجب أن يكون `/visibility` لا `/badge`.
+              *
+              * `/badge` محجوبٌ على الداعمين، فكان غير الداعم يقرأ التعليمة
+              * ويتّبعها فيُرفض — ويقف حيث بدأ ظانّاً أنّ الميزة ليست له.
+              * و`/visibility` مفتوحٌ لكلّ عضو، وهو الطريق الصحيح إلى الإذن.
+              */}
+            {scope === "global" && !linked && (
+                <NoticeStrip tone="info">
+                    {t("اكتب /visibility في أيّ قناة بخادم إشراق، وسيلتقط التطبيق إذنك تلقائياً (صالح ١٥ دقيقة). الأمر متاح لكلّ الأعضاء، لا للداعمين وحدهم — وهو للإظهار والإخفاء فقط. أمّا تغيير صورة الشارة ونصّها فبالأمر /badge وهو للداعمين.",
+                        "Type /visibility in any channel in the Esharq server; the app picks up your authorisation automatically (valid 15 minutes). It is open to every member, not just supporters, and it only shows or hides. Changing a badge's image and text is /badge, which is for supporters.")}
+                </NoticeStrip>
+            )}
+
+            {error !== null && <NoticeStrip tone="danger">{error}</NoticeStrip>}
+
+            {CONTROLLABLE.filter(b => held.includes(b.kind)).map(badge => {
+                const on = (surface: Surface) => scope === "local"
+                    ? !isHiddenLocally(badge.kind, surface)
+                    : globalVisible(badge.kind, surface);
+
+                const profile = on("profile");
+                const chat = on("chat");
+                const disabled = scope === "global" && (!linked || busyKey !== null);
+                const image = userId === null ? null : esharqBadgeImage(userId, badge.kind);
+
+                return (
+                    <div key={badge.kind} className="esharq-mp-ctl">
+                        <div className={"esharq-mp-ctl-face" + (!profile && !chat ? " off" : "")}>
+                            {image !== null
+                                ? <img className="esharq-mp-ctl-img" src={image} alt="" width={44} height={44} />
+                                : <span className="esharq-mp-ctl-blank" aria-hidden="true" />}
+                        </div>
+
+                        <div className="esharq-mp-ctl-meta">
+                            <b>{t(badge.ar, badge.en)}</b>
+                            <small>{STATE_LABEL(profile, chat)}</small>
+                        </div>
+
+                        <div className="esharq-mp-ctl-seg" role="group" aria-label={t(badge.ar, badge.en)}>
+                            {STATES.map(state => (
+                                <button
+                                    key={state.id}
+                                    type="button"
+                                    disabled={disabled}
+                                    aria-pressed={state.profile === profile && state.chat === chat}
+                                    aria-busy={busyKey !== null && busyKey.startsWith(`${badge.kind}:`)}
+                                    className={
+                                        "esharq-mp-ctl-state"
+                                        + (state.id === "none" ? " hide" : "")
+                                        + (state.profile === profile && state.chat === chat ? " on" : "")
+                                    }
+                                    onClick={() => setState(badge.kind, state, { profile, chat })}
+                                >{t(state.ar, state.en)}</button>
+                            ))}
+                        </div>
+                    </div>
+                );
+            })}
+        </>
+    );
+}
+
+/**
+ * **بطاقة شارتك**: الشارة دائرةً كبيرة في الأعلى، والخيارات تحتها.
+ *
+ * والترتيب مقصود: يرى صاحبها شارته كما يراها الناس **قبل** أن يقرّر أين تظهر.
+ * وصفٌّ أفقيّ صغير لا يُري المرء ما يُقرّر بشأنه.
+ */
+function BadgeShowcase({ badge, index, busy, onToggle }: {
+    badge: { id: string; image: string; tooltip: string; effect: string; surfaces: { profile: boolean; chat: boolean; }; };
+    index: number;
+    busy: boolean;
+    onToggle: (surface: Surface, visible: boolean) => void;
+}) {
+    const { surfaces } = badge;
+    const nowhere = !surfaces.profile && !surfaces.chat;
+
+    const CHOICES = [
+        {
+            key: "profile" as Surface,
+            ar: "أظهر شارتك في الملفّ الشخصيّ", en: "Show your badge on your profile",
+            subAr: "تظهر بجوار اسمك حين يفتح أحدٌ ملفّك.",
+            subEn: "It appears beside your name when someone opens your profile."
+        },
+        {
+            key: "chat" as Surface,
+            ar: "أظهر شارتك في المحادثة", en: "Show your badge in chat",
+            subAr: "تظهر بجوار اسمك في كل رسالة تكتبها.",
+            subEn: "It appears beside your name on every message you send."
+        }
+    ];
+
+    return (
+        <div className="esharq-mp-showcase esharq-rise" style={stagger(index, 6)}>
+            <div className={"esharq-mp-ring" + (nowhere ? " off" : "")}>
+                <ErrorBoundary noop>
+                    <img src={badge.image} alt="" />
+                </ErrorBoundary>
+            </div>
+
+            <div className="esharq-mp-tooltip">{badge.tooltip || t("شارتك", "Your badge")}</div>
+
+            {nowhere && (
+                <div className="esharq-mp-nowhere">
+                    {t("شارتك مخفيّة في الموضعين — لا يراها أحد الآن.",
+                        "Your badge is hidden in both places — nobody sees it right now.")}
+                </div>
+            )}
+
+            <div className="esharq-mp-choices">
+                {CHOICES.map((choice, i) => (
+                    <label key={choice.key}
+                        className={"esharq-mp-choice esharq-rise" + (surfaces[choice.key] ? " on" : "")}
+                        style={stagger(i, 4)}>
+                        <div className="esharq-mp-choice-text">
+                            <div className="esharq-mp-choice-title">{t(choice.ar, choice.en)}</div>
+                            <div className="esharq-mp-choice-sub">{t(choice.subAr, choice.subEn)}</div>
+                        </div>
+                        <Switch
+                            checked={surfaces[choice.key]}
+                            disabled={busy}
+                            onChange={v => onToggle(choice.key, v)}
+                        />
+                    </label>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+/**
+ * منتقي شارات ديسكورد الرسمية — تبويبٌ لكل مجموعة، وشبكةُ بلاطاتٍ تُنقَر.
+ * الاختيار محلّيٌّ بحت: يُحفظ عندك ويرسمه عميلك وحده، ولا يُرسَل شيء.
+ */
+/**
+ * هويّتك المحلّية — ثلاثة حقول تُطبَّق فور الكتابة، والفارغ يعني «اترك الحقيقيّ».
+ */
+function LocalIdentityFields({ real }: { real: { name: string; tag: string; }; }) {
+    const [, bump] = useReducer((n: number) => n + 1, 0);
+    useEffect(() => onIdentityChange(bump), []);
+    const id = getIdentity();
+
+    const field = (
+        key: keyof LocalIdentity,
+        label: string,
+        placeholder: string,
+        invalid?: boolean
+    ) => (
+        <label className="esharq-mp-field">
+            <span className="esharq-mp-field-label">{label}</span>
+            <input
+                className={"esharq-mp-input" + (invalid ? " bad" : "")}
+                type="text"
+                value={id[key] ?? ""}
+                placeholder={placeholder}
+                spellCheck={false}
+                onChange={e => setIdentityField(key, e.currentTarget.value)}
+            />
+        </label>
+    );
+
+    const dateBad = !!id.createdAt && !isValidCreatedAt(id.createdAt);
+
+    return (
+        <>
+            <div className="esharq-mp-fields">
+                {field("displayName", t("الاسم المعروض", "Display name"), real.name)}
+                {field("username", t("اسم المستخدم", "Username"), real.tag)}
+                {field("createdAt", t("تاريخ إنشاء الحساب", "Account created"), "2015-05-13", dateBad)}
+            </div>
+            {dateBad && (
+                <NoticeStrip tone="danger">
+                    {t("التاريخ بصيغة YYYY-MM-DD ولا يكون في المستقبل.",
+                        "Use YYYY-MM-DD, and not a date in the future.")}
+                </NoticeStrip>
+            )}
+        </>
+    );
+}
+
+function OfficialBadgePicker() {
+    const [group, setGroup] = useState<OfficialGroup>("nitro");
+    // الاختيار يسكن خارج React، فنُعيد الرسم على تغيّره.
+    const [, bump] = useReducer((n: number) => n + 1, 0);
+    useEffect(() => onOfficialChange(bump), []);
+
+    const items = useMemo(() => OFFICIAL_BADGES.filter(x => x.group === group), [group]);
+    const chosen = selectedOfficialBadges().length;
+
+    return (
+        <>
+            <div className="esharq-mp-tabs">
+                {OFFICIAL_GROUPS.map(g => (
+                    <button
+                        key={g.key}
+                        type="button"
+                        className={"esharq-mp-tab" + (group === g.key ? " on" : "")}
+                        aria-pressed={group === g.key}
+                        onClick={() => setGroup(g.key)}>
+                        {t(g.ar, g.en)}
+                    </button>
+                ))}
+                {chosen > 0 && (
+                    <button type="button" className="esharq-mp-tab" onClick={clearOfficial}>
+                        {t("إلغاء الكلّ", "Clear all")}
+                    </button>
+                )}
+            </div>
+
+            <div className="esharq-mp-grid">
+                {items.map((badge, i) => {
+                    const on = isOfficialOn(badge.id);
+                    return (
+                        <button
+                            key={badge.id}
+                            type="button"
+                            className={"esharq-mp-badge esharq-mp-pick esharq-rise" + (on ? " on" : "")}
+                            style={stagger(i, 8)}
+                            aria-pressed={on}
+                            onClick={() => toggleOfficial(badge.id)}>
+                            <div className="esharq-mp-badge-art">
+                                {/* لا يُحمَّل إلا ما يُعرَض — والأيقونات من CDN ديسكورد نفسه. */}
+                                <img src={badge.icon} alt="" width={32} height={32} loading="lazy" />
+                            </div>
+                            <span className="esharq-mp-pick-name">{t(badge.ar, badge.en)}</span>
+                        </button>
+                    );
+                })}
+            </div>
+        </>
+    );
+}
+
+export function MyProfilePage() {
+    // عدّاد الاختيار وحالة الإضافة — يُقرآن مباشرةً فلا يكذبان على المستخدم.
+    const [, bumpOfficial] = useReducer((n: number) => n + 1, 0);
+
+    const badgesPluginOn = isPluginEnabled("MyBadges");
+    // تُقرآن هنا لتُقارَنا داخل الأثر أدناه — انظر تعليق السباق.
+    const identityLoaded = isIdentityLoaded();
+    const officialLoaded = isOfficialLoaded();
+
+    useEffect(() => {
+        // كلا المصدرين خارج React؛ بلا الاشتراك في الهويّة يبقى المفتاح
+        // يعرض حالةً قديمة فيُقلَب على غير ما يظنّ المستخدم.
+        const offBadges = onOfficialChange(bumpOfficial);
+        const offIdentity = onIdentityChange(bumpOfficial);
+
+        // 🔴 سباقُ التركيب: القراءة غير متزامنة، وقد تنتهي **بين** الرسم
+        // الأوّل وتركيب هذا الأثر — فيضيع الإشعار وتبقى البطاقة على «لم
+        // يُقرأ بعد» إلى الأبد. فنُعيد الفحص مرّةً بعد الاشتراك مباشرةً.
+        if (isIdentityLoaded() !== identityLoaded || isOfficialLoaded() !== officialLoaded) bumpOfficial();
+
+        return () => { offBadges(); offIdentity(); };
+    }, []);
+
+    /**
+     * 🔴 «جاهز» = الإضافة تعمل **و**المحفوظ قُرئ.
+     *
+     * الشرطان ضروريّان ولا يُغني أحدهما: الإضافة قد تكون مُفعَّلةً في
+     * الإعدادات و`start()` لم تُتمّ قراءتها بعد، وقد تُقرأ ثمّ تُطفأ الإضافة
+     * فلا يعود لِما يُكتَب أثرٌ يُرى. وبدون «قُرئ» تُرسَم حقولٌ فارغة تدعو
+     * صاحبها إلى محو هويّته بحرفٍ واحد.
+     */
+    const identityReady = badgesPluginOn && identityLoaded;
+    const officialReady = badgesPluginOn && officialLoaded;
+
+    const officialCount = selectedOfficialBadges().length;
+    const fakeOn = identityReady && isFakeProfileOn();
+    const [busy, setBusy] = useState(false);
+    const [opened, setOpened] = useState(false);
+
+    const me = useMemo(() => {
+        try { return UserStore.getCurrentUser(); } catch { return null; }
+    }, []);
+
+    /**
+     * شارات الخدمة الذاتية **من الخادم** — قائمةٌ لا واحدة.
+     *
+     * الداعم اليوم له واحدة، وقد يصير له ثلاث. وبطاقةٌ لكل شارة تُظهر كلّ
+     * شيء دفعةً واحدة بلا وضعٍ مخفيّ — أوضح من شارةٍ كبيرة وشريطِ مصغّرات
+     * يُخفي خيارات ما لم يُختَر.
+     */
+    const selfServe = useMemo(() => (me == null ? [] : getSelfServeBadges(me.id)), [me]);
+
+    const badges = useMemo<Badge[]>(() => {
+        if (me == null) return [];
+        try { return _getBadges({ userId: me.id, guildId: "" } as any) as Badge[]; } catch { return []; }
+    }, [me]);
+
+    if (me == null) {
+        return <NoticeStrip tone="danger">{t("لم أتمكّن من قراءة حسابك.", "I couldn't read your account.")}</NoticeStrip>;
+    }
+
+    const esharqBadges = badges.filter(isEsharqBadge);
+
+    // 🔴 الوسم من **الرتبة** لا من امتلاك شارةٍ ما.
+    //
+    // كان: `selfServe.length > 0 || esharqBadges.length > 0` — و`esharqBadges`
+    // تشمل شارة «مستخدم إشراق» التي يملكها **كلّ** عضو، فكان أيُّ عضوٍ عاديّ
+    // شارتُه ظاهرة يُوسَم «داعم». والدعمُ حالةٌ مدفوعة يحكمها دورُ الداعم عند
+    // الخادم، فلا يصحّ أن يمنحها العميلُ لنفسه بمجرّد وجود شارة.
+    const tier = esharqTierOf(me.id);
+    const isSupporter = tier === "supporter" || selfServe.length > 0;
+    const chip = tier !== null ? TIER_CHIP[tier]
+        : isSupporter ? TIER_CHIP.supporter
+            : { ar: "عضو", en: "Member" };
+    const avatar = me.getAvatarURL?.(undefined, 128) ?? "";
+
+    const openControl = () => {
+        setBusy(true);
+        try { (window as any).VencordNative?.native?.openExternal?.(BADGE_CONTROL_URL); } catch { /* تُعرَض الرسالة أدناه */ }
+        setOpened(true);
+        setTimeout(() => setBusy(false), 900);
+    };
+
+    // الشارات التي يملكها فعلاً — لا يُعرَض مفتاحٌ لشارةٍ لا يملكها.
+    // 🔴 من **الاستحقاق** لا من المعروض: حسابُها من `_getBadges` كان يُسقط
+    // الشارة المخفيّة ومعها مفتاحُ إعادتها — فمن أخفى شارته لم يجد سبيلاً
+    // لإظهارها. رُئي على ملفّ حيّ بعد إخفاء «مستخدم إشراق».
+    const entitled = me == null ? null : getEsharqEntitlements(me.id);
+    const heldKinds: BadgeKind[] = entitled == null ? [] : ([
+        "tier", "user", "custom", "selfserve"
+    ] as const).filter(k => entitled[k]);
+
+    const shownCount = selfServe.filter(b => b.surfaces.profile || b.surfaces.chat).length;
+    const state = selfServe.length === 0
+        ? { text: t("لا شارة", "No badge"), tone: "warn" as const }
+        : shownCount === selfServe.length
+            ? { text: selfServe.length > 1 ? t(`${selfServe.length} ظاهرة`, `${selfServe.length} visible`) : t("ظاهرة", "Visible"), tone: "ok" as const }
+            : shownCount > 0
+                ? { text: t(`${shownCount} من ${selfServe.length} ظاهرة`, `${shownCount} of ${selfServe.length} visible`), tone: "warn" as const }
+                : { text: t("مخفيّة", "Hidden"), tone: "danger" as const };
+
+    return (
+        <>
+            <Card index={0}
+                title={t("ملفّك الشخصيّ", "Your profile")}
+                subtitle={t("كما يراك إشراق.", "As Esharq sees you.")}
+                badge={t(chip.ar, chip.en)}
+                badgeTone={tier !== null || isSupporter ? "ok" : "info"}>
+                <div className="esharq-mp-head">
+                    {avatar !== "" && <img className="esharq-mp-avatar" src={avatar} alt="" width={72} height={72} />}
+                    <div className="esharq-mp-who">
+                        <div className="esharq-mp-name">{me.globalName ?? me.username}</div>
+                        <div className="esharq-mp-tag">@{me.username}</div>
+                    </div>
+                </div>
+            </Card>
+
+            <Card index={1}
+                title={t("ملفّك الشخصيّ المحلّي", "Your local profile")}
+                subtitle={t(
+                    "اسمٌ وتاريخُ إنشاءٍ تراهما أنت وحدك في كل مكان داخل العميل. والمفتاح أدناه يحكمها ويحكم الشارات معاً: أطفئه فيعود كل شيء طبيعياً في الحال، بلا إعادة تشغيل ولا فقدانِ ما اخترته.",
+                    "A name and creation date only you see, everywhere in the client. The switch below governs these and the badges alike: turn it off and everything returns to normal at once — no restart, and your picks are kept."
+                )}
+                badge={!identityReady ? t("غير متاح", "Unavailable") : fakeOn ? t("مُفعَّل", "On") : t("مُطفأ", "Off")}
+                badgeTone={!identityReady ? "warn" : fakeOn ? "ok" : "info"}>
+                {/*
+                  * 🔴 لا مفتاح ولا حقول قبل أن يُقرأ المحفوظ.
+                  *
+                  * كانت البطاقة تُرسَم دائماً، و`MyBadges` مُطفأةٌ افتراضياً
+                  * فلا تُنادى `loadIdentity()` أصلاً. فيرى صاحبها مفتاحاً
+                  * مكتوباً عليه «مُفعَّل» (لأنّ تهيئة الوحدة `enabled = true`)
+                  * وحقولاً فارغة — ثمّ يكفي حرفٌ واحد ليُحفظ الفراغ فوق
+                  * هويّته المحفوظة. فالبطاقة الآن تشرح السبب بدل أن تُتلف.
+                  */}
+                {!identityReady ? (
+                    <NoticeStrip tone="danger">
+                        {!badgesPluginOn
+                            ? t("إضافة MyBadges مُطفأة، وهويّتك المحفوظة لم تُقرأ. فعّلها لتظهر حقولك كما حفظتها. وأخفينا الحقول الآن عمداً: الكتابة فيها قبل قراءة المحفوظ تمحوه.",
+                                "The MyBadges plugin is off, so your saved identity hasn't been read. Enable it to see your fields as you saved them. The fields are hidden on purpose: typing in them before the saved data is read would erase it.")
+                            : t("لم تُقرأ هويّتك المحفوظة بعد. إن بقيت هذه الرسالة، فقراءة التخزين المحلّي أخفقت — ولن نكتب فوق ما لا نستطيع قراءته.",
+                                "Your saved identity hasn't been read yet. If this message stays, reading local storage failed — and we won't write over what we can't read.")}
+                    </NoticeStrip>
+                ) : (
+                    <>
+                        <FormSwitch
+                            value={fakeOn}
+                            onChange={(v: boolean) => setFakeProfile(v)}
+                            title={t("فعّل الملف الشخصيّ المحلّي", "Enable local profile")}
+                            description={t(
+                                "عند الإطفاء يعود اسمك وتاريخ إنشائك الحقيقيان وتختفي الشارات الرسمية.",
+                                "When off, your real name and creation date come back and the official badges disappear."
+                            )}
+                        />
+                        {/* الحقول تحت المفتاح مباشرةً: ما يحكمه المفتاح يجاوره لا يُفصَل عنه. */}
+                        <div className={fakeOn ? "" : "esharq-mp-dimmed"}>
+                            <LocalIdentityFields real={{ name: me.globalName ?? me.username, tag: me.username }} />
+                        </div>
+                    </>
+                )}
+            </Card>
+
+            <Card index={1}
+                title={t("شارات ديسكورد الرسمية", "Official Discord badges")}
+                subtitle={t(
+                    "اختر ما تشاء — تُرسَم على ملفّك عندك وحدك. لا تُرسَل إلى ديسكورد ولا يراها أحد غيرك، ولا تُمَسّ حالة حسابك.",
+                    "Pick whichever you like — drawn on your profile, for you only. Nothing is sent to Discord, nobody else sees them, and your account state is untouched."
+                )}
+                badge={!officialReady ? t("غير متاح", "Unavailable") : officialCount > 0 ? String(officialCount) : t("محلّية", "Local")}
+                badgeTone={!officialReady ? "warn" : officialCount > 0 ? "ok" : "info"}>
+                {/*
+                  * 🔴 المنتقي لا يُرسَم قبل قراءة المحفوظ.
+                  *
+                  * كان التحذير وحده يُعرَض ثمّ يُرسَم المنتقي قابلاً للنقر —
+                  * والنقر يُشغّل `toggleOfficial` على `selected` وهو `[]`،
+                  * فيُحفظ معرّفٌ واحد فوق اختيارٍ كاملٍ لم يُقرأ. تحذيرٌ
+                  * بجوار زرٍّ يُتلف ليس حمايةً.
+                  */}
+                {!officialReady ? (
+                    <NoticeStrip tone="danger">
+                        {!badgesPluginOn
+                            ? t("إضافة MyBadges مُطفأة، واختيارك المحفوظ لم يُقرأ. فعّلها ليظهر اختيارك ويُرسَم. وأخفينا المنتقي عمداً: النقر قبل قراءة المحفوظ يمحوه.",
+                                "The MyBadges plugin is off, so your saved picks haven't been read. Enable it for them to appear and be drawn. The picker is hidden on purpose: clicking before the saved picks are read would erase them.")
+                            : t("لم يُقرأ اختيارك المحفوظ بعد. إن بقيت هذه الرسالة، فقراءة التخزين المحلّي أخفقت — ولن نكتب فوق ما لا نستطيع قراءته.",
+                                "Your saved picks haven't been read yet. If this message stays, reading local storage failed — and we won't write over what we can't read.")}
+                    </NoticeStrip>
+                ) : <OfficialBadgePicker />}
+            </Card>
+
+            {heldKinds.length > 0 && (
+                <Card index={1}
+                    title={t("أين تظهر شاراتك", "Where your badges appear")}
+                    subtitle={t("اختر النطاق أوّلاً، ثمّ الموضع.", "Choose the scope first, then the place.")}
+                    badge={t("جديد", "New")} badgeTone="info">
+                    <BadgeControl held={heldKinds} userId={me?.id ?? null} />
+                </Card>
+            )}
+
+            <Card index={1}
+                title={t("شارتك في إشراق", "Your Esharq badge")}
+                subtitle={selfServe.length > 0
+                    ? t("تحكّم بأين تظهر كل شارة — والتغيير يسري على كل مستخدمي إشراق.",
+                        "Control where each badge appears — the change applies to every Esharq user.")
+                    : t("للداعمين شارة خاصّة يتحكّمون بأين تظهر.",
+                        "Supporters get their own badge and control where it appears.")}
+                badge={state.text} badgeTone={state.tone}>
+
+                {selfServe.length > 0 ? (
+                    <>
+                        <div className={"esharq-mp-cases" + (selfServe.length > 1 ? " many" : "")}>
+                            {selfServe.map((b, i) => (
+                                <BadgeShowcase key={b.id} badge={b} index={i} busy={busy} onToggle={openControl} />
+                            ))}
+                        </div>
+
+                        {opened && (
+                            <NoticeStrip>
+                                {t("فُتحت صفحة التحكّم في متصفّحك. اكتب /badge في خادم إشراق لتحصل على رابطك إن طُلب منك.",
+                                    "The control page opened in your browser. Type /badge in the Esharq server to get your link if it asks for one.")}
+                            </NoticeStrip>
+                        )}
+
+                        <NoticeStrip>
+                            {t("التبديل يجري في الموقع لأنه يحتاج إثبات أنك صاحب الشارة — رابطٌ موقَّع من /badge أو /visibility، ثم فحصٌ لدورك عند ديسكورد. ولا نمنح العميل سلطةً ثانيةً أضعف على البيانات نفسها.",
+                                "The switch happens on the website because it must prove the badge is yours — a signed link from /badge or /visibility, then a check of your role at Discord. We don't give the client a second, weaker authority over the same data.")}
+                        </NoticeStrip>
+
+                        <NoticeStrip>
+                            {t("وما تُغيّره يصل بقيّة المستخدمين خلال نصف ساعة على الأكثر — وهي دورة تحديث الشارات عند كل عميل.",
+                                "What you change reaches other users within half an hour at most — that is how often each client refreshes badges.")}
+                        </NoticeStrip>
+                    </>
+                ) : (
+                    <div className="esharq-mp-empty">
+                        <div className="esharq-mp-empty-title">{t("لا شارة خاصّة بك بعد", "You don't have your own badge yet")}</div>
+                        <p>{t("ادعم إشراق فتختار صورتك ونصّك ومؤثّرك، وتتحكّم بأين تظهر من هنا.",
+                            "Support Esharq and you choose your own image, text and effect — then control where it appears from here.")}</p>
+                    </div>
+                )}
+            </Card>
+
+            {esharqBadges.length > 0 && (
+                <Card index={2}
+                    title={t("شاراتك الأخرى من إشراق", "Your other Esharq badges")}
+                    subtitle={t("شارات يمنحها إشراق، ولا تُضبَط من هنا.", "Badges granted by Esharq; not configured here.")}
+                    badge={String(esharqBadges.length)} badgeTone="info">
+                    <div className="esharq-mp-list">
+                        {esharqBadges.map((b, i) => (
+                            <div key={(b.description ?? "") + i} className="esharq-mp-badge esharq-rise" style={stagger(i, 10)}>
+                                <div className="esharq-mp-badge-art">
+                                    <ErrorBoundary noop>
+                                        {b.component
+                                            // `_getBadges` يدمج `userId` في كائن الشارة نفسه،
+                                            // والمكوّن يحتاجه ليعرف الرتبة. تمريرُ `props` وحدها
+                                            // كان يُصيّر شارة الرتبة فارغةً بلا خطأ.
+                                            ? <b.component {...b} {...(b.props ?? {})} />
+                                            : (b.iconSrc ?? b.image)
+                                                ? <img src={b.iconSrc ?? b.image} alt="" width={32} height={32} />
+                                                : <span className="esharq-mp-noart">?</span>}
+                                    </ErrorBoundary>
+                                </div>
+                                <div className="esharq-mp-badge-body">
+                                    <div className="esharq-mp-badge-name">{b.description ?? t("شارة", "Badge")}</div>
+                                    <div className="esharq-mp-origin esharq">{t("من إشراق", "From Esharq")}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </Card>
+            )}
+
+            <Card index={3}
+                title={t("هل يُعرّض هذا حسابك للحظر؟", "Does this put your account at risk?")}
+                subtitle={t("الجواب مبنيّ على ما تفعله الصفحة لا على الطمأنة.",
+                    "The answer is based on what the page does, not on reassurance.")}>
+                <div style={{ fontSize: 13, lineHeight: 1.9 }}>
+                    <div>{t("① الصفحة تقرأ وترسم فقط. لا تُرسل طلباً واحداً إلى ديسكورد.",
+                        "① The page only reads and renders. It sends not one request to Discord.")}</div>
+                    <div>{t("② ولا تُعدّل بيانات حسابك: لا اسمك ولا شاراتك ولا أي حقل عند ديسكورد.",
+                        "② It changes nothing on your account: not your name, not your badges, not any field at Discord.")}</div>
+                    <div>{t("③ وشارات إشراق ليست شارات ديسكورد أصلاً — يرسمها العميل عندك ولا وجود لها في حسابك.",
+                        "③ Esharq badges aren't Discord badges at all — your client draws them, and they don't exist on your account.")}</div>
+                </div>
+            </Card>
+        </>
+    );
+}

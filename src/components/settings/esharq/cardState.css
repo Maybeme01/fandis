@@ -1,0 +1,94 @@
+/*
+ * Esharq, a Discord client mod
+ * Copyright (c) 2026 LOSTSTR
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * حالة الإضافة تُرى قبل أن تُقرأ: أخضر تعمل، أحمر متوقّفة.
+ *
+ * مع 458 بطاقة صار المفتاح الصغير في زاويتها هو الدليل الوحيد على حالتها،
+ * فيضطرّ القارئ إلى فحص كل بطاقة على حدة. واللون يُجيب عن «ما الذي يعمل؟»
+ * بنظرة واحدة على الشبكة كلّها.
+ *
+ * 🔴 **`border-inline-start` لا `border-left`**: واجهة إشراق تنقلب إلى RTL
+ * مع العربية، و`left` تُبقي الشريط على الجهة الخطأ — يصير على نهاية البطاقة
+ * لا بدايتها.
+ *
+ * 🔴 **واللون ليس الدليل الوحيد**: المفتاح باقٍ كما هو. من لا يميّز الأحمر
+ * من الأخضر (وهم كثير) يقرأ الحالة من المفتاح، واللون زيادة لا بديل.
+ */
+
+.vc-addon-card {
+    border-inline-start: 3px solid transparent;
+    transition:
+        border-color 140ms cubic-bezier(0.33, 1, 0.68, 1),
+        background-color 140ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.vc-addon-card-on {
+    border-inline-start-color: var(--status-positive, #23a55a);
+    background-color: rgb(35 165 90 / 7%);
+}
+
+.vc-addon-card-off {
+    border-inline-start-color: var(--status-danger, #f23f43);
+    background-color: rgb(242 63 67 / 5%);
+}
+
+/* الإضافات المطلوبة لا تُطفأ أصلاً، فتلوينها بالأحمر يوهم بعطل.
+   تأخذ لون التمييز: «قائمة دائماً» لا «متوقّفة». */
+.vc-addon-card-locked {
+    border-inline-start-color: #c9a227;
+    background-color: rgb(201 162 39 / 6%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vc-addon-card {
+        transition: none;
+    }
+}
+
+/* شارات الفئة على البطاقة — صغيرة وباهتة، فلا تنافس اسم الإضافة.
+   اللون يأتي من متغيّر تُحدّده الشارة نفسها، فيبقى ثابتاً لكل فئة. */
+
+/* 🔴 مساحة محجوزة حتى للبطاقات بلا فئات (`min-height`): بدونها يبدأ وصف
+   كل بطاقة على ارتفاع مختلف عن جارتها، فتبدو الشبكة مهتزّة. والفراغ أسفلها
+   أوسع من أعلاها: الشارات تخصّ الاسم فوقها لا الوصف تحتها. */
+.vc-addon-tags {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-height: 20px;
+    margin: 2px 0 10px;
+}
+
+/* 🔴 `inline-flex` + `align-items: center` + `line-height: 1`: الشارة كانت
+   عنصراً يتمدّد بارتفاع الصفّ فيعلق نصّها في أعلاها ويبدو مرتفعاً. الثلاثة
+   معاً تُثبّت الحرف في وسط الشارة مهما كان ارتفاع الصفّ. */
+.vc-addon-tag {
+    display: inline-flex;
+    height: 18px;
+    align-items: center;
+    padding: 0 7px;
+    line-height: 1;
+    border: 1px solid color-mix(in srgb, var(--esharq-tag) 45%, transparent);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--esharq-tag) 14%, transparent);
+    color: var(--esharq-tag);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* 🔴 محاذاة موحّدة داخل البطاقة: كان العنوان والشارات على جهة والوصف على
+   الجهة المقابلة، لأن النصّ العربي يُحاذي نفسه. `start` تجعل الثلاثة على
+   حافة واحدة مهما كان اتّجاه الواجهة. */
+.vc-addon-note,
+.vc-addon-tags {
+    text-align: start;
+}
+
+.vc-addon-note {
+    unicode-bidi: plaintext;
+}

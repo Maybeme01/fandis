@@ -1,0 +1,200 @@
+/*
+ * Esharq, a Discord client mod
+ * Copyright (c) 2026 LOSTSTR
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+/* ── الرصد: جرد الوجهات ──────────────────────────────────────────────────── */
+
+.esharq-sv-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 10px 14px;
+    border-radius: 11px;
+    background: var(--esharq-surface-1);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+    transition: box-shadow 0.16s ease;
+}
+
+.esharq-sv-search:focus-within {
+    box-shadow: inset 0 0 0 1px #c9a22766;
+}
+
+.esharq-sv-search input {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    border: none;
+    background: none;
+    outline: none;
+    color: var(--text-default);
+    font-size: 13.5px;
+    direction: ltr;
+    text-align: start;
+}
+
+.esharq-sv-search button {
+    border: none;
+    background: var(--esharq-surface-3);
+    color: var(--text-default);
+    border-radius: 999px;
+    inline-size: 22px;
+    block-size: 22px;
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1;
+}
+
+.esharq-sv-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.esharq-sv-row {
+    /* عموديّ: الاسم، ثم شرحٌ بجملة، ثم الوسوم. والشرح قبل الوسوم قصداً —
+       من يقرأ «موقع استضافة صور تستعمله الثيمات» لا يُفزعه بعدها وسمُ
+       «يعرض صورةً منه». */
+    display: block;
+    padding: 12px 14px;
+    border-radius: 9px;
+    background: var(--esharq-surface-1);
+    border-inline-start: 3px solid transparent;
+    transition: background 0.14s ease;
+}
+
+.esharq-sv-row:hover {
+    background: var(--esharq-surface-1-hover);
+}
+
+/* ما يُسمح له بشيفرة يحمل حدّاً أحمر — أخطر صفّ يُرى قبل أن يُقرأ. */
+.esharq-sv-row.exec {
+    border-inline-start-color: var(--status-danger, #f23f43);
+    background: rgb(242 63 67 / 6%);
+}
+
+.esharq-sv-host {
+    flex: 1 1 200px;
+    min-inline-size: 0;
+    font-family: var(--font-code, monospace);
+    font-size: 12.5px;
+    overflow-wrap: anywhere;
+
+    /* أسماء المضيفين إنجليزية دائماً. */
+    direction: ltr;
+    text-align: start;
+}
+
+.esharq-sv-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 9px;
+}
+
+.esharq-sv-tag {
+    font-size: 10.5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    background: var(--esharq-surface-3);
+    color: var(--text-muted);
+}
+
+.esharq-sv-tag.code {
+    background: rgb(242 63 67 / 16%);
+    color: var(--esharq-on-danger);
+}
+
+.esharq-sv-tag.net {
+    background: rgb(88 101 242 / 20%);
+    color: var(--esharq-on-info);
+}
+
+.esharq-sv-tag.media {
+    background: rgb(35 165 90 / 15%);
+    color: var(--esharq-on-positive);
+}
+
+.esharq-sv-tag.style {
+    background: rgb(201 162 39 / 15%);
+    color: var(--esharq-on-accent);
+}
+
+.esharq-sv-mine {
+    font-size: 10.5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: rgb(201 162 39 / 18%);
+    color: var(--esharq-on-accent);
+    white-space: nowrap;
+}
+
+.esharq-sv-empty {
+    padding: 26px 12px;
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.5;
+}
+
+
+/* ── الشرح النصّي ────────────────────────────────────────────────────────── */
+
+.esharq-sv-top {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* الشرح بجملة قبل الوسوم — يُفهم الموقع قبل أن تُقرأ صلاحياته. */
+.esharq-sv-note {
+    margin-top: 5px;
+    font-size: 12px;
+    line-height: 1.6;
+    opacity: 0.62;
+}
+
+.esharq-sv-explain p {
+    margin: 0 0 11px;
+    font-size: 13.5px;
+    line-height: 1.85;
+}
+
+.esharq-sv-explain p:last-child {
+    margin-bottom: 0;
+}
+
+.esharq-sv-explain b {
+    color: var(--text-default);
+}
+
+/* ── مفتاح المصطلحات ─────────────────────────────────────────────────────── */
+
+.esharq-sv-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+}
+
+.esharq-sv-legend-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.esharq-sv-legend-text {
+    flex: 1 1 260px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    opacity: 0.75;
+}
+
+.esharq-sv-subhead {
+    margin: 16px 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.55;
+}

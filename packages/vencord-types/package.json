@@ -1,12 +1,12 @@
 {
-    "name": "@equicord/types",
+    "name": "@FanCord/types",
     "private": false,
     "version": "1.15.15",
     "description": "",
     "types": "index.d.ts",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Equicord/Equicord.git",
+        "url": "git+https://github.com/FanCord/FanCord.git",
         "directory": "packages/vencord-types"
     },
     "scripts": {
@@ -14,7 +14,7 @@
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [],
-    "author": "Equicord & Vencord Contributors",
+    "author": "FanCord & Vencord Contributors",
     "license": "GPL-3.0-or-later",
     "devDependencies": {
         "@types/fs-extra": "catalog:",
@@ -23,7 +23,7 @@
     },
     "dependencies": {
         "@types/node": "catalog:",
-        "@vencord/discord-types": "workspace:@equicord/discord-types@^",
+        "@vencord/discord-types": "workspace:@FanCord/discord-types@^",
         "lodash": "catalog:",
         "moment": "catalog:",
         "ts-pattern": "catalog:",

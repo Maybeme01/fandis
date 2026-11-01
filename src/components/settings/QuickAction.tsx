@@ -13,7 +13,7 @@ import type { ComponentType, PropsWithChildren, ReactNode } from "react";
 const cl = classNameFactory("vc-settings-quickActions-");
 
 export interface QuickActionProps {
-    Icon: ComponentType<{ className?: string; }>;
+    Icon?: ComponentType<{ className?: string; }>;
     text: ReactNode;
     action?: () => void;
     disabled?: boolean;
@@ -25,7 +25,7 @@ export function QuickAction(props: QuickActionProps) {
 
     return (
         <button className={cl("pill")} onClick={action} disabled={disabled} style={style}>
-            <Icon className={cl("img")} />
+            {Icon ? <Icon className={cl("img")} /> : null}
             {text}
         </button>
     );

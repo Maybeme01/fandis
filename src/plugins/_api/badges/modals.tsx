@@ -121,7 +121,7 @@ export function EquicordDonorModal() {
                 </div>
                 <div>
                     <Flex justifyContent="center" style={{ width: "100%" }}>
-                        <DonateButton equicord={true} />
+                        <DonateButton Equicord={true} />
                     </Flex>
                 </div>
             </Modal>
@@ -156,7 +156,7 @@ export function EquicordTranslatorModal() {
                         <img
                             className="vc-translate-modal-icon"
                             role="presentation"
-                            src="https://badge.equicord.org/translator.png"
+                            src="https://badge.Equicord.org/translator.png"
                             alt=""
                         />
                     </Flex>

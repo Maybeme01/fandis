@@ -1648,3 +1648,4 @@ export function HistoryIcon(props: IconProps) {
         </Icon>
     );
 }
+export const FanCordIcon = EquicordIcon;

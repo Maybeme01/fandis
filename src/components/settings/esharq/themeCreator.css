@@ -1,0 +1,647 @@
+/*
+ * Esharq, a Discord client mod
+ * Copyright (c) 2026 LOSTSTR
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+/* ── منشئ الثيمات ────────────────────────────────────────────────────────── */
+
+.esharq-tc-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 12px 0;
+}
+
+.esharq-tc-row + .esharq-tc-row {
+    border-block-start: 1px solid var(--esharq-line);
+}
+
+.esharq-tc-row-text {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+}
+
+.esharq-tc-row-label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.esharq-tc-row-hint {
+    margin-top: 3px;
+    font-size: 12px;
+    line-height: 1.6;
+    opacity: 0.55;
+}
+
+/* المِقبض يحتاج عرضاً ثابتاً: تركه مرناً يجعل طوله يتغيّر بطول النصّ بجواره،
+   فيبدو كل صفٍّ بمقياسٍ مختلف عن أخيه. */
+.esharq-tc-row-control {
+    flex: 0 0 auto;
+    inline-size: 240px;
+    max-inline-size: 50%;
+}
+
+.esharq-tc-slider {
+    margin: 0;
+    padding: 0;
+}
+
+/* ── اللون ───────────────────────────────────────────────────────────────── */
+
+.esharq-tc-colour {
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.esharq-tc-swatch {
+    display: grid;
+    place-items: center;
+    inline-size: 150px;
+    block-size: 88px;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px var(--esharq-line), 0 8px 22px #00000059;
+    flex: 0 0 auto;
+}
+
+/* اسم اللون يُكتب فوق اللون نفسه، فيجب أن يُقرأ على الفاتح والداكن معاً:
+   ظلٌّ حادّ خلف حروفٍ بيضاء يفعلها بلا افتراضٍ عن اللون. */
+.esharq-tc-swatch span {
+    font-family: var(--font-code, monospace);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-strong);
+    text-shadow: 0 1px 3px #000, 0 0 10px #000;
+    direction: ltr;
+}
+
+.esharq-tc-colour-fields {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.esharq-tc-picker {
+    inline-size: 44px;
+    block-size: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.esharq-tc-hex,
+.esharq-tc-name {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-medium, var(--esharq-line));
+    background: var(--input-background, #1e1f22);
+    color: var(--text-default, #f2f3f5);
+    font-size: 14px;
+}
+
+.esharq-tc-hex {
+    inline-size: 110px;
+    font-family: var(--font-code, monospace);
+    direction: ltr;
+    text-align: start;
+}
+
+.esharq-tc-name {
+    inline-size: 100%;
+}
+
+.esharq-tc-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.esharq-tc-preset {
+    inline-size: 28px;
+    block-size: 28px;
+    border-radius: 999px;
+    border: 1px solid var(--esharq-line);
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.14s cubic-bezier(0.22, 1.2, 0.36, 1), box-shadow 0.14s ease;
+}
+
+.esharq-tc-preset:hover {
+    transform: scale(1.12);
+}
+
+.esharq-tc-preset.on {
+    box-shadow: 0 0 0 2px var(--background-base-lowest, #0b0b0e), 0 0 0 4px #c9a227;
+}
+
+.esharq-tc-preset:focus-visible {
+    outline: 2px solid #c9a227;
+    outline-offset: 3px;
+}
+
+.esharq-tc-hsl {
+    margin-top: 14px;
+    font-family: var(--font-code, monospace);
+    font-size: 11.5px;
+    opacity: 0.5;
+}
+
+/* ── الأسطح ──────────────────────────────────────────────────────────────── */
+
+.esharq-tc-quick {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.esharq-tc-quick-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 0;
+    text-align: start;
+    background: var(--esharq-surface-1);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.esharq-tc-quick-btn:hover {
+    background: var(--esharq-surface-1-hover);
+    box-shadow: inset 0 0 0 1px rgb(201 162 39 / 30%);
+}
+
+.esharq-tc-quick-name {
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.esharq-tc-quick-hint {
+    font-size: 11.5px;
+    opacity: 0.55;
+}
+
+.esharq-tc-surfaces {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.esharq-tc-surface {
+    padding: 14px 16px 6px;
+    border-radius: 12px;
+    background: var(--esharq-surface-0);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+}
+
+.esharq-tc-surface-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.esharq-tc-surface-value {
+    font-family: var(--font-code, monospace);
+    font-size: 11.5px;
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── الخلفية ─────────────────────────────────────────────────────────────── */
+
+.esharq-tc-bg {
+    display: flex;
+    gap: 16px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.esharq-tc-bg-preview {
+    display: grid;
+    place-items: center;
+    inline-size: 220px;
+    block-size: 124px;
+    flex: 0 0 auto;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--esharq-surface-0);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+    font-size: 12px;
+    opacity: 1;
+}
+
+.esharq-tc-bg-preview span {
+    opacity: 0.4;
+}
+
+.esharq-tc-bg-preview img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+}
+
+.esharq-tc-bg-side {
+    flex: 1 1 220px;
+    min-inline-size: 0;
+}
+
+.esharq-tc-bg-side p {
+    margin: 0 0 12px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    opacity: 0.55;
+}
+
+.esharq-tc-bg-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.esharq-tc-choices {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.esharq-tc-choice {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 0;
+    font-size: 12px;
+    background: var(--esharq-surface-1);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.14s ease, box-shadow 0.14s ease;
+}
+
+.esharq-tc-choice:hover {
+    background: var(--esharq-surface-1-hover);
+}
+
+.esharq-tc-choice.on {
+    background: rgb(201 162 39 / 12%);
+    box-shadow: inset 0 0 0 1px rgb(201 162 39 / 45%);
+}
+
+/* ── ألوان النصّ والإجراءات ──────────────────────────────────────────────── */
+
+.esharq-tc-text-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.esharq-tc-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+}
+
+.esharq-tc-how {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+    line-height: 1.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .esharq-tc-preset {
+        transition: none;
+    }
+}
+
+/* ── المظهر الأساس ───────────────────────────────────────────────────────── */
+
+.esharq-tc-modes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.esharq-tc-mode {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 0;
+    text-align: start;
+    background: var(--esharq-surface-1);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.esharq-tc-mode:hover {
+    background: var(--esharq-surface-1-hover);
+}
+
+.esharq-tc-mode.on {
+    background: rgb(201 162 39 / 8%);
+    box-shadow: inset 0 0 0 1px rgb(201 162 39 / 45%);
+}
+
+.esharq-tc-mode-swatch {
+    inline-size: 34px;
+    block-size: 34px;
+    flex: 0 0 auto;
+    border-radius: 9px;
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+}
+
+.esharq-tc-mode-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-inline-size: 0;
+}
+
+.esharq-tc-mode-text b {
+    font-size: 14px;
+}
+
+.esharq-tc-mode-text span {
+    font-size: 11.5px;
+    opacity: 0.55;
+}
+
+/* ── فحص المظهر ─────────────────────────────────────────────────────────── */
+
+/* التحذير يحمل حلَّه بجواره: تحذيرٌ بلا زرٍّ يترك صاحبه يبحث عن الإعداد. */
+.esharq-tc-warn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding: 13px 16px;
+    border-radius: 10px;
+    background: rgb(242 63 67 / 8%);
+    border-inline-start: 3px solid var(--status-danger, #f23f43);
+}
+
+.esharq-tc-warn-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1 1 240px;
+    min-inline-size: 0;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.esharq-tc-warn-text b {
+    color: var(--esharq-on-danger);
+}
+
+/* ── الأهداف ─────────────────────────────────────────────────────────────── */
+
+.esharq-tc-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 4px 0 8px;
+}
+
+.esharq-tc-chip {
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 0;
+    font-size: 12.5px;
+    background: var(--esharq-surface-1);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.14s ease, box-shadow 0.14s ease;
+}
+
+.esharq-tc-chip:hover {
+    background: var(--esharq-surface-1-hover);
+}
+
+.esharq-tc-chip.on {
+    background: rgb(201 162 39 / 14%);
+    box-shadow: inset 0 0 0 1px rgb(201 162 39 / 50%);
+    color: var(--esharq-on-accent);
+}
+
+.esharq-tc-chip.all {
+    font-weight: 700;
+}
+
+.esharq-tc-chip:focus-visible,
+.esharq-tc-choice:focus-visible,
+.esharq-tc-mode:focus-visible,
+.esharq-tc-quick-btn:focus-visible {
+    outline: 2px solid #c9a227;
+    outline-offset: 2px;
+}
+
+/* ── معاينة ونماذج ──────────────────────────────────────────────────────── */
+
+.esharq-tc-quick-btn.on {
+    background: rgb(201 162 39 / 10%);
+    box-shadow: inset 0 0 0 1px rgb(201 162 39 / 40%);
+}
+
+.esharq-tc-preview {
+    margin-top: 16px;
+    padding: 22px 18px;
+    border-radius: 12px;
+    background: var(--esharq-surface-0);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+/* المعاينة تُري التدرّج على الحروف نفسها كما سيظهر، لا مستطيلاً ملوّناً. */
+.esharq-tc-preview.gradient {
+    background-color: var(--esharq-surface-0);
+
+    /* كروميوم 120+ يفهم غير المسبوقة، وهذا البناء أحدث منها بكثير.
+       أمّا `-webkit-text-fill-color` فلا مقابل قياسيّاً لها. */
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+.esharq-tc-colour-pair {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    justify-content: flex-end;
+}
+
+.esharq-tc-code {
+    font-family: var(--font-code, monospace);
+    font-size: 11.5px;
+    opacity: 0.6;
+    direction: ltr;
+}
+
+.esharq-tc-select {
+    inline-size: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-medium, var(--esharq-line));
+    background: var(--input-background, #1e1f22);
+    color: var(--text-default, #f2f3f5);
+    font-size: 13.5px;
+    cursor: pointer;
+}
+
+/* ── مجموعات الأسطح ──────────────────────────────────────────────────────── */
+
+.esharq-tc-group {
+    margin-top: 20px;
+}
+
+.esharq-tc-group-head {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 10px;
+}
+
+.esharq-tc-group-head b {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.esharq-tc-group-head span {
+    font-size: 11.5px;
+    opacity: 0.5;
+}
+
+.esharq-tc-surface-hint {
+    margin: -2px 0 8px;
+    font-size: 11px;
+    line-height: 1.55;
+    opacity: 0.45;
+}
+
+.esharq-tc-actions.end {
+    justify-content: flex-end;
+    margin-bottom: 0;
+}
+
+/* ── بطاقات الأهداف ──────────────────────────────────────────────────────── */
+
+.esharq-tc-targets {
+    margin: 6px 0 4px;
+}
+
+.esharq-tc-target-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.esharq-tc-target {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    inline-size: 100%;
+    padding: 11px 13px;
+    border-radius: 10px;
+    border: 0;
+    text-align: start;
+    background: var(--esharq-surface-1);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.14s ease, box-shadow 0.14s ease;
+}
+
+.esharq-tc-target:hover {
+    background: var(--esharq-surface-1-hover);
+}
+
+.esharq-tc-target.on {
+    background: rgb(201 162 39 / 9%);
+    box-shadow: inset 0 0 0 1px rgb(201 162 39 / 42%);
+}
+
+.esharq-tc-target.all {
+    background: var(--esharq-surface-0);
+}
+
+/* مربّع اختيارٍ مرسوم: الحالة تُرى قبل أن تُقرأ. */
+.esharq-tc-target-box {
+    inline-size: 15px;
+    block-size: 15px;
+    margin-block-start: 2px;
+    flex: 0 0 auto;
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 1.5px var(--esharq-line);
+    position: relative;
+    transition: background 0.14s ease, box-shadow 0.14s ease;
+}
+
+.esharq-tc-target.on .esharq-tc-target-box {
+    background: #c9a227;
+    box-shadow: inset 0 0 0 1.5px #c9a227;
+}
+
+.esharq-tc-target.on .esharq-tc-target-box::after {
+    content: "";
+    position: absolute;
+    inset-inline-start: 4px;
+    inset-block-start: 1px;
+    inline-size: 4px;
+    block-size: 8px;
+    border: solid #0d0d0f;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.esharq-tc-target-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-inline-size: 0;
+}
+
+.esharq-tc-target-text b {
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.esharq-tc-target-text span {
+    font-size: 10.5px;
+    line-height: 1.55;
+    opacity: 0.5;
+}
+
+.esharq-tc-target:focus-visible {
+    outline: 2px solid #c9a227;
+    outline-offset: 2px;
+}

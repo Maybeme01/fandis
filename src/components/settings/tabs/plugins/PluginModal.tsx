@@ -220,7 +220,7 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
                                         className={AvatarStyles.clickableAvatar}
                                         onClick={() => isEquicordPlugin ? openContributorModal(user) : openContributorModal(user)}
                                     >
-                                        <img
+                                        <img onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
                                             className={AvatarStyles.avatar}
                                             src={user.getAvatarURL(void 0, 80, true)}
                                             alt={user.username}
@@ -264,7 +264,7 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
                                 />
                                 <WebsiteButton
                                     text="Website"
-                                    href={isEquicordPlugin ? `https://equicord.org/plugins/${plugin.name}` : `https://vencord.dev/plugins/${plugin.name}`}
+                                    href={isEquicordPlugin ? `https://Equicord.org/plugins/${plugin.name}` : `https://vencord.dev/plugins/${plugin.name}`}
                                 />
                                 <GithubButton
                                     text="Source Code"

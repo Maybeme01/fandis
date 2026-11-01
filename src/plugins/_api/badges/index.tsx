@@ -46,7 +46,7 @@ const ContributorBadge: ProfileBadge = {
 };
 
 const EquicordContributorBadge: ProfileBadge = {
-    id: "equicord_contributor_badge",
+    id: "Equicord_contributor_badge",
     description: "Equicord Contributor",
     infoLabel: "Equicord",
     rarity: BadgeRarity.MYTHIC,
@@ -107,10 +107,10 @@ async function loadBadges(url: string, noCache = false) {
 
 async function loadAllBadges(noCache = false) {
     const vencordBadges = await loadBadges("https://badges.vencord.dev/badges.json", noCache);
-    const equicordBadges = await loadBadges("https://badge.equicord.org/badges.json", noCache);
+    const EquicordBadges = await loadBadges("https://badge.Equicord.org/badges.json", noCache);
 
     DonorBadges = vencordBadges;
-    EquicordDonorBadges = equicordBadges;
+    EquicordDonorBadges = EquicordBadges;
 }
 
 let intervalId: any;
@@ -331,7 +331,7 @@ export default definePlugin({
 
     getEquicordDonorBadges(userId: string) {
         return EquicordDonorBadges[userId]?.map((badge, idx) => ({
-            id: `equicord_donor_badge_${idx}`,
+            id: `Equicord_donor_badge_${idx}`,
             iconSrc: badge.badge,
             description: badge.tooltip,
             name: badge.tooltip,

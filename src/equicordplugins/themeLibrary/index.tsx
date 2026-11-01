@@ -21,13 +21,13 @@ export default definePlugin({
     settings,
     toolboxActions: {
         "Open Theme Library": () => {
-            SettingsRouter.openUserSettings("equicord_theme_library_panel");
+            SettingsRouter.openUserSettings("Equicord_theme_library_panel");
         },
     },
 
     start() {
         SettingsPlugin.customEntries.push({
-            key: "equicord_theme_library",
+            key: "Equicord_theme_library",
             title: "Theme Library",
             Component: require("./components/ThemeTab").default,
             Icon: ColorPaletteIcon
@@ -35,6 +35,6 @@ export default definePlugin({
     },
 
     stop() {
-        removeFromArray(SettingsPlugin.customEntries, e => e.key === "equicord_theme_library");
+        removeFromArray(SettingsPlugin.customEntries, e => e.key === "Equicord_theme_library");
     },
 });

@@ -1,0 +1,234 @@
+/*
+ * Esharq, a Discord client mod
+ * Copyright (c) 2026 LOSTSTR
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+/* ── المقبض الدوّار ──────────────────────────────────────────────────────────
+   القرص وحده هو ما يدور؛ الحلقة الخارجية ثابتة، وإلّا دار المسار مع المؤشّر
+   فبدا المقبض ساكناً. زمن الانتقال ونابضيّته من تصميم المالك، ويُلغى أثناء
+   السحب كي يلاحق الإصبع بلا تأخير. */
+.esharq-knob-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.esharq-knob-track {
+    position: relative;
+    width: 124px;
+    height: 124px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 42%, var(--esharq-surface-3) 0%, var(--esharq-surface-2) 72%, var(--esharq-surface-0) 100%);
+    box-shadow: inset 0 0 0 1px var(--esharq-line), 0 6px 18px #00000059;
+    display: grid;
+    place-items: center;
+}
+
+.esharq-knob {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: var(--esharq-surface-1);
+    box-shadow: inset 0 0 0 1px var(--esharq-line);
+    cursor: grab;
+
+    /* السحب لمسةً يجب ألّا يُمرّر الصفحة تحت الإصبع. */
+    touch-action: none;
+    outline: none;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.esharq-knob.dragging {
+    transition: none;
+    cursor: grabbing;
+}
+
+.esharq-knob:focus-visible {
+    box-shadow: inset 0 0 0 1px var(--esharq-line), 0 0 0 2px var(--esharq-knob-accent);
+}
+
+.esharq-knob::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 4px;
+    height: 16px;
+    margin-left: -2px;
+    border-radius: 2px;
+    background: var(--esharq-knob-accent);
+}
+
+/* علامة بداية المدى — تُخبر العين أين الصفر قبل أن يُسحَب المقبض. */
+.esharq-knob-zero {
+    position: absolute;
+    bottom: 16px;
+    left: 20px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--esharq-knob-accent);
+    opacity: 0.55;
+}
+
+.esharq-knob-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--esharq-knob-accent);
+    font-variant-numeric: tabular-nums;
+}
+
+.esharq-knob-label {
+    font-size: 12px;
+    opacity: 0.55;
+}
+
+/* ── مقياس المستوى الحيّ ─────────────────────────────────────────────────── */
+.esharq-vu {
+    position: relative;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--esharq-tint-strong);
+    overflow: hidden;
+}
+
+.esharq-vu > i {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--esharq-knob-accent), #e0c05a);
+    transition: inline-size 70ms linear;
+}
+
+/* ── أزرار مقطعية (بلا/قياسي/Krisp، ومعدّلات البتّ) ──────────────────────── */
+.esharq-seg {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.esharq-seg > button {
+    flex: 1 1 0;
+    min-width: 72px;
+    padding: 7px 10px;
+    border: none;
+    border-radius: 8px;
+    background: var(--esharq-tint-strong);
+    color: var(--text-default);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 140ms ease, color 140ms ease;
+}
+
+.esharq-seg > button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.esharq-seg > button:hover:not(:disabled) {
+    background: var(--esharq-tint-hover);
+}
+
+.esharq-seg > button.on {
+    background: var(--esharq-knob-accent);
+    color: #14140f;
+    font-weight: 600;
+}
+
+/* ── شريط ملفات الإعدادات ────────────────────────────────────────────────── */
+.esharq-profrow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.esharq-profrow > :first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.esharq-pbtn {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 8px;
+    background: var(--esharq-tint-strong);
+    color: var(--text-default);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 140ms ease;
+}
+
+.esharq-pbtn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.esharq-pbtn:hover:not(:disabled) {
+    background: var(--esharq-tint-hover);
+}
+
+/* ── حقل رقمي بمفتاح ─────────────────────────────────────────────────────── */
+.esharq-numgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px;
+}
+
+.esharq-numcard {
+    background: var(--esharq-tint);
+    border-radius: 9px;
+    padding: 12px 14px;
+}
+
+.esharq-numhead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.esharq-numhead > span {
+    font-size: 13px;
+}
+
+.esharq-numinput {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.esharq-numinput > input {
+    width: 100%;
+    min-width: 0;
+    padding: 6px 9px;
+    border: none;
+    border-radius: 7px;
+    background: var(--esharq-tint-strong);
+    color: var(--text-default);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}
+
+.esharq-numinput > input:disabled {
+    opacity: 0.4;
+}
+
+.esharq-numunit {
+    font-size: 11px;
+    opacity: 0.5;
+}
+
+.esharq-numnote {
+    display: block;
+    margin-top: 7px;
+    font-size: 11px;
+    opacity: 0.45;
+    line-height: 1.5;
+}
