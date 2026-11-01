@@ -79,6 +79,9 @@ export const CspPolicies: PolicyMap = {
 
     "FanCord.org": ImageSrc,
     "*.FanCord.org": ImageSrc,
+    "equicord.org": [...ImageSrc, ...ConnectSrc],
+    "*.equicord.org": [...ImageSrc, ...ConnectSrc],
+    "badge.equicord.org": [...ImageSrc, ...ConnectSrc],
 
     "fonts.gstatic.com": [...ConnectSrc, ...CssSrc],
     "fonts.google.com": ConnectSrc,
@@ -237,3 +240,4 @@ export function initCsp() {
     // impossible to load css from github raw despite our fix above
     session.defaultSession.webRequest.onHeadersReceived = () => { };
 }
+
