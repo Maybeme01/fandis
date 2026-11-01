@@ -33,7 +33,7 @@ import { React } from "@webpack/common";
 
 import gitHash from "~git-hash";
 
-import { HashLink, Newer, Updatable } from "./Components";
+import { Newer, Updatable } from "./Components";
 
 interface CommonProps {
     repo: string;
@@ -111,26 +111,6 @@ function Updater() {
 
             <Divider className={Margins.top20} />
 
-            <Heading className={Margins.top20}>Repository</Heading>
-            <Paragraph className={Margins.bottom8}>
-                This is the GitHub repository where FanCord fetches updates from.
-            </Paragraph>
-            <Paragraph color="text-subtle">
-                {repoPending
-                    ? repo
-                    : err
-                        ? "Failed to retrieve - check console"
-                        : (
-                            <Link href={repo}>
-                                {repo.split("/").slice(-2).join("/")}
-                            </Link>
-                        )
-                }
-                {" "}(<HashLink hash={gitHash} repo={repo} disabled={repoPending} />)
-            </Paragraph>
-
-            <Divider className={Margins.top20} />
-
             <Heading className={Margins.top20}>Updates</Heading>
             {isNewer ? <Newer {...commonProps} /> : <Updatable {...commonProps} />}
         </SettingsTab>
@@ -140,3 +120,4 @@ function Updater() {
 export default IS_UPDATER_DISABLED
     ? null
     : wrapTab(Updater, "Updater");
+
