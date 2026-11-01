@@ -30,3 +30,4 @@ export function useCspPermission(url: string | undefined, directives: string[], 
 
     return [isAllowed, requestPermission] as const;
 }
+
