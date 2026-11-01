@@ -113,17 +113,29 @@ export function proxyLazy<T>(factory: () => T, attempts = 5, isChild = false): T
             // thus, we lazy proxy the get access to make things like destructuring work as expected
             // meow here will also be a lazy
             // `const { meow } = findByPropsLazy("meow");`
+            const dummyFallback: any = new Proxy(() => null, {
+                get: () => dummyFallback,
+                apply: () => null
+            });
+
             if (!isChild && isSameTick)
                 return proxyLazy(
-                    () => Reflect.get(target[SYM_LAZY_GET](), p, receiver),
+                    () => {
+                        const t = target[SYM_LAZY_GET]();
+                        return (t != null && (typeof t === "object" || typeof t === "function"))
+                            ? Reflect.get(t, p, receiver)
+                            : dummyFallback;
+                    },
                     attempts,
                     true
                 );
+
             const lazyTarget = target[SYM_LAZY_GET]();
-            if (typeof lazyTarget === "object" || typeof lazyTarget === "function") {
+            if (lazyTarget != null && (typeof lazyTarget === "object" || typeof lazyTarget === "function")) {
                 return Reflect.get(lazyTarget, p, receiver);
             }
-            throw new Error("proxyLazy called on a primitive value");
+            return dummyFallback;
         }
     }) as any;
 }
+

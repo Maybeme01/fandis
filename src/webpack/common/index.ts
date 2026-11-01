@@ -26,6 +26,7 @@ const dummyProxy: any = new Proxy(() => null, {
 
 export const Button: any = typeof findByPropsLazy === "function" ? (findByPropsLazy("Sizes", "Colors", "Looks") ?? dummyProxy) : dummyProxy;
 const ResolvedText: any = (TextModule as any).default ?? (TextModule as any).Text ?? TextModule;
-export const Text: any = ResolvedText;
-export const Forms: any = typeof findByPropsLazy === "function" ? (findByPropsLazy("FormItem", "FormTitle") ?? dummyProxy) : dummyProxy;
+export const Text: any = (TextModule as any).default ?? (TextModule as any).Text ?? TextModule;
+export const Forms: any = dummyProxy;
+
 
