@@ -97,3 +97,26 @@ export function _buildPopoverElements(
 ) {
     return <VencordPopoverButtons Component={Component} message={message} />;
 }
+
+function PopoverOverflow({ children }: { children: any }) {
+    const ref = React.useRef<HTMLDivElement>(null);
+    return (
+        <div ref={ref} className="vc-popover-overflow">
+            <div
+                className="vc-popover-overflow-arrow vc-popover-overflow-arrow-left"
+                onClick={() => ref.current?.scrollBy({ left: -100, behavior: "smooth" })}
+            />
+            <div className="vc-popover-overflow-track">
+                {children}
+            </div>
+            <div
+                className="vc-popover-overflow-arrow vc-popover-overflow-arrow-right"
+                onClick={() => ref.current?.scrollBy({ left: 100, behavior: "smooth" })}
+            />
+        </div>
+    );
+}
+
+export function _wrapPopoverBar(children: any) {
+    return <PopoverOverflow>{children}</PopoverOverflow>;
+}
