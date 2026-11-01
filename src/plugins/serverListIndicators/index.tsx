@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Vencord, a modification for Discord's desktop app
  * Copyright (c) 2022 Sofia Lima
  *
@@ -62,8 +62,6 @@ function FriendsIndicator() {
         </div>
     );
 }
-    } catch (e) { return null; }
-}
 
 function ServersIndicator() {
     guildCount = useStateFromStores([GuildStore, UserGuildJoinRequestStore], () => {
@@ -80,8 +78,6 @@ function ServersIndicator() {
             <BaseText size="xs" id="vc-guildcount-text">{guildCount}</BaseText>
         </div>
     );
-}
-    } catch (e) { return null; }
 }
 
 export const settings = definePluginSettings({
