@@ -28,3 +28,4 @@ export function getPluginTarget(filePath) {
     const identiferBits = identifier.split(".");
     return identiferBits.length === 1 ? null : identiferBits.at(-1);
 }
+

@@ -245,3 +245,6 @@ await Promise.all([
     createPackage("dist/equibop", "dist/equibop.asar"),
 ]);
 
+
+
+

@@ -61,7 +61,8 @@
             ],
             "@equicordplugins/*": [
                 "./src/equicordplugins/*"
-            ]
+            ],
+      "@fanplugins/*": ["./src/fanplugins/*"]
         },
         "plugins": [
             // Transform paths in output .d.ts files (Include this line if you output declarations files)
@@ -79,3 +80,4 @@
         "eslint.config.mjs"
     ],
 }
+
