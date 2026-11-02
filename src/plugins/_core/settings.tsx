@@ -99,8 +99,8 @@ const settings = definePluginSettings({
         type: OptionType.SELECT,
         description: "Where to put the FanCord settings section",
         options: [
-            { label: "At the very top", value: "top" },
-            { label: "Above Billing section", value: "aboveNitro", default: true },
+            { label: "At the very top", value: "top" , default: true},
+            { label: "Above Billing section", value: "aboveNitro", },
             { label: "Below Billing section", value: "belowNitro" },
             { label: "Above Games & Apps Settings", value: "aboveActivity" },
             { label: "Below Games & Apps Settings", value: "belowActivity" },
@@ -110,8 +110,7 @@ const settings = definePluginSettings({
     includeVencordInfoWhenCopying: {
         type: OptionType.BOOLEAN,
         description: "Also copy FanCord info (FanCord, Electron, Chromium) when clicking the version info in the bottom left area of the Settings page",
-        default: true
-    }
+        }
 });
 
 export default definePlugin({
@@ -324,3 +323,4 @@ export default definePlugin({
         );
     }
 });
+
