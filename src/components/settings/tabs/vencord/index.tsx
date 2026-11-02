@@ -34,6 +34,7 @@ import { DonateButtonComponent } from "./DonateButton";
 import { MacOSVibrancySettings } from "./MacVibrancySettings";
 import { NotificationSection } from "./NotificationSettings";
 import { WindowsMaterialSettings } from "./WindowsMaterialSettings";
+import { ArabicSettings } from "./ArabicSettings";
 
 const DEFAULT_DONATE_IMAGE = "https://cdn.discordapp.com/emojis/1026533090627174460.png";
 const SHIGGY_DONATE_IMAGE = "https://FanCord.org/assets/favicon.png";
@@ -283,6 +284,8 @@ function FanCordSettings() {
 
             <Switches />
 
+            <ArabicSettings />
+
             <MacOSVibrancySettings />
             <WindowsMaterialSettings />
 
@@ -302,3 +305,4 @@ export function isVencordDonor(userId: string): boolean {
     const donorBadges = BadgeAPI.getDonorBadges(userId);
     return GuildMemberStore.getMember(VC_GUILD_ID, userId)?.roles.includes(VC_DONOR_ROLE_ID) || !!donorBadges;
 }
+

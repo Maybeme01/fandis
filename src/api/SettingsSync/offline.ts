@@ -180,7 +180,7 @@ export async function downloadSettingsBackup(type: BackupType = "all", { minify 
     try {
         const syncDataStore = type === "all" || type === "datastore";
         const backup = await exportSettings({ minify, type, syncDataStore });
-        const filename = `Equicord-${type}-backup-${moment().format("YYYY-MM-DD")}.json`;
+        const filename = `FanCord-${type}-backup-${moment().format("YYYY-MM-DD")}.json`;
         const data = new TextEncoder().encode(backup);
 
         if (IS_DISCORD_DESKTOP) {
@@ -230,3 +230,4 @@ export async function uploadSettingsBackup(type: BackupType = "all", showToast =
         reader.readAsText(file);
     }
 }
+

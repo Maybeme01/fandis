@@ -46,6 +46,7 @@ const settings = definePluginSettings({
             { label: "Vazirmatn", value: "vazirmatn" },
         ],
         restartNeeded: true,
+    hidden: true,
     },
 });
 
@@ -156,6 +157,7 @@ export default definePlugin({
     authors: [Devs.mar, Devs.nyiq],
     tags: ["Appearance"],
     restartNeeded: true,
+    hidden: true,
     settings,
 
     start() {
@@ -178,3 +180,4 @@ export default definePlugin({
         removeGlobalScrollbarHygiene();
     },
 });
+
