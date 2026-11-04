@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -34,7 +34,7 @@ export function SettingsSearch(): JSX.Element {
             <TextInput
                 type="search"
                 aria-label="Search Questify Settings"
-                placeholder="بحث في إعدادات Questify..."
+                placeholder="Search Questify Settings..."
                 value={inputValue}
                 onChange={setInputValue}
             />
@@ -44,5 +44,3 @@ export function SettingsSearch(): JSX.Element {
         </div>
     );
 }
-
-

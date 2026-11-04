@@ -13,40 +13,40 @@ import type { JSX } from "react";
 import { type ManaSelectOption, SettingsCard, SettingsDescription, SettingsHeader, SettingsRow, SettingsRowItem, SettingsSelect, SettingsSubheader, SettingsSubtleSwitch } from "./shared";
 
 const questStatusOptions = [
-    { label: "المتاحة", value: "UNCLAIMED" },
-    { label: "المستلمة", value: "CLAIMED" },
-    { label: "المتجاهلة", value: "IGNORED" },
-    { label: "المنتهية", value: "EXPIRED" },
+    { label: "Unclaimed", value: "UNCLAIMED" },
+    { label: "Claimed", value: "CLAIMED" },
+    { label: "Ignored", value: "IGNORED" },
+    { label: "Expired", value: "EXPIRED" },
 ] as const satisfies readonly { label: string, value: QuestOrderStatus; }[];
 
-const questPositionManaOptions: ManaSelectOption[] = ["أولاً", "ثانياً", "ثالثاً", "رابعاً"].map((label, index) => ({
+const questPositionManaOptions: ManaSelectOption[] = ["First", "Second", "Third", "Fourth"].map((label, index) => ({
     id: String(index),
     label,
     value: String(index),
 }));
 
-questPositionManaOptions.push({ id: "hidden", label: "مخفية", value: "hidden" });
+questPositionManaOptions.push({ id: "hidden", label: "Hidden", value: "hidden" });
 
 const baseSubsortOptions = [
-    { label: "المضافة حديثاً", value: "Recent DESC" },
+    { label: "Added (Newest)", value: "Recent DESC" },
     { label: "Added (Oldest)", value: "Recent ASC" },
 ] as const satisfies readonly { label: string, value: QuestSubsort; }[];
 
 const expiringSubsortOptions = [
     ...baseSubsortOptions,
-    { label: "الأقرب انتهاءً", value: "Expiring ASC" },
+    { label: "Expiring (Soonest)", value: "Expiring ASC" },
     { label: "Expiring (Latest)", value: "Expiring DESC" },
 ] as const satisfies readonly { label: string, value: QuestSubsort; }[];
 
 const expiredSubsortOptions = [
     ...baseSubsortOptions,
-    { label: "المنتهية حديثاً", value: "Expiring DESC" },
+    { label: "Expired (Most Recent)", value: "Expiring DESC" },
     { label: "Expired (Least Recent)", value: "Expiring ASC" },
 ] as const satisfies readonly { label: string, value: QuestSubsort; }[];
 
 const claimedSubsortOptions = [
     ...baseSubsortOptions,
-    { label: "المستلمة حديثاً", value: "Claimed DESC" },
+    { label: "Claimed (Most Recent)", value: "Claimed DESC" },
     { label: "Claimed (Least Recent)", value: "Claimed ASC" },
 ] as const satisfies readonly { label: string, value: QuestSubsort; }[];
 
@@ -168,7 +168,7 @@ export function ReorderQuestsSetting(): JSX.Element {
             <SettingsRow>
                 <SettingsRowItem>
                     <SettingsSelect
-                        label="ترتيب المتاحة:"
+                        label="Unclaimed Subsort:"
                         options={unclaimedSubsortManaOptions}
                         value={reorderQuests.unclaimedSubsort}
                         selectionMode="single"
@@ -184,7 +184,7 @@ export function ReorderQuestsSetting(): JSX.Element {
                 </SettingsRowItem>
                 <SettingsRowItem>
                     <SettingsSelect
-                        label="ترتيب المستلمة:"
+                        label="Claimed Subsort:"
                         options={claimedSubsortManaOptions}
                         value={reorderQuests.claimedSubsort}
                         selectionMode="single"
@@ -202,7 +202,7 @@ export function ReorderQuestsSetting(): JSX.Element {
             <SettingsRow>
                 <SettingsRowItem>
                     <SettingsSelect
-                        label="ترتيب المتجاهلة:"
+                        label="Ignored Subsort:"
                         options={ignoredSubsortManaOptions}
                         value={reorderQuests.ignoredSubsort}
                         selectionMode="single"
@@ -218,7 +218,7 @@ export function ReorderQuestsSetting(): JSX.Element {
                 </SettingsRowItem>
                 <SettingsRowItem>
                     <SettingsSelect
-                        label="ترتيب المنتهية:"
+                        label="Expired Subsort:"
                         options={expiredSubsortManaOptions}
                         value={reorderQuests.expiredSubsort}
                         selectionMode="single"
@@ -237,7 +237,7 @@ export function ReorderQuestsSetting(): JSX.Element {
             <SettingsSubtleSwitch
                 checked={reorderQuests.rememberQuestPageSort}
                 disabled={disabled}
-                label="تذكر خيار الترتيب المختار في صفحة المهمات:"
+                label="Remember the selected Quest page sort:"
                 onChange={checked => updateRememberSetting("rememberQuestPageSort", checked)}
                 bottomSpacing="5"
                 tooltip={{
@@ -248,7 +248,7 @@ export function ReorderQuestsSetting(): JSX.Element {
             <SettingsSubtleSwitch
                 checked={reorderQuests.rememberQuestPageFilters}
                 disabled={disabled}
-                label="تذكر الفلاتر المختارة في صفحة المهمات:"
+                label="Remember the selected Quest page filters:"
                 onChange={checked => updateRememberSetting("rememberQuestPageFilters", checked)}
                 tooltip={{
                     position: "top",

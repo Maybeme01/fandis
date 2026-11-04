@@ -48,16 +48,16 @@ export const settings = definePluginSettings({
     settingsSearch: {
         type: OptionType.COMPONENT,
         component: ErrorBoundary.wrap(SettingsSearch) as any,
-        description: "البحث في إعدادات Questify.",
+        description: "Search Questify settings.",
     },
     questFeatures: {
         type: OptionType.COMPONENT,
         component: ErrorBoundary.wrap(QuestFeaturesSetting) as any,
-        description: "تحديد ميزات المهمات المراد تعطيلها.",
+        description: "Select which Quest features to disable.",
     },
     disableQuestsEverything: {
         type: OptionType.BOOLEAN,
-        description: "تعطيل كافة ميزات المهمات بالكامل.",
+        description: "Disable all Quest features.",
         default: defaultDisableQuestsEverything,
         restartNeeded: true,
         hidden: true,
@@ -71,7 +71,7 @@ export const settings = definePluginSettings({
     },
     disableSponsoredBanner: {
         type: OptionType.BOOLEAN,
-        description: "تعطيل البانر الترويجي في صفحة المهمات.",
+        description: "Disable the sponsored banner on the Quest page.",
         default: defaultDisableSponsoredBanner,
         restartNeeded: true,
         hidden: true,
@@ -113,13 +113,13 @@ export const settings = definePluginSettings({
     },
     allowChangingDangerousSettings: {
         type: OptionType.BOOLEAN,
-        description: "السماح بتعديل الإعدادات الحساسة والمتقدمة.",
+        description: "Allow changing dangerous settings.",
         default: defaultAllowChangingDangerousSettings,
         hidden: true,
     },
     resumeInterruptedQuests: {
         type: OptionType.BOOLEAN,
-        description: "استئناف الإكمال التلقائي للمهمات بعد إعادة التشغيل.",
+        description: "Resume auto-completing Quests after a reload or restart.",
         default: defaultResumeInterruptedQuests,
         restartNeeded: true,
         hidden: true,
@@ -168,7 +168,7 @@ export const settings = definePluginSettings({
     questButton: {
         type: OptionType.COMPONENT,
         component: ErrorBoundary.wrap(QuestButtonSetting) as any,
-        description: "تخصيص زر المهمات في قائمة السيرفرات.",
+        description: "Customize the Quest button in the server list.",
     },
     questButtonDisplay: {
         type: OptionType.CUSTOM,
@@ -287,7 +287,7 @@ export const settings = definePluginSettings({
     questTiles: {
         type: OptionType.COMPONENT,
         component: ErrorBoundary.wrap(QuestTilesSetting) as any,
-        description: "تخصيص مظهر وتنسيق بطاقات المهمات.",
+        description: "Customize the appearance of Quest tiles in the Quests page.",
     },
     questTileUnclaimedColor: {
         type: OptionType.CUSTOM,
@@ -327,7 +327,7 @@ export const settings = definePluginSettings({
     },
     reorderQuests: {
         type: OptionType.COMPONENT,
-        description: "ترتيب المهمات حسب حالتها.",
+        description: "Sort Quests by their status.",
         component: ErrorBoundary.wrap(ReorderQuestsSetting) as any,
     },
     questOrder: {

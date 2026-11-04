@@ -6,9 +6,9 @@
 
 import { QuestRewardType, QuestTaskType } from "@fanplugins/questify/utils/types";
 
-export type QuestButtonDisplayMode = "دائماً" | "unclaimed" | "أبداً";
-export type QuestButtonIndicatorMode = "شريط جانبي" | "شارة رقمية" | "كلاهما" | "بدون";
-export type QuestButtonAction = "open-quests" | "context-menu" | "plugin-settings" | "لا شيء";
+export type QuestButtonDisplayMode = "always" | "unclaimed" | "never";
+export type QuestButtonIndicatorMode = "pill" | "badge" | "both" | "none";
+export type QuestButtonAction = "open-quests" | "context-menu" | "plugin-settings" | "nothing";
 export type QuestTileGradient = "intense" | "default" | "black" | "hide";
 export type QuestOrderStatus = "UNCLAIMED" | "CLAIMED" | "IGNORED" | "EXPIRED";
 export type QuestSubsort = "Recent ASC" | "Recent DESC" | "Expiring ASC" | "Expiring DESC" | "Claimed ASC" | "Claimed DESC";
@@ -31,8 +31,8 @@ export const defaultQuestOrder = ["UNCLAIMED", "CLAIMED", "IGNORED", "EXPIRED"] 
 export const defaultHiddenQuestStatuses: QuestOrderStatus[] = [];
 
 export const defaultQuestButtonBadgeColor = defaultQuestTileUnclaimedColor;
-export const defaultQuestButtonDisplay: QuestButtonDisplayMode = "دائماً";
-export const defaultQuestButtonIndicator: QuestButtonIndicatorMode = "كلاهما";
+export const defaultQuestButtonDisplay: QuestButtonDisplayMode = "always";
+export const defaultQuestButtonIndicator: QuestButtonIndicatorMode = "both";
 export const defaultLeftClickAction: QuestButtonAction = "open-quests";
 export const defaultMiddleClickAction: QuestButtonAction = "plugin-settings";
 export const defaultRightClickAction: QuestButtonAction = "context-menu";
@@ -130,5 +130,3 @@ export const ignoredQuestIDsKey = "questIDs";
 export const defaultIgnoredQuestIDs = { [ignoredQuestIDsKey]: [] } as Record<typeof ignoredQuestIDsKey, string[]>;
 export const defaultResumeQuestIDs = {} as Record<string, // key: UserID
     { timestamp: number, questIDs: string[]; }>;
-
-

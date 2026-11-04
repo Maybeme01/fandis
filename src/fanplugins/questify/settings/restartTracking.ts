@@ -76,7 +76,7 @@ export function promptToRestartIfDirty({ onDecline }: RestartPromptOptions = {})
     }
 
     Alerts.show({
-        title: "إعادة التشغيل مطلوبة",
+        title: "Restart Required",
         body: "A change you've made to Questify's settings requires a restart.",
         confirmText: "Restart",
         cancelText: "Later",

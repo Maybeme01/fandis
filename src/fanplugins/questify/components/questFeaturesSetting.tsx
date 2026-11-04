@@ -39,31 +39,31 @@ interface QuestDisableOption {
 const disableFeatureOptions = [
     {
         key: "disableSponsoredBanner",
-        label: "البانر الترويجي الممول",
+        label: "Sponsored Banner",
     },
     {
         key: "disableRelocationNotices",
-        label: "إشعارات النقل",
+        label: "Relocation Notices",
     },
     {
         key: "disableFriendsListPromo",
-        label: "إعلانات قائمة الأصدقاء",
+        label: "Friends List Promo",
     },
     {
         key: "disableMembersListPromo",
-        label: "شارات قائمة الأعضاء",
+        label: "Members List Promo",
     },
     {
         key: "disableAccountPanelPromo",
-        label: "إعلانات لوحة الحساب",
+        label: "Account Panel Promo",
     },
     {
         key: "disableAccountPanelQuestProgress",
-        label: "شريط تقدم لوحة الحساب",
+        label: "Account Panel Progress",
     },
     {
         key: "disableOrbsAndQuestsBadges",
-        label: "شارات المهمات والأوربز",
+        label: "Quest & Orbs Badges",
     },
 ] as const satisfies readonly QuestDisableOption[];
 
@@ -74,13 +74,13 @@ const disableManaOptions: ManaSelectOption[] = disableFeatureOptions.map(({ key,
 }));
 
 const autoCompleteQuestTypeLabels = {
-    [QuestTaskType.WATCH_VIDEO]: "مشاهدة فيديو",
-    [QuestTaskType.WATCH_VIDEO_ON_MOBILE]: "مشاهدة فيديو (جوال)",
-    [QuestTaskType.ACHIEVEMENT_IN_ACTIVITY]: "إنجاز في نشاط",
-    [QuestTaskType.PLAY_ACTIVITY]: "لعب نشاط",
-    [QuestTaskType.PLAY_ON_DESKTOP]: "لعب على الكمبيوتر",
-    [QuestTaskType.PLAY_ON_PLAYSTATION]: "لعب على بلايستيشن",
-    [QuestTaskType.PLAY_ON_XBOX]: "لعب على إكس بوكس",
+    [QuestTaskType.WATCH_VIDEO]: "Watch Video",
+    [QuestTaskType.WATCH_VIDEO_ON_MOBILE]: "Watch Video on Mobile",
+    [QuestTaskType.ACHIEVEMENT_IN_ACTIVITY]: "Achievement in Activity",
+    [QuestTaskType.PLAY_ACTIVITY]: "Play Activity",
+    [QuestTaskType.PLAY_ON_DESKTOP]: "Play on Desktop",
+    [QuestTaskType.PLAY_ON_PLAYSTATION]: "Play on PlayStation",
+    [QuestTaskType.PLAY_ON_XBOX]: "Play on Xbox",
 } as const satisfies Record<typeof autoCompleteQuestTaskTypes[number], string>;
 
 const autoCompleteQuestTypeOptions = autoCompleteQuestTaskTypes.map(questType => ({
@@ -133,7 +133,7 @@ export function QuestFeaturesSetting(): JSX.Element {
 
     function confirmDangerousSettingChange(body: string, onConfirm: () => void) {
         Alerts.show({
-            title: "هل أنت متأكد؟",
+            title: "Are you sure?",
             body,
             confirmText: "Continue",
             confirmVariant: "critical-primary",
@@ -206,7 +206,7 @@ export function QuestFeaturesSetting(): JSX.Element {
             <SettingsSubheader> Disable Features </SettingsSubheader>
             <SettingsSubtleSwitch
                 checked={questFeatures.disableQuestsEverything}
-                label="تعطيل نظام المهمات بالكامل:"
+                label="Completely disable Quest functionality:"
                 onChange={updateDisableEverything}
                 bottomSpacing="10"
                 tooltip={{
@@ -215,7 +215,7 @@ export function QuestFeaturesSetting(): JSX.Element {
                 }}
             />
             <SettingsSelect
-                label="تعطيل ميزات معينة:"
+                label="Disable specific features:"
                 wrapTags={true}
                 options={disableManaOptions}
                 value={selectedDisableValues}
@@ -238,25 +238,25 @@ export function QuestFeaturesSetting(): JSX.Element {
             <SettingsSubheader> Modify Features </SettingsSubheader>
             <SettingsNotice className={["notice-card-red", questFeatures.disableQuestsEverything ? "dimmed-settings-item" : undefined, questFeatures.allowChangingDangerousSettings ? undefined : "notice-card-solo", "no-bottom-margin"].filter(c => c !== undefined)}>
                 <SettingsParagraph>
-                    من المعروف أن ديسكورد يعاقب مستخدمي الأدوات التي تعدل طريقة إكمال المهمات. تعديل إكمال المهمات يخالف <a href="https://discord.com/safety/platform-manipulation-policy-explainer" target="_blank" rel="noreferrer">شروط الخدمة</a>.
+                    Discord is known to punish users of scripts or plugins that modify the completion of Quests. Modifying the completion of Quests is against Discord's <a href="https://discord.com/safety/platform-manipulation-policy-explainer" target="_blank" rel="noreferrer">Terms of Service</a>.
                 </SettingsParagraph>
                 <br />
                 <SettingsParagraph>
-                    تتراوح العقوبة بين فقدان مؤقت أو دائم للوصول للمهمات ومكافآتها. <strong>كما تسجل العقوبة كمخالفة رسمية على حالة الحساب وتستمر لمدة سنتين.</strong>
+                    The punishment consists of a temporary or permanent loss of access to Quests and their rewards. <strong>The punishment also consists of an account standing violation which lasts 2 years per violation.</strong>
                 </SettingsParagraph>
                 <br />
                 <SettingsParagraph>
-                    بسبب أساليب المراقبة المتعددة لدى ديسكورد، يصعب تجنب الرصد تماماً. المتابعة تكون على مسؤوليتك الخاصة.
+                    Due to the various methods Discord uses to track users, there's no way to realistically evade detection. If you proceed, understand that Discord likely will detect your use at some point.
                 </SettingsParagraph>
                 <br />
                 <SettingsParagraph>
-                    فعّل الخيار التالي للوصول إلى الإعدادات المتقدمة والحساسة على مسؤوليتك.
+                    Use the following toggle to access potentially dangerous settings at your own risk.
                 </SettingsParagraph>
                 <div className={q("settings-button", "allow-dangerous-button")}>
                     <ManaButton
                         text={questFeatures.allowChangingDangerousSettings
-                            ? "إعادة ضبط وتعطيلالسماح بتعديل الإعدادات الخطرة..."
-                            : "السماح بتعديل الإعدادات الخطرة..."}
+                            ? "Reset and disallow changing dangerous settings..."
+                            : "Allow changing dangerous settings..."}
                         variant={questFeatures.allowChangingDangerousSettings ? "critical-secondary" : "critical-primary"}
                         fullWidth={true}
                         disabled={questFeatures.disableQuestsEverything}
@@ -268,45 +268,45 @@ export function QuestFeaturesSetting(): JSX.Element {
                     <SettingsSubtleSwitch
                         disabled={questFeatures.disableQuestsEverything || !questFeatures.allowChangingDangerousSettings}
                         checked={questFeatures.hideNonAutoCompletableQuests}
-                        label="إخفاء المهمات غير القابلة للإكمال التلقائي:"
+                        label="Hide Non Auto-Completable Quests:"
                         onChange={checked => updateModifyValue("hideNonAutoCompletableQuests", checked)}
                         topSpacing="10"
                         bottomSpacing="5"
                         tooltip={{
                             position: "top",
-                            text: "إخفاء المهمات غير المكتملة (سواء المتاحة أو المتجاهلة) إذا كانت لا تدعم مهمة إكمال تلقائي على هذه المنصة ومفعلة في قائمة أنواع المهمات. يُستثنى من ذلك المهمات المستلمة والمنتهية والمكتملة. استخدم خيارات ترتيب الحالات المخفية لإخفائها."
+                            text: "Hide incomplete Quests with an unclaimed or ignored status when no auto-complete task is supported on this platform and enabled in the Quest types dropdown. Claimed, expired, and completed Quests are exempt. Use the Status Order Hidden options to hide those Quests."
                         }}
                     />
                     <SettingsSubtleSwitch
                         disabled={questFeatures.disableQuestsEverything || !questFeatures.allowChangingDangerousSettings}
                         checked={questFeatures.completeVideoQuestsQuicker}
-                        label="تسريع الإكمال التلقائي لمهام الفيديو:"
+                        label="Accelerate Video Quest auto-completion:"
                         onChange={checked => updateModifyValue("completeVideoQuestsQuicker", checked)}
                         bottomSpacing="5"
                         tooltip={{
                             position: "top",
-                            text: "يسمح ديسكورد بإكمال مهام الفيديو بمجرد مرور وقت يقل بمقدار 24 ثانية عن مدة الفيديو منذ تسجيلك في المهمة."
-                                + "\n\nهذا يعني أنه إذا كانت مدة مهمة الفيديو 24 ثانية أو أقل، أو إذا سجلت فيها وعدت لاحقاً لإنهائها، فيمكن إكمالها فوراً."
-                                + "\n\nينطبق هذا الإعداد فقط على الإكمال التلقائي لمهام الفيديو ويعتمد على إعداد الإكمال أدناه. الإكمال اليدوي يتطلب الانتظار طوال المدة."
+                            text: "Discord allows Video Quests to be completed once 24 seconds less than the duration of the video has passed since you enrolled into the Quest."
+                                + "\n\nThis means that if a Video Quest is 24 seconds or less, or if you enroll in a Video Quest and return later to complete it, it can be completed immediately."
+                                + "\n\nThis setting will only apply to auto-completing Video Quests and relies on the auto-complete setting below. Manually completing Video Quests will still require waiting the full duration and is not dependent on enrollment time."
                         }}
                     />
                     <SettingsSubtleSwitch
                         disabled={questFeatures.disableQuestsEverything || !questFeatures.allowChangingDangerousSettings}
                         checked={questFeatures.preventVideoQuestsPausing}
-                        label="منع إيقاف مهام الفيديو مؤقتاً عند فقدان التركيز:"
+                        label="Prevent Video Quests from pausing when losing focus:"
                         onChange={checked => updateModifyValue("preventVideoQuestsPausing", checked)}
                         bottomSpacing="5"
                         tooltip={{
                             position: "top",
-                            text: "يفرض ديسكورد البقاء داخل نافذة التطبيق لتشغيل فيديوهات المهام واستمرارها."
-                                + "\n\nيمنع هذا الخيار إيقاف الفيديو مؤقتاً ويتيح استمرار التقدم بشكل طبيعي حتى عند الانتقال لنوافذ أخرى."
-                                + "\n\nينطبق هذا الإعداد فقط على المشاهدة اليدوية لمهام الفيديو."
+                            text: "Discord forces you to be tabbed into the client for Video Quests to play their video."
+                                + "\n\nThis setting prevents the video from pausing and allows completion to progress as normal."
+                                + "\n\nThis setting applies only to manually completing Video Quests."
                         }}
                     />
                     <SettingsSubtleSwitch
                         disabled={questFeatures.disableQuestsEverything || !questFeatures.allowChangingDangerousSettings}
                         checked={questFeatures.makeMobileVideoQuestsDesktopCompatible}
-                        label="إتاحة إكمال بعض مهام الفيديو المخصصة للجوال على الكمبيوتر:"
+                        label="Make some mobile-only Video Quests completable on desktop:"
                         onChange={checked => updateModifyValue("makeMobileVideoQuestsDesktopCompatible", checked)}
                         bottomSpacing="5"
                         tooltip={{
@@ -319,29 +319,29 @@ export function QuestFeaturesSetting(): JSX.Element {
                     <SettingsSubtleSwitch
                         disabled={questFeatures.disableQuestsEverything || !questFeatures.allowChangingDangerousSettings}
                         checked={questFeatures.autoCompleteQuestsSimultaneously}
-                        label="إكمال المهمات في آن واحد بدلاً من التتابع:"
+                        label="Auto-complete Quests simultaneously rather than sequentially:"
                         onChange={checked => updateModifyValue("autoCompleteQuestsSimultaneously", checked)}
                         bottomSpacing="5"
                         tooltip={{
                             position: "top",
-                            text: "افتراضياً، يتم إدراج المهمات المتعددة في قائمة انتظار لتُنجز واحدة تلو الأخرى بالترتيب."
-                                + "\n\nيتيح هذا الخيار تشغيل كافة المهمات القابلة للإكمال في نفس الوقت بشكل متزامن."
-                                + "\n\nينطبق هذا الخيار فقط على الإكمال التلقائي ويعتمد على تفعيل الإعداد أدناه."
+                            text: "By default, attempting to auto-complete multiple Quests will queue them to be completed in order."
+                                + "\n\nThis setting will alternatively allow all auto-complete Quests to run at the same time."
+                                + "\n\nThis setting will only apply to auto-completing Quests and relies on the auto-complete setting below."
                         }}
                     />
                     <SettingsSubtleSwitch
                         disabled={questFeatures.disableQuestsEverything || !questFeatures.allowChangingDangerousSettings}
                         checked={questFeatures.resumeInterruptedQuests}
-                        label="استئناف الإكمال التلقائي المنقطع بعد إعادة التشغيل:"
+                        label="Resume interrupted auto-completions after a reload or restart:"
                         onChange={checked => updateModifyValue("resumeInterruptedQuests", checked)}
                         bottomSpacing="5"
                         tooltip={{
                             position: "top",
-                            text: "يستأنف هذا الخيار تلقائياً أي عمليات إكمال منقطعة بسبب إعادة تشغيل ديسكورد، بما في ذلك إعادة جدولة المهمات التي كانت في قائمة الانتظار ولم تبدأ بعد."
+                            text: "This setting will automatically resume any interrupted auto-completions caused by reloads or restarts, including requeuing Quests which had yet to start auto-completing but had been queued."
                         }}
                     />
                     <SettingsSelect
-                        label="إكمال أنواع محددة من المهمات تلقائياً:"
+                        label="Auto-complete specific Quest types:"
                         labelClassName="margin-top-9"
                         wrapTags={true}
                         options={autoCompleteQuestTypeManaOptions}
@@ -354,13 +354,13 @@ export function QuestFeaturesSetting(): JSX.Element {
                         tooltip={{
                             position: "top",
                             wider: true,
-                            text: "مهام مشاهدة الفيديو على الجوال تعمل فقط مع المهام التي تقبل التسجيل من الكمبيوتر. إذا كانت المهمة محصورة في التسجيل عبر الجوال، فيجب التسجيل فيها من هاتفك أولاً ثم تحديث المهمات على الكمبيوتر."
-                                + "\n\nترسل مهام الفيديو عادة سجل تتبع (Stack Trace) مع تقارير التقدم، مما يمكن ديسكورد من التحقق من الدوال المستدعاة. يقوم Questify بمسح هذا السجل، لكن غيابه التام قد يكون ملحوظاً أيضاً."
-                                + "\n\nمهام اللعب على الكمبيوتر أو بلايستيشن أو إكس بوكس والأنشطة مدعومة فقط في تطبيق ديسكورد المكتبي الرسمي؛ التطبيقات الخارجية والمعدلة لا تدعم هذه الأنواع بسبب قيود ديسكورد."
-                                + "\n\nترسل مهام الألعاب بصمة رقمية للعبة مع نبضات التحقق (Heartbeat). يترك Questify هذه القيمة فارغة لعدم إمكانية تزييفها بدقة، لكن غيابها قد يلفت الانتباه."
-                                + "\n\nمهام إنجازات الأنشطة لا تكتمل تلقائياً إلا فورياً في وقتها، وقد تغلق هذه الطريقة في أي وقت من قِبل ديسكورد."
-                                + "\n\nيتم الإكمال التلقائي بالنقر على زر المهمة في صفحة المهمات، وتُنجز حسب ترتيب طابور الانتظار ما لم يتم تفعيل خيار الإنجاز المتزامن أعلاه."
-                                + "\n\nالإكمال التلقائي هو الخيار الأكثر حساسية وخطورة بين الإعدادات المتاحة. تفعيله واستخدامه يكون على مسؤوليتك الخاصة بالكامل."
+                            text: "Watch Video on Mobile Quests will only work on mobile Quests which are enrollable on desktop. If a Quest is locked to enrollment on mobile, you must first enroll in it on your mobile device before returning to desktop and refreshing your Quests."
+                                + "\n\nAll video related Quests usually send a stack trace with the progress reports. This means Discord would know exactly which functions were called, and can therefore verify that their own functions initiated the progress. Questify erases this stack trace, but the absence of it will be just as telling as its presence."
+                                + "\n\nPlay on Desktop, Play on PlayStation, Play on Xbox, and Play Activity Quests are only available on official desktop clients due to a limitation imposed by Discord. 3rd party clients such as web extensions, Vesktop, Equibop, and others, do not support auto-completing these Quest types."
+                                + "\n\nAll game related Quests usually send a game fingerprint with the heartbeat reports. This means Discord can use data from tens of thousands of users to determine whether other users are likely using a real game or are emulating the executable. There is no reasonable method to spoof this value, so Questify leaves it blank, but the absence of it will be just as telling as poorly spoofing the value."
+                                + "\n\nAchievement in Activity Quests can only be auto-completed by completing them immediately. This method may be patched at any time."
+                                + "\n\nAuto-completing Quests is done by clicking their respective buttons on the Quests page. Quests will be auto-completed in the order they were queued, unless the simultaneous completion setting is enabled above."
+                                + "\n\nAuto-completing Quests is the riskiest dangerous setting available. Enable it at your own risk."
                         }}
                     />
                 </div>
@@ -368,4 +368,3 @@ export function QuestFeaturesSetting(): JSX.Element {
         </SettingsCard>
     );
 }
-

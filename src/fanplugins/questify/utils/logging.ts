@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -69,7 +69,7 @@ export function notifyQuestCompletion(quest?: Quest): void {
     if (!quest) return;
 
     showNotification({
-        title: "اكتملت المهمة!",
+        title: "Quest Completed!",
         body: `The ${normalizeQuestName(quest)} Quest has completed.`,
         dismissOnClick: true,
         onClick: () => NavigationRouter.transitionTo(`${QUEST_PAGE}#${quest.id}`)

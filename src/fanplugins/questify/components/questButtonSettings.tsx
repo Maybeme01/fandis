@@ -22,44 +22,44 @@ interface QuestButtonIncludedTypeOption {
 }
 
 const questButtonDisplayOptions = [
-    { label: "دائماً", value: "always" },
-    { label: "المتاحة", value: "unclaimed" },
-    { label: "أبداً", value: "never" },
+    { label: "Always", value: "always" },
+    { label: "Unclaimed", value: "unclaimed" },
+    { label: "Never", value: "never" },
 ] as const satisfies readonly { label: string; value: QuestButtonDisplayMode; }[];
 
 const questButtonIndicatorOptions = [
-    { label: "شريط جانبي", value: "pill" },
-    { label: "شارة رقمية", value: "badge" },
-    { label: "كلاهما", value: "both" },
-    { label: "بدون", value: "none" },
+    { label: "Pill", value: "pill" },
+    { label: "Badge", value: "badge" },
+    { label: "Both", value: "both" },
+    { label: "None", value: "none" },
 ] as const satisfies readonly { label: string; value: QuestButtonIndicatorMode; }[];
 
 const questButtonClickOptions = [
-    { label: "فتح المهمات", value: "open-quests" },
-    { label: "قائمة الخيارات", value: "context-menu" },
-    { label: "إعدادات الإضافة", value: "plugin-settings" },
-    { label: "لا شيء", value: "nothing" },
+    { label: "Open Quests", value: "open-quests" },
+    { label: "Context Menu", value: "context-menu" },
+    { label: "Plugin Settings", value: "plugin-settings" },
+    { label: "Nothing", value: "nothing" },
 ] as const satisfies readonly { label: string; value: QuestButtonAction; }[];
 
 const questButtonRewardTypeOptions = [
-    { label: "أوربز (Orbs)", value: QuestRewardType.VIRTUAL_CURRENCY },
-    { label: "أكواد نيترو", value: QuestRewardType.FRACTIONAL_PREMIUM },
-    { label: "أكواد مكافآت", value: QuestRewardType.REWARD_CODE },
-    { label: "عناصر داخل الألعاب", value: QuestRewardType.IN_GAME },
-    { label: "مقتنيات الملف الشخصي", value: QuestRewardType.COLLECTIBLE },
+    { label: "Orbs", value: QuestRewardType.VIRTUAL_CURRENCY },
+    { label: "Nitro Codes", value: QuestRewardType.FRACTIONAL_PREMIUM },
+    { label: "Reward Codes", value: QuestRewardType.REWARD_CODE },
+    { label: "In Game Items", value: QuestRewardType.IN_GAME },
+    { label: "Profile Collectibles", value: QuestRewardType.COLLECTIBLE },
 ] as const satisfies readonly QuestButtonIncludedTypeOption[];
 
 const questButtonQuestTypeOptions = [
-    { label: "مشاهدة فيديو", value: QuestTaskType.WATCH_VIDEO },
-    { label: "مشاهدة فيديو (جوال)", value: QuestTaskType.WATCH_VIDEO_ON_MOBILE },
-    { label: "إنجاز في نشاط", value: QuestTaskType.ACHIEVEMENT_IN_ACTIVITY },
-    { label: "إنجاز في لعبة", value: QuestTaskType.ACHIEVEMENT_IN_GAME },
-    { label: "لعب نشاط", value: QuestTaskType.PLAY_ACTIVITY },
-    { label: "لعب على الكمبيوتر", value: QuestTaskType.PLAY_ON_DESKTOP },
-    { label: "لعب على الكمبيوتر (V2)", value: QuestTaskType.PLAY_ON_DESKTOP_V2 },
-    { label: "بث على الكمبيوتر", value: QuestTaskType.STREAM_ON_DESKTOP },
-    { label: "لعب على بلايستيشن", value: QuestTaskType.PLAY_ON_PLAYSTATION },
-    { label: "لعب على إكس بوكس", value: QuestTaskType.PLAY_ON_XBOX },
+    { label: "Watch Video", value: QuestTaskType.WATCH_VIDEO },
+    { label: "Watch Video on Mobile", value: QuestTaskType.WATCH_VIDEO_ON_MOBILE },
+    { label: "Achievement in Activity", value: QuestTaskType.ACHIEVEMENT_IN_ACTIVITY },
+    { label: "Achievement in Game", value: QuestTaskType.ACHIEVEMENT_IN_GAME },
+    { label: "Play Activity", value: QuestTaskType.PLAY_ACTIVITY },
+    { label: "Play on Desktop", value: QuestTaskType.PLAY_ON_DESKTOP },
+    { label: "Play on Desktop V2", value: QuestTaskType.PLAY_ON_DESKTOP_V2 },
+    { label: "Stream on Desktop", value: QuestTaskType.STREAM_ON_DESKTOP },
+    { label: "Play on PlayStation", value: QuestTaskType.PLAY_ON_PLAYSTATION },
+    { label: "Play on Xbox", value: QuestTaskType.PLAY_ON_XBOX },
 ] as const satisfies readonly QuestButtonIncludedTypeOption[];
 
 function toManaOptions<T extends string | number>(options: readonly { label: string; value: T; }[]): ManaSelectOption[] {
@@ -159,7 +159,7 @@ export function QuestButtonSetting(): JSX.Element {
             <SettingsRow>
                 <SettingsRowItem>
                     <SettingsSelect
-                        label="عند النقر باليسار:"
+                        label="Left Click Action:"
                         options={questButtonClickManaOptions}
                         value={questButton.questButtonLeftClickAction}
                         selectionMode="single"
@@ -170,7 +170,7 @@ export function QuestButtonSetting(): JSX.Element {
                 </SettingsRowItem>
                 <SettingsRowItem>
                     <SettingsSelect
-                        label="عند النقر بالزر الأوسط:"
+                        label="Middle Click Action:"
                         options={questButtonClickManaOptions}
                         value={questButton.questButtonMiddleClickAction}
                         selectionMode="single"
@@ -181,7 +181,7 @@ export function QuestButtonSetting(): JSX.Element {
                 </SettingsRowItem>
                 <SettingsRowItem>
                     <SettingsSelect
-                        label="عند النقر باليمين:"
+                        label="Right Click Action:"
                         options={questButtonClickManaOptions}
                         value={questButton.questButtonRightClickAction}
                         selectionMode="single"
@@ -194,7 +194,7 @@ export function QuestButtonSetting(): JSX.Element {
             <SettingsRow>
                 <SettingsRowItem>
                     <SettingsSelect
-                        label="ظهور الزر:"
+                        label="Button Visibility:"
                         options={questButtonDisplayManaOptions}
                         value={questButton.questButtonDisplay}
                         selectionMode="single"
@@ -211,7 +211,7 @@ export function QuestButtonSetting(): JSX.Element {
                 </SettingsRowItem>
                 <SettingsRowItem>
                     <SettingsSelect
-                        label="مؤشر المهمات المتاحة:"
+                        label="Unclaimed Indicator:"
                         options={questButtonIndicatorManaOptions}
                         value={questButton.questButtonIndicator}
                         selectionMode="single"
@@ -229,7 +229,7 @@ export function QuestButtonSetting(): JSX.Element {
                 </SettingsRowItem>
                 <SettingsRowItem>
                     <SettingsColorPicker
-                        label="لون الشارة:"
+                        label="Badge Color:"
                         className="quest-button-color-picker"
                         color={questButton.questButtonBadgeColor}
                         disabled={disabled}
@@ -240,7 +240,7 @@ export function QuestButtonSetting(): JSX.Element {
             </SettingsRow>
             <SettingsSubheader> Quest Relevancy </SettingsSubheader>
             <SettingsSelect
-                label="أنواع المكافآت المضمنة:"
+                label="Included Reward Types:"
                 wrapTags={true}
                 options={questButtonRewardTypeManaOptions}
                 value={selectedRewardTypes}
@@ -256,7 +256,7 @@ export function QuestButtonSetting(): JSX.Element {
                 }}
             />
             <SettingsSelect
-                label="أنواع المهمات المضمنة:"
+                label="Included Quest Types:"
                 labelClassName="margin-top-9"
                 wrapTags={true}
                 options={questButtonQuestTypeManaOptions}

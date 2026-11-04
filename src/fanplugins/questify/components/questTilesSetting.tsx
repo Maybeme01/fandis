@@ -23,10 +23,10 @@ const QuestTile = findComponentByCodeLazy(".rowIndex,trackGuildAndChannelMetadat
 }>;
 
 const gradientOptions = [
-    { label: "تدرج لوني قوي", value: "intense" },
-    { label: "تدرج لوني افتراضي", value: "default" },
-    { label: "تدرج أسود خفيف", value: "black" },
-    { label: "بدون تدرج", value: "hide" },
+    { label: "Intense Restyle Gradient", value: "intense" },
+    { label: "Default Restyle Gradient", value: "default" },
+    { label: "Subtle Black Gradient", value: "black" },
+    { label: "No Gradient", value: "hide" },
 ] as const satisfies readonly { label: string, value: QuestTileGradient; }[];
 
 const gradientManaOptions: ManaSelectOption[] = gradientOptions.map(({ label, value }) => ({
@@ -36,8 +36,8 @@ const gradientManaOptions: ManaSelectOption[] = gradientOptions.map(({ label, va
 }));
 
 const preloadManaOptions: ManaSelectOption[] = [
-    { id: "true", label: "تحميل كافة صور المهمات فور فتح الصفحة", value: "true" },
-    { id: "false", label: "تحميل صور المهمات أثناء التمرير فقط", value: "false" },
+    { id: "true", label: "Load All Quest Assets On Page Load", value: "true" },
+    { id: "false", label: "Load Quest Assets During Page Scroll", value: "false" },
 ];
 
 type QuestTileColorKey =
@@ -55,22 +55,22 @@ interface QuestTileColorOption {
 const colorOptions = [
     {
         key: "questTileUnclaimedColor",
-        label: "المتاحة",
+        label: "Unclaimed",
         defaultValue: defaultQuestTileUnclaimedColorSetting,
     },
     {
         key: "questTileClaimedColor",
-        label: "المستلمة",
+        label: "Claimed",
         defaultValue: defaultQuestTileClaimedColorSetting,
     },
     {
         key: "questTileIgnoredColor",
-        label: "المتجاهلة",
+        label: "Ignored",
         defaultValue: defaultQuestTileIgnoredColorSetting,
     },
     {
         key: "questTileExpiredColor",
-        label: "المنتهية",
+        label: "Expired",
         defaultValue: defaultQuestTileExpiredColorSetting,
     },
 ] as const satisfies readonly QuestTileColorOption[];
@@ -201,7 +201,7 @@ export function QuestTilesSetting(): JSX.Element {
             <SettingsRow className="quest-tile-behavior-row">
                 <SettingsRowItem className="quest-tile-gradient-row-item">
                     <SettingsSelect
-                        label="نمط التدرج:"
+                        label="Gradient Style:"
                         options={gradientManaOptions}
                         value={questTiles.questTileGradient}
                         selectionMode="single"
@@ -219,7 +219,7 @@ export function QuestTilesSetting(): JSX.Element {
                 </SettingsRowItem>
                 <SettingsRowItem className="quest-tile-preload-row-item">
                     <SettingsSelect
-                        label="تحميل الوسائط مسبقاً:"
+                        label="Asset Preload:"
                         options={preloadManaOptions}
                         value={String(questTiles.questTilePreload)}
                         selectionMode="single"

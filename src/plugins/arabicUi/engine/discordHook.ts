@@ -207,3 +207,4 @@ export function uninstallDiscordHook() {
     hooked = false;
     logger.info("Discord intl hook removed");
 }
+
