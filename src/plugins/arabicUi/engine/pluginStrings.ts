@@ -122,3 +122,4 @@ export function removePluginOverlay() {
     overlayActive = false;
     logger.info("Plugin overlay off");
 }
+

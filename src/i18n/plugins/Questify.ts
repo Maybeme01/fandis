@@ -1,14 +1,34 @@
-/*
- * Vencord, a Discord client mod
- * Copyright (c) 2026 Vendicated and contributors
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
-
-import { definePluginI18n } from "@utils/i18n/types";
-
-export default definePluginI18n({
-    "description": {
-        "ar": "يُحسّن ميزات المهام، يُزيل المزعجات، أو يُخفي المهام كلياً.",
-        "en": "Improves quest features, removes annoyances, or hides quests entirely."
+﻿export default {
+    name: "Questify",
+    description: "تحسين ميزات مهمات ديسكورد، تعطيل الإعلانات المزعجة، أو إخفاء المهمات بالكامل.",
+    settings: {
+        disableQuestsEverything: {
+            name: "تعطيل نظام المهمات بالكامل",
+            description: "إخفاء صفحة المهمات وجميع عناصرها من ديسكورد ومنع جلب بياناتها."
+        },
+        questButtonDisplay: {
+            name: "زر المهمات في شريط السيرفرات",
+            description: "التحكم في ظهور زر المهمات المخصص في الشريط الجانبي."
+        },
+        notifyOnQuestComplete: {
+            name: "إشعار عند اكتمال المهمة",
+            description: "إظهار إشعار فوري عند انتهاء أي مهمة بنجاح."
+        },
+        preventVideoQuestsPausing: {
+            name: "منع إيقاف مهام الفيديو مؤقتاً",
+            description: "استمرار تشغيل الفيديو حتى عند الانتقال لنافذة أو تطبيق آخر."
+        },
+        disableSponsoredBanner: {
+            name: "إخفاء البانر الإعلاني الممول",
+            description: "إخفاء البانر الإعلاني في أعلى صفحة المهمات."
+        },
+        disableFriendsListPromo: {
+            name: "إخفاء إعلانات قائمة الأصدقاء",
+            description: "إزالة خانات المهام الترويجية من قسم النشاط الحالي للأصدقاء."
+        },
+        disableMembersListPromo: {
+            name: "إخفاء شارات المهام من قائمة الأعضاء",
+            description: "إخفاء أيقونة المهمة الترويجية المجاورة لأسماء الأعضاء في السيرفرات."
+        }
     }
-});
+};
