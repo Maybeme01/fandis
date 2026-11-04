@@ -35,7 +35,7 @@ import { getEntryPoint, isPluginFile, parseDevs, parseFanCordDevs, parseFile, Pl
     } else if (vencordFlag) {
         dirs = ["src/plugins", "src/plugins/_core"];
     } else {
-        dirs = ["src/plugins", "src/plugins/_core", "src/equicordplugins/_core", "src/equicordplugins", "src/fanplugins"];`n        dirs.push("src/fanplugins");
+        dirs = ["src/plugins", "src/plugins/_core", "src/equicordplugins/_core", "src/equicordplugins", "src/fanplugins"];
     }
 
     const outputPath = args.find(a => !a.startsWith("--")) ?? null;
@@ -61,4 +61,5 @@ import { getEntryPoint, isPluginFile, parseDevs, parseFanCordDevs, parseFile, Pl
         console.log(data);
     }
 })();
+
 
