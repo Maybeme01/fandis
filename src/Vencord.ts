@@ -200,7 +200,7 @@ init();
 document.addEventListener("DOMContentLoaded", () => {
     startAllPlugins(StartAt.DOMContentLoaded);
 
-    if (IS_DISCORD_DESKTOP && Settings.nativeTitleBar) {
+    if (IS_DISCORD_DESKTOP && (Settings.winNativeTitleBar || (Settings as any).nativeTitleBar)) {
         enableStyle(nativeTitleBarStyles);
     }
 }, { once: true });

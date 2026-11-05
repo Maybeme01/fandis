@@ -107,7 +107,7 @@ export function parseFanCordDevs() {
     for (const child of file.getChildAt(0).getChildren()) {
         if (!isVariableStatement(child)) continue;
 
-        const devsDeclaration = child.declarationList.declarations.find(d => hasName(d, "FanCordDevs"));
+        const devsDeclaration = child.declarationList.declarations.find(d => hasName(d, "FanCordDevs") || hasName(d, "EquicordDevs"));
         if (!devsDeclaration?.initializer || !isCallExpression(devsDeclaration.initializer)) continue;
 
         const value = devsDeclaration.initializer.arguments[0];
@@ -165,8 +165,21 @@ export async function parseFile(fileName: string) {
             switch (key) {
                 case "name":
                 case "description":
-                    if (!isStringLiteral(value)) throw fail(`${key} is not a string literal`);
-                    data[key] = value.text;
+                    if (isStringLiteral(value)) {
+                        data[key] = value.text;
+                    } else if (isCallExpression(value)) {
+                        const secondArg = value.arguments[1];
+                        const firstArg = value.arguments[0];
+                        if (secondArg && isStringLiteral(secondArg)) {
+                            data[key] = secondArg.text;
+                        } else if (firstArg && isStringLiteral(firstArg)) {
+                            data[key] = firstArg.text;
+                        } else {
+                            data[key] = "";
+                        }
+                    } else {
+                        throw fail(`${key} is not a string literal`);
+                    }
                     break;
                 case "patches":
                     data.hasPatches = true;
@@ -204,10 +217,36 @@ export async function parseFile(fileName: string) {
                 case "authors":
                     if (!isArrayLiteralExpression(value)) throw fail("authors is not an array literal");
                     data.authors = value.elements.map(e => {
-                        if (!isPropertyAccessExpression(e)) throw fail("authors array contains non-property access expressions");
-                        const d = devs[getName(e)!] || FanCordDevs[getName(e)!];
-                        if (!d) throw fail(`couldn't look up author ${getName(e)}`);
-                        return d;
+                        if (isObjectLiteralExpression(e)) {
+                            const nameProp = getObjectProp(e, "name");
+                            const idProp = getObjectProp(e, "id");
+                            let authorName = "Unknown";
+                            let authorId = "0";
+                            if (nameProp) {
+                                if (isStringLiteral(nameProp)) {
+                                    authorName = nameProp.text;
+                                } else if (isCallExpression(nameProp)) {
+                                    const secondArg = nameProp.arguments[1];
+                                    const firstArg = nameProp.arguments[0];
+                                    if (secondArg && isStringLiteral(secondArg)) authorName = secondArg.text;
+                                    else if (firstArg && isStringLiteral(firstArg)) authorName = firstArg.text;
+                                }
+                            }
+                            if (idProp) {
+                                if (idProp.kind === SyntaxKind.BigIntLiteral) {
+                                    authorId = (idProp as BigIntLiteral).text.replace(/n$/, "");
+                                } else if (idProp.kind === SyntaxKind.NumericLiteral) {
+                                    authorId = (idProp as any).text;
+                                }
+                            }
+                            return { name: authorName, id: authorId };
+                        }
+                        if (isPropertyAccessExpression(e)) {
+                            const propName = getName(e);
+                            const d = (propName && (devs[propName] || FanCordDevs[propName])) || { name: propName || "Unknown", id: "0" };
+                            return d;
+                        }
+                        return { name: "Unknown", id: "0" };
                     });
                     break;
                 case "tags":

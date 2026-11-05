@@ -112,3 +112,5 @@ export const ServerListItem = ErrorBoundary.wrap(function ServerListItem({ id, i
         </div>
     );
 }, { noop: true });
+
+export default ServerListItem;

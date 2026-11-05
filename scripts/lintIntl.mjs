@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, sep } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
@@ -18,7 +18,9 @@ let errors = 0;
 let warnings = 0;
 
 for (const rel of tracked) {
-    const text = readFileSync(join(ROOT, rel), "utf8");
+    const file = join(ROOT, rel);
+    if (!existsSync(file)) continue;
+    const text = readFileSync(file, "utf8");
     if (!text.includes("#{intl::") && !text.includes("find:") && !text.includes("match:")) continue;
 
     const lines = text.split("\n");

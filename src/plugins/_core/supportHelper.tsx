@@ -328,15 +328,15 @@ export default definePlugin({
 
     commands: [
         {
-            name: "Equicord-debug",
-            description: "Send Equicord debug info",
+            name: "fancord-debug",
+            description: "Send FanCord debug info",
             // @ts-ignore
             predicate: ctx => isAnyPluginDev(UserStore.getCurrentUser()?.id) || isEquicordGuild(ctx?.guild?.id, true),
             execute: async () => ({ content: await generateDebugInfoMessage() })
         },
         {
-            name: "Equicord-plugins",
-            description: "Send Equicord plugin list",
+            name: "fancord-plugins",
+            description: "Send FanCord plugin list",
             // @ts-ignore
             predicate: ctx => isAnyPluginDev(UserStore.getCurrentUser()?.id) || isEquicordGuild(ctx?.guild?.id, true),
             execute: async () => {
@@ -349,6 +349,36 @@ export default definePlugin({
                     try {
                         await uploadPluginListFile(channelId, pluginList.fileContent, pluginList.filename);
                         return { content: "" }; // Empty return since file was already sent
+                    } catch (e) {
+                        new Logger("SupportHelper").error("Failed to upload plugin list:", e);
+                        return { content: "Failed to upload plugin list file. Please try again." };
+                    }
+                }
+                return { content: "Unable to generate plugin list." };
+            }
+        },
+        {
+            name: "Equicord-debug",
+            description: "Send FanCord debug info (alias)",
+            // @ts-ignore
+            predicate: ctx => isAnyPluginDev(UserStore.getCurrentUser()?.id) || isEquicordGuild(ctx?.guild?.id, true),
+            execute: async () => ({ content: await generateDebugInfoMessage() })
+        },
+        {
+            name: "Equicord-plugins",
+            description: "Send FanCord plugin list (alias)",
+            // @ts-ignore
+            predicate: ctx => isAnyPluginDev(UserStore.getCurrentUser()?.id) || isEquicordGuild(ctx?.guild?.id, true),
+            execute: async () => {
+                const channelId = SelectedChannelStore.getChannelId();
+                const pluginList = generatePluginList();
+
+                if (typeof pluginList === "string") {
+                    return { content: pluginList };
+                } else if (pluginList && typeof pluginList === "object" && pluginList.uploadFile) {
+                    try {
+                        await uploadPluginListFile(channelId, pluginList.fileContent, pluginList.filename);
+                        return { content: "" };
                     } catch (e) {
                         new Logger("SupportHelper").error("Failed to upload plugin list:", e);
                         return { content: "Failed to upload plugin list file. Please try again." };
@@ -461,14 +491,19 @@ export default definePlugin({
         }
 
         if (EquicordSupport && isSupportChannel(props.channel.id) && PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel)) {
-            if (props.message.content.includes("/Equicord-debug") || props.message.content.includes("/Equicord-plugins")) {
+            if (
+                props.message.content.includes("/fancord-debug") ||
+                props.message.content.includes("/Equicord-debug") ||
+                props.message.content.includes("/fancord-plugins") ||
+                props.message.content.includes("/Equicord-plugins")
+            ) {
                 buttons.push(
                     <Button
                         key="vc-dbg"
                         variant="secondary"
                         onClick={async () => sendMessage(props.channel.id, { content: await generateDebugInfoMessage() })}
                     >
-                        Run /Equicord-debug
+                        Run /fancord-debug
                     </Button>,
                     <Button
                         key="vc-plg-list"
@@ -488,7 +523,7 @@ export default definePlugin({
                             }
                         }}
                     >
-                        Run /Equicord-plugins
+                        Run /fancord-plugins
                     </Button>
                 );
             }
@@ -506,7 +541,7 @@ export default definePlugin({
 
         return (
             <Card variant="warning" className={Margins.top8} defaultPadding>
-                Please do not private message Equicord & Vencord plugin developers for support!
+                Please do not private message FanCord plugin developers for support!
                 <br />
                 Instead, use the support channel: {Parser.parse("https://discord.com/channels/1173279886065029291/1297590739911573585")}
                 {!ChannelStore.getChannel(SUPPORT_CHANNEL_ID) && " (Click the link to join)"}

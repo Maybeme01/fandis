@@ -5,7 +5,7 @@
  * Located in: src/fanplugins/voiceLogger/index.tsx
  */
 
-import { addChannelToolbarButton, HeaderBarButton, removeChannelToolbarButton } from "@api/HeaderBar";
+import { HeaderBarButton } from "@api/HeaderBar";
 import { showNotification } from "@api/Notifications";
 import { definePluginSettings, Settings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
@@ -1716,8 +1716,6 @@ export default definePlugin({
         loadLogs();
         setupNativePanel();
 
-        addChannelToolbarButton("VoiceLogger", () => React.createElement(LogsHeaderButton, null));
-
         this.keyHandler = (e: KeyboardEvent) => {
             if ((e.ctrlKey && e.altKey && (e.key === "v" || e.key === "V")) ||
                 (e.ctrlKey && e.shiftKey && (e.key === "v" || e.key === "V"))) {
@@ -1729,7 +1727,6 @@ export default definePlugin({
     },
 
     stop() {
-        removeChannelToolbarButton("VoiceLogger");
         if (this.keyHandler) {
             window.removeEventListener("keydown", this.keyHandler);
             this.keyHandler = null;

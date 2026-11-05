@@ -78,7 +78,7 @@ const STORE_KEY = "Esharq_Backpack_pinned_v2";
 const STEALTH_KEY = "Esharq_Backpack_stealth";
 
 /** صندوق أدوات إشراق يبقى ظاهراً افتراضياً: هو باب الإعدادات كلّه. */
-const DEFAULT_PINNED = ["headerBar:EquicordToolbox"];
+const DEFAULT_PINNED = ["headerBar:EquicordToolbox", "headerBar:VoiceLogger"];
 
 // ─── الشعار ───────────────────────────────────────────────────────────────────
 
