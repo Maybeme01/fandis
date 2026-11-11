@@ -1,8 +1,7 @@
 /*
- * VoiceLogger Plugin for FanCord
- * Native Discord Theme Integration, Interactive Profiles, Servers & Channels Navigation,
- * In-UI Settings, Target Notifications, Bilingual Support (Arabic & English), RTL/LTR Layouts
- * Located in: src/fanplugins/voiceLogger/index.tsx
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { HeaderBarButton } from "@api/HeaderBar";
@@ -80,7 +79,7 @@ const LOCALES: { ar: LocaleStrings; en: LocaleStrings } = {
         noLogsTitle: "لا توجد أي سجلات حالياً",
         noLogsSearch: "لا توجد نتائج مطابقة لبحثك",
         noLogsEmpty: "سيتم تسجيل دخول وخروج الأعضاء من الرومات هنا تلقائياً",
-        noLogsFriendsOnly: (count) => `مراقبة الأصدقاء فقط مفعّلة (لديك ${count} صديق متعرف عليهم). بانتظار دخول أحدهم لروم صوتي...`,
+        noLogsFriendsOnly: count => `مراقبة الأصدقاء فقط مفعّلة (لديك ${count} صديق متعرف عليهم). بانتظار دخول أحدهم لروم صوتي...`,
         noLogsTargetOnly: "مراقبة أشخاص محددين بالـ ID مفعّلة. بانتظار نشاط منهم...",
         noLogsPaused: "مراقبة الرومات الصوتية متوقفة حالياً من الإعدادات",
         joinText: "انضمام",
@@ -132,7 +131,7 @@ const LOCALES: { ar: LocaleStrings; en: LocaleStrings } = {
         noLogsTitle: "No voice logs available",
         noLogsSearch: "No matching results for your search",
         noLogsEmpty: "Members joining or leaving voice channels will be recorded here automatically",
-        noLogsFriendsOnly: (count) => `Friends-only filter active (${count} friends detected). Waiting for friend voice activity...`,
+        noLogsFriendsOnly: count => `Friends-only filter active (${count} friends detected). Waiting for friend voice activity...`,
         noLogsTargetOnly: "Target user IDs filter active. Waiting for voice activity from specified users...",
         noLogsPaused: "Voice monitoring is currently paused in settings",
         joinText: "Joined",
@@ -203,13 +202,13 @@ export const settings = definePluginSettings({
                     panel.style.right = "24px";
                     panel.style.left = "auto";
                     panel.style.transform = "none";
-                    const t = getStrings();
-                    showNotification({
-                        title: "VoiceLogger",
-                        body: t.resetPosSuccess,
-                        color: "#5865f2"
-                    });
                 }
+                const t = getStrings();
+                showNotification({
+                    title: "VoiceLogger",
+                    body: t.resetPosSuccess,
+                    color: "#5865f2"
+                });
             },
             style: {
                 backgroundColor: "var(--brand-experiment, #5865f2)",
@@ -251,11 +250,11 @@ interface FilterSettings {
 }
 
 let activeFilters: FilterSettings = {
-    masterEnabled: true,
+    masterEnabled: false,
     trackOnlyFriends: false,
     enableTargetUsers: false,
     targetUserIds: "",
-    notifyTargetUsers: true,
+    notifyTargetUsers: false,
     filterSpecificServers: false,
     specificServerIds: ""
 };
@@ -273,42 +272,64 @@ let onWindowMouseUp: (() => void) | null = null;
 
 function loadFilters() {
     try {
-        const savedV5 = localStorage.getItem("fancord_vl_filters_v5");
-        if (savedV5) {
-            activeFilters = { ...activeFilters, ...JSON.parse(savedV5) };
+        localStorage.removeItem("fancord_vl_filters_v5");
+        localStorage.removeItem("fancord_vl_filters_v4");
+
+        const savedV6 = localStorage.getItem("fancord_vl_filters_v6");
+        if (savedV6) {
+            const parsed = JSON.parse(savedV6);
+            activeFilters = {
+                masterEnabled: Boolean(parsed.masterEnabled),
+                trackOnlyFriends: Boolean(parsed.trackOnlyFriends),
+                enableTargetUsers: Boolean(parsed.enableTargetUsers),
+                targetUserIds: typeof parsed.targetUserIds === "string" ? parsed.targetUserIds : "",
+                notifyTargetUsers: Boolean(parsed.notifyTargetUsers),
+                filterSpecificServers: Boolean(parsed.filterSpecificServers && parsed.specificServerIds),
+                specificServerIds: typeof parsed.specificServerIds === "string" ? parsed.specificServerIds : ""
+            };
             return;
         }
 
-        const savedV4 = localStorage.getItem("fancord_vl_filters_v4");
-        if (savedV4) {
-            const parsed = JSON.parse(savedV4);
-            activeFilters.masterEnabled = parsed.masterEnabled ?? true;
-            activeFilters.trackOnlyFriends = parsed.trackOnlyFriends ?? false;
-            activeFilters.enableTargetUsers = parsed.enableTargetUsers ?? false;
-            activeFilters.targetUserIds = parsed.targetUserIds ?? "";
-            activeFilters.notifyTargetUsers = parsed.notifyTargetUsers ?? true;
-            activeFilters.filterSpecificServers = Boolean(parsed.filterSpecificServers && parsed.specificServerIds);
-            activeFilters.specificServerIds = parsed.specificServerIds ?? "";
-            saveFilters();
-        }
-    } catch {}
+        activeFilters = {
+            masterEnabled: false,
+            trackOnlyFriends: false,
+            enableTargetUsers: false,
+            targetUserIds: "",
+            notifyTargetUsers: false,
+            filterSpecificServers: false,
+            specificServerIds: ""
+        };
+        saveFilters();
+    } catch {
+        activeFilters = {
+            masterEnabled: false,
+            trackOnlyFriends: false,
+            enableTargetUsers: false,
+            targetUserIds: "",
+            notifyTargetUsers: false,
+            filterSpecificServers: false,
+            specificServerIds: ""
+        };
+    }
 }
 
 function saveFilters() {
     try {
-        localStorage.setItem("fancord_vl_filters_v5", JSON.stringify(activeFilters));
+        localStorage.setItem("fancord_vl_filters_v6", JSON.stringify(activeFilters));
     } catch {}
 }
 
 function saveLogs() {
     try {
-        localStorage.setItem("fancord_voice_logs_v5", JSON.stringify(logs.slice(-200)));
+        localStorage.setItem("fancord_voice_logs_v6", JSON.stringify(logs.slice(-200)));
     } catch {}
 }
 
 function loadLogs() {
     try {
-        const s = localStorage.getItem("fancord_voice_logs_v5") || localStorage.getItem("fancord_voice_logs_v4");
+        localStorage.removeItem("fancord_voice_logs_v5");
+        localStorage.removeItem("fancord_voice_logs_v4");
+        const s = localStorage.getItem("fancord_voice_logs_v6");
         if (s) logs = JSON.parse(s);
     } catch {}
 }
@@ -392,10 +413,19 @@ function checkIsFriend(userId: string): boolean {
     return false;
 }
 
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 function isTargetUser(userId: string): boolean {
     if (!userId || !activeFilters.targetUserIds) return false;
     const targets = activeFilters.targetUserIds
-        .split(/[, \n]+/)
+        .split(/[,\u060C\s\n]+/)
         .map(id => id.trim())
         .filter(id => id.length > 0);
     return targets.includes(userId);
@@ -410,7 +440,7 @@ function shouldLogEvent(userId: string, guildId?: string): boolean {
     // 2. مراقبة أشخاص محددين بالـ ID فقط
     if (activeFilters.enableTargetUsers) {
         const targets = activeFilters.targetUserIds
-            .split(/[, \n]+/)
+            .split(/[,\u060C\s\n]+/)
             .map(id => id.trim())
             .filter(id => id.length > 0);
         if (targets.length === 0 || !targets.includes(userId)) {
@@ -428,7 +458,7 @@ function shouldLogEvent(userId: string, guildId?: string): boolean {
     // 4. حصر المراقبة في سيرفرات محددة فقط (اختياري)
     if (activeFilters.filterSpecificServers) {
         const allowedGuilds = activeFilters.specificServerIds
-            .split(/[, \n]+/)
+            .split(/[,\u060C\s\n]+/)
             .map(id => id.trim())
             .filter(id => id.length > 0);
         if (allowedGuilds.length === 0 || !guildId || !allowedGuilds.includes(guildId)) {
@@ -1035,7 +1065,7 @@ function setupNativePanel(forceRebuild = false) {
             <div class="fcvl-title-box">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--brand-experiment, #5865f2);"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                 <h3>${t.panelTitle}</h3>
-                <span class="fcvl-badge ${activeFilters.masterEnabled ? '' : 'paused'}" id="fcvl-count-badge">
+                <span class="fcvl-badge ${activeFilters.masterEnabled ? "" : "paused"}" id="fcvl-count-badge">
                     ${activeFilters.masterEnabled ? logs.length : t.pausedBadge}
                 </span>
             </div>
@@ -1047,31 +1077,31 @@ function setupNativePanel(forceRebuild = false) {
         </div>
 
         <div class="fcvl-tabs">
-            <button class="fcvl-tab-btn ${currentTab === 'logs' ? 'active' : ''}" id="fcvl-tab-logs">
+            <button class="fcvl-tab-btn ${currentTab === "logs" ? "active" : ""}" id="fcvl-tab-logs">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 ${t.tabLogs}
             </button>
-            <button class="fcvl-tab-btn ${currentTab === 'settings' ? 'active' : ''}" id="fcvl-tab-settings">
+            <button class="fcvl-tab-btn ${currentTab === "settings" ? "active" : ""}" id="fcvl-tab-settings">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 ${t.tabSettings}
             </button>
         </div>
 
         <!-- قسم عرض السجلات -->
-        <div class="fcvl-body" id="fcvl-logs-view" style="display: ${currentTab === 'logs' ? 'flex' : 'none'};">
+        <div class="fcvl-body" id="fcvl-logs-view" style="display: ${currentTab === "logs" ? "flex" : "none"};">
             <div class="fcvl-search-bar">
                 <input type="text" class="fcvl-search-input" id="fcvl-search-input" placeholder="${t.searchPlaceholder}" value="${searchQuery}">
                 <div class="fcvl-quick-filters">
-                    <button class="fcvl-filter-pill ${eventTypeFilter === 'ALL' ? 'active' : ''}" data-filter-type="ALL">${t.filterAll}</button>
-                    <button class="fcvl-filter-pill ${eventTypeFilter === 'JOIN' ? 'active' : ''}" data-filter-type="JOIN">${t.filterJoin}</button>
-                    <button class="fcvl-filter-pill ${eventTypeFilter === 'LEAVE' ? 'active' : ''}" data-filter-type="LEAVE">${t.filterLeave}</button>
+                    <button class="fcvl-filter-pill ${eventTypeFilter === "ALL" ? "active" : ""}" data-filter-type="ALL">${t.filterAll}</button>
+                    <button class="fcvl-filter-pill ${eventTypeFilter === "JOIN" ? "active" : ""}" data-filter-type="JOIN">${t.filterJoin}</button>
+                    <button class="fcvl-filter-pill ${eventTypeFilter === "LEAVE" ? "active" : ""}" data-filter-type="LEAVE">${t.filterLeave}</button>
                 </div>
             </div>
             <div id="fcvl-cards-container" style="display:flex; flex-direction:column; gap:10px;"></div>
         </div>
 
         <!-- قسم الإعدادات المدمج داخل الواجهة -->
-        <div class="fcvl-settings-view" id="fcvl-settings-view" style="display: ${currentTab === 'settings' ? 'flex' : 'none'};">
+        <div class="fcvl-settings-view" id="fcvl-settings-view" style="display: ${currentTab === "settings" ? "flex" : "none"};">
             <!-- 0. المفتاح الرئيسي للتشغيل والإيقاف -->
             <div class="fcvl-setting-card" style="border-right: 3px solid var(--brand-experiment, #5865f2);">
                 <div class="fcvl-setting-header">
@@ -1080,7 +1110,7 @@ function setupNativePanel(forceRebuild = false) {
                         <span class="fcvl-setting-desc">${t.masterDesc}</span>
                     </div>
                     <label class="fcvl-switch">
-                        <input type="checkbox" id="fcvl-opt-master" ${activeFilters.masterEnabled ? 'checked' : ''}>
+                        <input type="checkbox" id="fcvl-opt-master" ${activeFilters.masterEnabled ? "checked" : ""}>
                         <span class="fcvl-slider"></span>
                     </label>
                 </div>
@@ -1094,7 +1124,7 @@ function setupNativePanel(forceRebuild = false) {
                         <span class="fcvl-setting-desc">${t.friendsDesc}</span>
                     </div>
                     <label class="fcvl-switch">
-                        <input type="checkbox" id="fcvl-opt-friends-only" ${activeFilters.trackOnlyFriends ? 'checked' : ''}>
+                        <input type="checkbox" id="fcvl-opt-friends-only" ${activeFilters.trackOnlyFriends ? "checked" : ""}>
                         <span class="fcvl-slider"></span>
                     </label>
                 </div>
@@ -1108,7 +1138,7 @@ function setupNativePanel(forceRebuild = false) {
                         <span class="fcvl-setting-desc">${t.targetsDesc}</span>
                     </div>
                     <label class="fcvl-switch">
-                        <input type="checkbox" id="fcvl-opt-enable-target" ${activeFilters.enableTargetUsers ? 'checked' : ''}>
+                        <input type="checkbox" id="fcvl-opt-enable-target" ${activeFilters.enableTargetUsers ? "checked" : ""}>
                         <span class="fcvl-slider"></span>
                     </label>
                 </div>
@@ -1128,7 +1158,7 @@ function setupNativePanel(forceRebuild = false) {
                         <span class="fcvl-setting-desc">${t.targetNotifyDesc}</span>
                     </div>
                     <label class="fcvl-switch">
-                        <input type="checkbox" id="fcvl-opt-notify-targets" ${activeFilters.notifyTargetUsers ? 'checked' : ''}>
+                        <input type="checkbox" id="fcvl-opt-notify-targets" ${activeFilters.notifyTargetUsers ? "checked" : ""}>
                         <span class="fcvl-slider"></span>
                     </label>
                 </div>
@@ -1142,7 +1172,7 @@ function setupNativePanel(forceRebuild = false) {
                         <span class="fcvl-setting-desc">${t.serversDesc}</span>
                     </div>
                     <label class="fcvl-switch">
-                        <input type="checkbox" id="fcvl-opt-filter-servers" ${activeFilters.filterSpecificServers ? 'checked' : ''}>
+                        <input type="checkbox" id="fcvl-opt-filter-servers" ${activeFilters.filterSpecificServers ? "checked" : ""}>
                         <span class="fcvl-slider"></span>
                     </label>
                 </div>
@@ -1151,7 +1181,7 @@ function setupNativePanel(forceRebuild = false) {
                     <input type="text" class="fcvl-input-text" id="fcvl-opt-server-ids" 
                            value="${activeFilters.specificServerIds}" 
                            placeholder="${t.serverIdsPlaceholder}" 
-                           ${activeFilters.filterSpecificServers ? '' : 'disabled'}>
+                           ${activeFilters.filterSpecificServers ? "" : "disabled"}>
                 </div>
             </div>
         </div>
@@ -1171,7 +1201,8 @@ function setupNativePanel(forceRebuild = false) {
     let isDragging = false;
     let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
 
-    dragHandle?.addEventListener("mousedown", (e) => {
+    dragHandle?.addEventListener("mousedown", e => {
+        if (e.button !== 0) return;
         if ((e.target as HTMLElement).closest(".fcvl-actions")) return;
         isDragging = true;
         startX = e.clientX;
@@ -1185,12 +1216,24 @@ function setupNativePanel(forceRebuild = false) {
         initialTop = rect.top;
     });
 
+    if (onWindowMouseMove) {
+        window.removeEventListener("mousemove", onWindowMouseMove);
+    }
+    if (onWindowMouseUp) {
+        window.removeEventListener("mouseup", onWindowMouseUp);
+    }
+
     onWindowMouseMove = (e: MouseEvent) => {
         if (!isDragging) return;
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
-        const newLeft = `${initialLeft + dx}px`;
-        const newTop = `${initialTop + dy}px`;
+        const panelWidth = panel.offsetWidth || 460;
+        const maxLeft = Math.max(0, window.innerWidth - panelWidth - 10);
+        const maxTop = Math.max(0, window.innerHeight - 80);
+        const newLeftPx = Math.max(10, Math.min(maxLeft, initialLeft + dx));
+        const newTopPx = Math.max(10, Math.min(maxTop, initialTop + dy));
+        const newLeft = `${newLeftPx}px`;
+        const newTop = `${newTopPx}px`;
         panel.style.left = newLeft;
         panel.style.top = newTop;
         panel.style.right = "auto";
@@ -1205,6 +1248,7 @@ function setupNativePanel(forceRebuild = false) {
 
     window.addEventListener("mousemove", onWindowMouseMove);
     window.addEventListener("mouseup", onWindowMouseUp);
+    window.addEventListener("blur", onWindowMouseUp);
 
     // زر الإغلاق
     document.getElementById("fcvl-close-btn")?.addEventListener("click", () => {
@@ -1254,7 +1298,7 @@ function setupNativePanel(forceRebuild = false) {
 
     // تفاعل الضغط على البطاقات (البروفايل، السيرفر، الروم)
     const cardsContainer = document.getElementById("fcvl-cards-container");
-    cardsContainer?.addEventListener("click", (e) => {
+    cardsContainer?.addEventListener("click", e => {
         const target = e.target as HTMLElement;
 
         // 1. فتح البروفايل
@@ -1440,8 +1484,8 @@ function renderLogs() {
         container.innerHTML = `
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 10px; color:var(--text-muted, #949ba4); gap:12px; text-align:center;">
                 <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.6;"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                <span style="font-size:15px; font-weight:700;">${searchQuery ? t.noLogsSearch : t.noLogsTitle}</span>
-                <span style="font-size:12px; line-height:1.5;">${searchQuery ? (isArabic() ? "جرّب البحث بكلمة أو رقم مختلف" : "Try searching with a different term or ID") : emptySubtitle}</span>
+                <span style="font-size:15px; font-weight:700;">${searchQuery ? escapeHtml(t.noLogsSearch) : escapeHtml(t.noLogsTitle)}</span>
+                <span style="font-size:12px; line-height:1.5;">${searchQuery ? (isArabic() ? "جرّب البحث بكلمة أو رقم مختلف" : "Try searching with a different term or ID") : escapeHtml(emptySubtitle)}</span>
             </div>
         `;
         return;
@@ -1456,18 +1500,22 @@ function renderLogs() {
         });
         const isJoin = log.type === "JOIN";
         const avatar = log.avatarUrl || "https://cdn.discordapp.com/embed/avatars/0.png";
+        const safeUsername = escapeHtml(log.username);
+        const safeUserId = escapeHtml(log.userId);
+        const safeChannelName = escapeHtml(log.channelName);
+        const safeGuildName = log.guildName ? escapeHtml(log.guildName) : "";
 
         return `
             <div class="fcvl-card ${isJoin ? "fcvl-card-join" : "fcvl-card-leave"}">
                 <div class="fcvl-indicator-bar"></div>
                 
                 <div class="fcvl-card-top">
-                    <div class="fcvl-user-box" data-click-user="${log.userId}" data-guild-id="${log.guildId || ''}" data-channel-id="${log.channelId || ''}" title="${isAr ? 'اضغط لفتح الملف الشخصي للمستخدم' : 'Click to open user profile'}">
-                        <img src="${avatar}" class="fcvl-avatar" alt="" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'" />
-                        <span class="fcvl-username">${log.username}</span>
-                        <span class="fcvl-userid-badge">${log.userId}</span>
+                    <div class="fcvl-user-box" data-click-user="${safeUserId}" data-guild-id="${escapeHtml(log.guildId || "")}" data-channel-id="${escapeHtml(log.channelId || "")}" title="${isAr ? "اضغط لفتح الملف الشخصي للمستخدم" : "Click to open user profile"}">
+                        <img src="${escapeHtml(avatar)}" class="fcvl-avatar" alt="" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'" />
+                        <span class="fcvl-username">${safeUsername}</span>
+                        <span class="fcvl-userid-badge">${safeUserId}</span>
                     </div>
-                    <span class="fcvl-time"><bdi>${timeStr}</bdi></span>
+                    <span class="fcvl-time"><bdi>${escapeHtml(timeStr)}</bdi></span>
                 </div>
 
                 <div class="fcvl-room-row">
@@ -1481,16 +1529,16 @@ function renderLogs() {
                         `}
                     </span>
                     
-                    <span class="fcvl-channel-btn" data-click-channel="${log.channelId || ''}" data-guild-id="${log.guildId || ''}" title="${isAr ? 'اضغط للانتقال ودخول الروم الصوتي' : 'Click to join voice room'}">
+                    <span class="fcvl-channel-btn" data-click-channel="${escapeHtml(log.channelId || "")}" data-guild-id="${escapeHtml(log.guildId || "")}" title="${isAr ? "اضغط للانتقال ودخول الروم الصوتي" : "Click to join voice room"}">
                         <span>${t.roomLabel}</span>
-                        <strong>${log.channelName}</strong>
+                        <strong>${safeChannelName}</strong>
                         <span>🔊</span>
                     </span>
 
                     ${log.guildName && log.guildId ? `
-                        <span class="fcvl-guild-btn" data-click-guild="${log.guildId}" title="${isAr ? 'اضغط للانتقال إلى السيرفر' : 'Click to go to server'}">
+                        <span class="fcvl-guild-btn" data-click-guild="${escapeHtml(log.guildId)}" title="${isAr ? "اضغط للانتقال إلى السيرفر" : "Click to go to server"}">
                             <span>🌐</span>
-                            <span>${log.guildName}</span>
+                            <span>${safeGuildName}</span>
                         </span>
                     ` : ""}
                 </div>
@@ -1539,7 +1587,7 @@ export default definePlugin({
     description: "سجل متقدم للرومات الصوتية، مدمج كلياً بثيم ديسكورد، ينزل من الأعلى، مع إمكانية فتح البروفايلات وإشعارات المستخدمين المستهدفين ودعم اللغتين العربية والإنجليزية.",
     authors: [{ name: "FAN", id: 0n }],
     dependencies: ["HeaderBarAPI"],
-    enabledByDefault: true,
+    enabledByDefault: false,
     settings,
 
     headerBarButton: {
@@ -1578,7 +1626,7 @@ export default definePlugin({
                     const user = UserStore?.getUser(userId);
                     const relNickname = RelationshipStore?.getNickname?.(userId);
                     const username = user ? (user.globalName || user.username) : (relNickname || `مستخدم (${userId.slice(-4)})`);
-                    const avatarUrl = user?.getAvatarURL ? user.getAvatarURL(guildId, 48, false) : undefined;
+                    const avatarUrl = (user?.getAvatarURL ? user.getAvatarURL(guildId, 48, false) : undefined) || user?.defaultAvatarURL || "https://cdn.discordapp.com/embed/avatars/0.png";
                     const channel = ChannelStore?.getChannel(channelId);
                     const channelName = channel ? channel.name : (isArabic() ? "روم صوتي" : "Voice Room");
                     const guild = GuildStore?.getGuild(guildId);
@@ -1652,12 +1700,12 @@ export default definePlugin({
                     }
                 }
                 // مغادرة الروم الصوتي بالكامل
-                else if (!channelId && (currentSession || state.oldChannelId)) {
+                else if (!channelId && (currentSession || state.oldChannelId || guildId)) {
                     const user = UserStore?.getUser(userId);
                     const relNickname = RelationshipStore?.getNickname?.(userId);
                     const username = user ? (user.globalName || user.username) : (relNickname || `مستخدم (${userId.slice(-4)})`);
                     const gId = currentSession?.guildId || guildId;
-                    const avatarUrl = user?.getAvatarURL ? user.getAvatarURL(gId, 48, false) : undefined;
+                    const avatarUrl = (user?.getAvatarURL ? user.getAvatarURL(gId, 48, false) : undefined) || user?.defaultAvatarURL || "https://cdn.discordapp.com/embed/avatars/0.png";
                     const now = Date.now();
                     const duration = currentSession ? (now - currentSession.joinTime) : undefined;
                     const cId = currentSession?.channelId || state.oldChannelId;
@@ -1716,11 +1764,41 @@ export default definePlugin({
         loadLogs();
         setupNativePanel();
 
+        try {
+            const vsStore = findStore("VoiceStateStore") as any;
+            const ChannelStore = findStore("ChannelStore") as any;
+            const GuildStore = findStore("GuildStore") as any;
+            const allStates = vsStore?.getAllVoiceStates ? vsStore.getAllVoiceStates() : null;
+            if (allStates) {
+                const now = Date.now();
+                for (const guildId in allStates) {
+                    const guildStates = allStates[guildId];
+                    if (!guildStates) continue;
+                    for (const userId in guildStates) {
+                        const s = guildStates[userId];
+                        if (s?.channelId) {
+                            const ch = ChannelStore?.getChannel(s.channelId);
+                            const g = GuildStore?.getGuild(guildId);
+                            activeSessions.set(userId, {
+                                channelId: s.channelId,
+                                channelName: ch ? ch.name : (isArabic() ? "روم صوتي" : "Voice Room"),
+                                guildId: guildId || "",
+                                guildName: g ? g.name : "",
+                                joinTime: now
+                            });
+                        }
+                    }
+                }
+            }
+        } catch {}
+
         this.keyHandler = (e: KeyboardEvent) => {
             if ((e.ctrlKey && e.altKey && (e.key === "v" || e.key === "V")) ||
                 (e.ctrlKey && e.shiftKey && (e.key === "v" || e.key === "V"))) {
                 e.preventDefault();
                 toggleLogsPanel();
+            } else if (e.key === "Escape" && isPanelOpen) {
+                toggleLogsPanel(false);
             }
         };
         window.addEventListener("keydown", this.keyHandler);
