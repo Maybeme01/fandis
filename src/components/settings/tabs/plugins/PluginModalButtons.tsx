@@ -6,10 +6,10 @@
 
 import "./PluginModalButtons.css";
 
-import { GithubIcon, StarFilled, StarOutlined, WebsiteIcon } from "@components/Icons";
+import { StarFilled, StarOutlined } from "@components/Icons";
 import { classNameFactory } from "@utils/css";
 import { getTheme, Theme } from "@utils/discord";
-import { Clickable, MaskedLink, Tooltip } from "@webpack/common";
+import { Clickable, Tooltip } from "@webpack/common";
 
 const cl = classNameFactory("vc-settings-modal-");
 
@@ -20,23 +20,8 @@ interface Props {
     href: string;
 }
 
-function LinkIcon({ text, href, Icon }: Props & { Icon: React.ComponentType; }) {
-    return (
-        <Tooltip text={text}>
-            {props =>
-                <MaskedLink {...props} href={href} className={cl("link-button", getThemeClass())}>
-                    <Icon />
-                </MaskedLink>
-            }
-        </Tooltip>
-    );
-}
-
-const GithubLinkIcon = () => <GithubIcon aria-hidden className={cl("link-icon")} />;
-const WebsiteLinkIcon = () => <WebsiteIcon aria-hidden className={cl("link-icon")} />;
-
-export const GithubButton = (props: Props) => <LinkIcon {...props} Icon={GithubLinkIcon} />;
-export const WebsiteButton = (props: Props) => <LinkIcon {...props} Icon={WebsiteLinkIcon} />;
+export const GithubButton = (_props: Props) => null;
+export const WebsiteButton = (_props: Props) => null;
 
 export function FavoriteButton({ isFavorite, onClick }: { isFavorite: boolean; onClick: () => void; }) {
     const Icon = isFavorite ? StarFilled : StarOutlined;
