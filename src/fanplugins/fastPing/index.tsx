@@ -7,6 +7,7 @@
 import "./styles.css";
 
 import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
 import { insertTextIntoChatInputBox } from "@utils/discord";
 import { t } from "@utils/esharqI18n";
 import definePlugin, { OptionType } from "@utils/types";
@@ -122,10 +123,10 @@ function onKeyDown(e: KeyboardEvent) {
 }
 
 export default definePlugin({
-    
-    isFan: true,name: "FastPing",
+
+    isFan: true, name: "FastPing",
     description: "Double-click a user ID you just typed in the chat box to instantly turn it into a <@mention>.",
-    authors: [{ name: t("مؤلف غير معروف", "Unknown"), id: 0n }],
+    authors: [Devs.FAN],
     tags: ["Chat", "Shortcuts"],
     settings,
 
@@ -146,4 +147,3 @@ export default definePlugin({
         removePopover();
     },
 });
-

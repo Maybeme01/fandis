@@ -1,0 +1,14 @@
+{
+    "name": "FanToolsAll",
+    "description": "أقوى وأدق أداة لكشف مستخدمي الفيك ديفن (Fake Deafen) وبصمات النسخ المعدلة عبر 6 محاور كشف بروتوكولية وصوتية حتمية.",
+    "settings": {
+        "detectFakeDeafen": "كشف مستخدمي الفيك ديفن (Fake Deafen) بكافة الطرق والمسارات",
+        "redDeafenIcon": "تلوين أيقونة السماعة بالأحمر النيون فور اكتشاف الفيك ديفن",
+        "showFakeBadge": "إظهار شارة حمراء [FAKE] بجانب اسم المستخدم المكتشف في الروم",
+        "notifyOnDetection": "إرسال تنبيه Toast فوري عند كشف أي شخص يستخدم فيك ديفن",
+        "detectRTPTraffic": "كشف تدفق حزم الصوت عبر WebRTC (RTP Stream Analysis)",
+        "detectClientMods": "كشف بصمات النسخ المعدلة وسرعة التبديل التلقائي (Heartbeat)",
+        "detectZeroWidth": "كشف وسوم التخفي والرموز المخفية في الحالة الشخصية (Zero-Width)"
+    }
+}
+

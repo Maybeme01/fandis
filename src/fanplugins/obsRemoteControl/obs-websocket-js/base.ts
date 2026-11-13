@@ -8,8 +8,7 @@ import { Logger } from "@utils/Logger.js";
 import type { Except, Merge, SetOptional } from "type-fest";
 
 import { EventEmitter } from "./eventEmitter";
-import type { IncomingMessage, IncomingMessageTypes, OBSEventTypes, OBSRequestTypes, OBSResponseTypes, OutgoingMessage, OutgoingMessageTypes, RequestBatchOptions, RequestBatchRequest, RequestMessage, ResponseBatchMessage, ResponseMessage } from "./types.js";
-import { WebSocketOpCode } from "./types.js";
+import { type IncomingMessage, type IncomingMessageTypes, type OBSEventTypes, type OBSRequestTypes, type OBSResponseTypes, type OutgoingMessage, type OutgoingMessageTypes, type RequestBatchOptions, type RequestBatchRequest, type RequestMessage, type ResponseBatchMessage, type ResponseMessage, WebSocketOpCode } from "./types.js";
 import authenticationHashing from "./utils/authenticationHashing.js";
 
 const logger = new Logger("OBS Remote Control");
@@ -28,19 +27,13 @@ export type EventTypes = Merge<{
 	Identified: IncomingMessageTypes[WebSocketOpCode.Identified];
 }, OBSEventTypes>;
 
-// EventEmitter expects {type: [value]} syntax while for us {type: value} is neater
-type MapValueToArgsArray<T extends Record<string, unknown>> = {
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	[K in keyof T]: T[K] extends void ? [] : [T[K]];
-};
-
 type IdentificationInput = SetOptional<Except<OutgoingMessageTypes[WebSocketOpCode.Identify], "authentication">, "rpcVersion">;
 type HelloIdentifiedMerged = Merge<
 	Exclude<IncomingMessageTypes[WebSocketOpCode.Hello], "authenticate">,
 	IncomingMessageTypes[WebSocketOpCode.Identified]
 >;
 
-export abstract class BaseOBSWebSocket extends EventEmitter<MapValueToArgsArray<EventTypes>> {
+export abstract class BaseOBSWebSocket extends EventEmitter<EventTypes> {
 	protected static requestCounter = 1;
 
 	protected static generateMessageId(): string {
@@ -282,7 +275,7 @@ export abstract class BaseOBSWebSocket extends EventEmitter<MapValueToArgsArray<
 			op,
 			d,
 		} as OutgoingMessage);
-		this.socket.send(encoded);
+		this.socket.send(encoded as any);
 	}
 
 	/**
@@ -295,7 +288,7 @@ export abstract class BaseOBSWebSocket extends EventEmitter<MapValueToArgsArray<
 	 */
 	protected async internalEventPromise<ReturnVal = unknown>(event: string): Promise<ReturnVal> {
 		return new Promise(resolve => {
-			this.internalListeners.once(event, resolve);
+			this.internalListeners.once(event, resolve as (val: any) => void);
 		});
 	}
 
@@ -327,7 +320,6 @@ export abstract class BaseOBSWebSocket extends EventEmitter<MapValueToArgsArray<
 			switch (op) {
 				case WebSocketOpCode.Event: {
 					const { eventType, eventData } = d;
-					// @ts-expect-error Typescript just doesn't understand it
 					this.emit(eventType, eventData);
 					return;
 				}

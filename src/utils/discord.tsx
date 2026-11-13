@@ -174,8 +174,15 @@ export function openImageModal(item: Except<MediaModalItem, "type">, mediaModalP
 }
 
 export async function openUserProfile(id: string) {
-    const user = await UserUtils.getUser(id);
-    if (!user) throw new Error("No such user: " + id);
+    try {
+        if (typeof UserUtils?.getUser === "function") {
+            await UserUtils.getUser(id).catch(() => {});
+        }
+    } catch {}
+
+    try {
+        await fetchUserProfile(id).catch(() => {});
+    } catch {}
 
     const guildId = SelectedGuildStore.getGuildId();
     openUserProfileModal({

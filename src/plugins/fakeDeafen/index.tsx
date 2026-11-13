@@ -366,7 +366,6 @@ export default definePlugin({
             });
         }
 
-
         setupKeybindListener();
     },
 

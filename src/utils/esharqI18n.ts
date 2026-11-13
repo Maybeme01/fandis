@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { PlainSettings, Settings } from "@api/Settings";
+
 import { prefsReady, readPluginsArabic } from "./esharqPrefs";
 
 /**
@@ -21,6 +23,9 @@ import { prefsReady, readPluginsArabic } from "./esharqPrefs";
 let arabicModeSnapshot: boolean | undefined;
 
 export function isArabicMode(): boolean {
+    const liveArabicUI = (PlainSettings.plugins as any)?.ArabicUI?.enabled ?? (Settings.plugins as any)?.ArabicUI?.enabled;
+    if (typeof liveArabicUI === "boolean") return liveArabicUI;
+
     if (arabicModeSnapshot !== undefined) return arabicModeSnapshot;
 
     const value = readPluginsArabic();

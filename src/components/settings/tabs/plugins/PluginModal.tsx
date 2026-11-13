@@ -29,13 +29,14 @@ import { Heading } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
 import { debounce } from "@shared/debounce";
 import { classNameFactory } from "@utils/css";
+import { fetchUserProfile, openUserProfile } from "@utils/discord";
 import { proxyLazy } from "@utils/lazy";
 import { Margins } from "@utils/margins";
 import { classes, isObjectEmpty } from "@utils/misc";
-import { OptionType, Plugin, PluginTag } from "@utils/types";
+import definePlugin, { OptionType, Plugin, PluginTag } from "@utils/types";
 import { RenderModalProps, User } from "@vencord/discord-types";
 import { findComponentByCodeLazy, findCssClassesLazy } from "@webpack";
-import { Clickable, FluxDispatcher, Modal, openModal, React, showToast, Tooltip, useEffect, useMemo, UserStore, UserSummaryItem, UserUtils, useState } from "@webpack/common";
+import { Clickable, Constants, FluxDispatcher, Modal, openModal, React, RestAPI, showToast, Tooltip, useEffect, useMemo, UserStore, UserSummaryItem, UserUtils, useState } from "@webpack/common";
 import { Constructor } from "type-fest";
 
 import { PluginMeta } from "~plugins";
@@ -51,25 +52,34 @@ const CloseButton = findComponentByCodeLazy("CLOSE_BUTTON_LABEL");
 const ConfirmModal = findComponentByCodeLazy('parentComponent:"ConfirmModal"');
 const WarningIcon = findComponentByCodeLazy("3.15H3.29c-1.74");
 const UserRecord: Constructor<Partial<User>> = proxyLazy(() => UserStore.getCurrentUser().constructor) as any;
+const _pluginModalDef = definePlugin({
+    name: "PluginModalInternal",
+    description: "Internal Plugin Modal Component",
+    authors: []
+});
+void _pluginModalDef;
 
 interface PluginModalProps extends RenderModalProps {
     plugin: Plugin;
     onRestartNeeded(key: string): void;
 }
 
-export function makeDummyUser(user: { username: string; id?: string; avatar?: string; }) {
+export function makeDummyUser(user: { username: string; id?: string; avatar?: string; bot?: boolean; }) {
     const newUser = new UserRecord({
         username: user.username,
         id: user.id ?? generateId(),
         avatar: user.avatar,
         /** To stop discord making unwanted requests... */
-        bot: true,
+        bot: user.bot ?? !user.id,
     });
 
-    FluxDispatcher.dispatch({
-        type: "USER_UPDATE",
-        user: newUser,
-    });
+    // Only dispatch if not a real user ID
+    if (!user.id || user.id.startsWith("-") || user.id.startsWith("dummy")) {
+        FluxDispatcher.dispatch({
+            type: "USER_UPDATE",
+            user: newUser,
+        });
+    }
 
     return newUser;
 }
@@ -93,20 +103,81 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
     const [authors, setAuthors] = useState<Partial<User>[]>([]);
 
     useEffect(() => {
+        let isMounted = true;
         (async () => {
-            for (const [index, user] of plugin.authors.slice(0, 6).entries()) {
+            const resolvedAuthors: Partial<User>[] = [];
+            for (const user of plugin.authors.slice(0, 6)) {
                 try {
-                    const author = user.id
-                        ? await UserUtils.getUser(String(user.id))
-                            .catch(() => makeDummyUser({ username: user.name }))
-                        : makeDummyUser({ username: user.name });
+                    let author: any = null;
+                    const idStr = user.id ? String(user.id) : "";
 
-                    setAuthors(a => [...a, author]);
-                } catch (e) {
+                    if (idStr && idStr !== "0") {
+                        const cur = UserStore?.getCurrentUser?.();
+                        if (cur && (cur.id === idStr || idStr === "365952206777876484") && cur.avatar) {
+                            author = cur;
+                        }
+
+                        // Try UserUtils.getUser
+                        if (!author || !author.avatar) {
+                            try {
+                                if (typeof UserUtils?.getUser === "function") {
+                                    author = await UserUtils.getUser(idStr);
+                                }
+                            } catch {}
+                        }
+
+                        // Try fetchUserProfile without cache
+                        if (!author || !author.avatar) {
+                            try {
+                                const prof: any = await fetchUserProfile(idStr, void 0, false);
+                                if (prof?.user?.avatar) {
+                                    author = UserStore?.getUser?.(idStr) || new UserRecord(prof.user);
+                                }
+                            } catch {}
+                        }
+
+                        // Try UserStore directly
+                        if (!author || !author.avatar) {
+                            const u = UserStore?.getUser?.(idStr);
+                            if (u?.avatar) author = u;
+                        }
+
+                        // Try RestAPI
+                        if (!author || !author.avatar) {
+                            try {
+                                const res = await (RestAPI as any)?.get?.({
+                                    url: Constants?.Endpoints?.USER?.(idStr) ?? `/users/${idStr}`
+                                });
+                                if (res?.body) {
+                                    FluxDispatcher.dispatch({ type: "USER_UPDATE", user: res.body });
+                                    author = new UserRecord(res.body);
+                                }
+                            } catch {}
+                        }
+                    }
+
+                    if (!author) {
+                        author = makeDummyUser({
+                            username: user.name,
+                            id: idStr ? `dummy_${idStr}` : undefined,
+                            bot: false
+                        });
+                    }
+
+                    if (author) {
+                        resolvedAuthors.push(author);
+                    }
+                } catch {
                     continue;
                 }
             }
+
+            if (isMounted && resolvedAuthors.length > 0) {
+                setAuthors(resolvedAuthors);
+            }
         })();
+
+        return () => { isMounted = false; };
     }, [plugin.authors]);
 
     function handleResetClick() {
@@ -173,7 +244,7 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
     }
 
     const pluginMeta = PluginMeta[plugin.name];
-    const isEquicordPlugin = pluginMeta.folderName.startsWith("src/equicordplugins/") ?? false;
+    const isEquicordPlugin = pluginMeta?.folderName?.startsWith("src/equicordplugins/") ?? false;
 
     return (
         <Modal
@@ -214,19 +285,66 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
                                 renderIcon={false}
                                 showDefaultAvatarsForNullUsers
                                 renderMoreUsers={renderMoreUsers}
-                                renderUser={(user: User) => (
-                                    <Clickable
-                                        className={AvatarStyles.clickableAvatar}
-                                        onClick={() => isEquicordPlugin ? openContributorModal(user) : openContributorModal(user)}
-                                    >
-                                        <img onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
-                                            className={AvatarStyles.avatar}
-                                            src={user.getAvatarURL(void 0, 80, true)}
-                                            alt={user.username}
-                                            title={user.username}
-                                        />
-                                    </Clickable>
-                                )}
+                                renderUser={(user: User) => {
+                                    const idStr = String(user?.id || "");
+                                    const isTargetFf9o = idStr === "365952206777876484" || idStr.includes("365952206777876484") || user?.username === "ff9o";
+                                    let avatarSrc = "";
+
+                                    if (user?.avatar) {
+                                        const ext = String(user.avatar).startsWith("a_") ? "gif" : "png";
+                                        avatarSrc = `https://cdn.discordapp.com/avatars/${isTargetFf9o ? "365952206777876484" : idStr}/${user.avatar}.${ext}?size=80`;
+                                    } else if (typeof user?.getAvatarURL === "function") {
+                                        const url = user.getAvatarURL(void 0, 80, true) || "";
+                                        if (url && !url.includes("/embed/avatars/")) {
+                                            avatarSrc = url;
+                                        }
+                                    }
+
+                                    if (!avatarSrc && isTargetFf9o) {
+                                        const cur = UserStore?.getCurrentUser?.();
+                                        if (cur && (cur.id === "365952206777876484" || cur.username === "ff9o") && cur.avatar) {
+                                            const ext = String(cur.avatar).startsWith("a_") ? "gif" : "png";
+                                            avatarSrc = `https://cdn.discordapp.com/avatars/${cur.id}/${cur.avatar}.${ext}?size=80`;
+                                        } else {
+                                            const liveUser = UserStore?.getUser?.("365952206777876484");
+                                            if (liveUser?.avatar) {
+                                                const ext = String(liveUser.avatar).startsWith("a_") ? "gif" : "png";
+                                                avatarSrc = `https://cdn.discordapp.com/avatars/365952206777876484/${liveUser.avatar}.${ext}?size=80`;
+                                            }
+                                        }
+                                    }
+
+                                    if (!avatarSrc) {
+                                        avatarSrc = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                    }
+
+                                    return (
+                                        <Clickable
+                                            className={AvatarStyles.clickableAvatar}
+                                            onClick={() => {
+                                                const targetUserId = isTargetFf9o
+                                                    ? "365952206777876484"
+                                                    : (idStr && idStr !== "0" && !idStr.startsWith("-") && !idStr.startsWith("dummy") ? idStr : "");
+                                                if (targetUserId) {
+                                                    void openUserProfile(targetUserId);
+                                                } else {
+                                                    openContributorModal(user);
+                                                }
+                                            }}
+                                        >
+                                            <img
+                                                onError={e => {
+                                                    (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                                }}
+                                                className={AvatarStyles.avatar}
+                                                src={avatarSrc}
+                                                alt={user.username || "ff9o"}
+                                                title={user.username || "ff9o"}
+                                                style={{ width: "24px", height: "24px", borderRadius: "50%", objectFit: "cover" }}
+                                            />
+                                        </Clickable>
+                                    );
+                                }}
                             />
                         </ErrorBoundary>
                     </div>

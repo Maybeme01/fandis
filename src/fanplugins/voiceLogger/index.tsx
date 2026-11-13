@@ -7,6 +7,7 @@
 import { HeaderBarButton } from "@api/HeaderBar";
 import { showNotification } from "@api/Notifications";
 import { definePluginSettings, Settings } from "@api/Settings";
+import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByProps, findStore } from "@webpack";
 import { NavigationRouter, openUserProfileModal, React, RelationshipStore } from "@webpack/common";
@@ -187,7 +188,90 @@ function getStrings(): LocaleStrings {
     return isArabic() ? LOCALES.ar : LOCALES.en;
 }
 
+interface FilterSettings {
+    masterEnabled: boolean;
+    trackOnlyFriends: boolean;
+    enableTargetUsers: boolean;
+    targetUserIds: string;
+    notifyTargetUsers: boolean;
+    filterSpecificServers: boolean;
+    specificServerIds: string;
+}
+
+let activeFilters: FilterSettings = {
+    masterEnabled: false,
+    trackOnlyFriends: false,
+    enableTargetUsers: false,
+    targetUserIds: "",
+    notifyTargetUsers: false,
+    filterSpecificServers: false,
+    specificServerIds: ""
+};
+
 export const settings = definePluginSettings({
+    masterEnabled: {
+        type: OptionType.BOOLEAN,
+        description: "Voice Logger Master Switch: Record voice room activity",
+        default: false,
+        onChange: v => {
+            activeFilters.masterEnabled = v;
+            syncUIFilters();
+        }
+    },
+    trackOnlyFriends: {
+        type: OptionType.BOOLEAN,
+        description: "Monitor Friends Only: Only record users on your friends list",
+        default: false,
+        onChange: v => {
+            activeFilters.trackOnlyFriends = v;
+            syncUIFilters();
+        }
+    },
+    enableTargetUsers: {
+        type: OptionType.BOOLEAN,
+        description: "Monitor Specific User IDs: Restrict recording to target user IDs",
+        default: false,
+        onChange: v => {
+            activeFilters.enableTargetUsers = v;
+            syncUIFilters();
+        }
+    },
+    targetUserIds: {
+        type: OptionType.STRING,
+        description: "Target User IDs (comma-separated user IDs to monitor)",
+        default: "",
+        onChange: v => {
+            activeFilters.targetUserIds = v;
+            syncUIFilters();
+        }
+    },
+    notifyTargetUsers: {
+        type: OptionType.BOOLEAN,
+        description: "Discord Notification for Target Users: Show popup when targets join/leave",
+        default: false,
+        onChange: v => {
+            activeFilters.notifyTargetUsers = v;
+            syncUIFilters();
+        }
+    },
+    filterSpecificServers: {
+        type: OptionType.BOOLEAN,
+        description: "Restrict to Specific Servers: Only monitor specified server IDs",
+        default: false,
+        onChange: v => {
+            activeFilters.filterSpecificServers = v;
+            syncUIFilters();
+        }
+    },
+    specificServerIds: {
+        type: OptionType.STRING,
+        description: "Specific Server IDs (comma-separated server IDs)",
+        default: "",
+        onChange: v => {
+            activeFilters.specificServerIds = v;
+            syncUIFilters();
+        }
+    },
     resetPosition: {
         type: OptionType.COMPONENT,
         description: isArabic() ? "إعادة تعيين مكان نافذة السجلات إلى الموضع الافتراضي (أعلى الشاشة)" : "Reset Voice Logger window position to default (top of window)",
@@ -239,26 +323,6 @@ interface VoiceLog {
     duration?: number;
 }
 
-interface FilterSettings {
-    masterEnabled: boolean;
-    trackOnlyFriends: boolean;
-    enableTargetUsers: boolean;
-    targetUserIds: string;
-    notifyTargetUsers: boolean;
-    filterSpecificServers: boolean;
-    specificServerIds: string;
-}
-
-let activeFilters: FilterSettings = {
-    masterEnabled: false,
-    trackOnlyFriends: false,
-    enableTargetUsers: false,
-    targetUserIds: "",
-    notifyTargetUsers: false,
-    filterSpecificServers: false,
-    specificServerIds: ""
-};
-
 let logs: VoiceLog[] = [];
 let searchQuery = "";
 let eventTypeFilter: "ALL" | "JOIN" | "LEAVE" = "ALL";
@@ -270,35 +334,85 @@ let currentAppliedLang: "ar" | "en" | null = null;
 let onWindowMouseMove: ((e: MouseEvent) => void) | null = null;
 let onWindowMouseUp: (() => void) | null = null;
 
+function syncUIFilters() {
+    try {
+        const optMaster = document.getElementById("fcvl-opt-master") as HTMLInputElement | null;
+        const optFriendsOnly = document.getElementById("fcvl-opt-friends-only") as HTMLInputElement | null;
+        const optEnableTarget = document.getElementById("fcvl-opt-enable-target") as HTMLInputElement | null;
+        const optTargetIds = document.getElementById("fcvl-opt-target-ids") as HTMLInputElement | null;
+        const optNotifyTargets = document.getElementById("fcvl-opt-notify-targets") as HTMLInputElement | null;
+        const optFilterServers = document.getElementById("fcvl-opt-filter-servers") as HTMLInputElement | null;
+        const optServerIds = document.getElementById("fcvl-opt-server-ids") as HTMLInputElement | null;
+
+        if (optMaster) optMaster.checked = activeFilters.masterEnabled;
+        if (optFriendsOnly) optFriendsOnly.checked = activeFilters.trackOnlyFriends;
+        if (optEnableTarget) optEnableTarget.checked = activeFilters.enableTargetUsers;
+        if (optTargetIds && optTargetIds.value !== activeFilters.targetUserIds) optTargetIds.value = activeFilters.targetUserIds;
+        if (optNotifyTargets) optNotifyTargets.checked = activeFilters.notifyTargetUsers;
+        if (optFilterServers) optFilterServers.checked = activeFilters.filterSpecificServers;
+        if (optServerIds && optServerIds.value !== activeFilters.specificServerIds) optServerIds.value = activeFilters.specificServerIds;
+        if (optServerIds) optServerIds.disabled = !activeFilters.filterSpecificServers;
+
+        const countBadge = document.getElementById("fcvl-count-badge");
+        if (countBadge) {
+            const tr = getStrings();
+            countBadge.textContent = activeFilters.masterEnabled ? logs.length.toString() : tr.pausedBadge;
+            if (!activeFilters.masterEnabled) {
+                countBadge.classList.add("paused");
+            } else {
+                countBadge.classList.remove("paused");
+            }
+        }
+    } catch {}
+}
+
 function loadFilters() {
     try {
-        localStorage.removeItem("fancord_vl_filters_v5");
-        localStorage.removeItem("fancord_vl_filters_v4");
+        const s = settings.store;
+        let targetUserIds = typeof s.targetUserIds === "string" ? s.targetUserIds : "";
+        let specificServerIds = typeof s.specificServerIds === "string" ? s.specificServerIds : "";
+        let masterEnabled = Boolean(s.masterEnabled);
+        let trackOnlyFriends = Boolean(s.trackOnlyFriends);
+        let enableTargetUsers = Boolean(s.enableTargetUsers);
+        let notifyTargetUsers = Boolean(s.notifyTargetUsers);
+        let filterSpecificServers = Boolean(s.filterSpecificServers);
 
-        const savedV6 = localStorage.getItem("fancord_vl_filters_v6");
-        if (savedV6) {
-            const parsed = JSON.parse(savedV6);
-            activeFilters = {
-                masterEnabled: Boolean(parsed.masterEnabled),
-                trackOnlyFriends: Boolean(parsed.trackOnlyFriends),
-                enableTargetUsers: Boolean(parsed.enableTargetUsers),
-                targetUserIds: typeof parsed.targetUserIds === "string" ? parsed.targetUserIds : "",
-                notifyTargetUsers: Boolean(parsed.notifyTargetUsers),
-                filterSpecificServers: Boolean(parsed.filterSpecificServers && parsed.specificServerIds),
-                specificServerIds: typeof parsed.specificServerIds === "string" ? parsed.specificServerIds : ""
-            };
-            return;
+        // Fallback / migrate from localStorage if on-disk settings were uninitialized
+        if (!targetUserIds && !specificServerIds && !masterEnabled) {
+            const savedV6 = localStorage.getItem("fancord_vl_filters_v6");
+            if (savedV6) {
+                try {
+                    const parsed = JSON.parse(savedV6);
+                    if (typeof parsed.targetUserIds === "string" && parsed.targetUserIds) targetUserIds = parsed.targetUserIds;
+                    if (typeof parsed.specificServerIds === "string" && parsed.specificServerIds) specificServerIds = parsed.specificServerIds;
+                    if (parsed.masterEnabled) masterEnabled = true;
+                    if (parsed.trackOnlyFriends) trackOnlyFriends = true;
+                    if (parsed.enableTargetUsers) enableTargetUsers = true;
+                    if (parsed.notifyTargetUsers) notifyTargetUsers = true;
+                    if (parsed.filterSpecificServers) filterSpecificServers = true;
+                } catch {}
+            }
         }
 
         activeFilters = {
-            masterEnabled: false,
-            trackOnlyFriends: false,
-            enableTargetUsers: false,
-            targetUserIds: "",
-            notifyTargetUsers: false,
-            filterSpecificServers: false,
-            specificServerIds: ""
+            masterEnabled,
+            trackOnlyFriends,
+            enableTargetUsers,
+            targetUserIds,
+            notifyTargetUsers,
+            filterSpecificServers,
+            specificServerIds
         };
+
+        // Write directly to settings.store (persisted to settings.json on disk across PC reboots)
+        s.masterEnabled = masterEnabled;
+        s.trackOnlyFriends = trackOnlyFriends;
+        s.enableTargetUsers = enableTargetUsers;
+        s.targetUserIds = targetUserIds;
+        s.notifyTargetUsers = notifyTargetUsers;
+        s.filterSpecificServers = filterSpecificServers;
+        s.specificServerIds = specificServerIds;
+
         saveFilters();
     } catch {
         activeFilters = {
@@ -315,6 +429,16 @@ function loadFilters() {
 
 function saveFilters() {
     try {
+        // 1. Save to Vencord settings.store (persists in settings.json on disk permanently)
+        settings.store.masterEnabled = activeFilters.masterEnabled;
+        settings.store.trackOnlyFriends = activeFilters.trackOnlyFriends;
+        settings.store.enableTargetUsers = activeFilters.enableTargetUsers;
+        settings.store.targetUserIds = activeFilters.targetUserIds;
+        settings.store.notifyTargetUsers = activeFilters.notifyTargetUsers;
+        settings.store.filterSpecificServers = activeFilters.filterSpecificServers;
+        settings.store.specificServerIds = activeFilters.specificServerIds;
+
+        // 2. Mirror in localStorage
         localStorage.setItem("fancord_vl_filters_v6", JSON.stringify(activeFilters));
     } catch {}
 }
@@ -1276,6 +1400,7 @@ function setupNativePanel(forceRebuild = false) {
         tabLogs?.classList.remove("active");
         if (logsView) logsView.style.display = "none";
         if (settingsView) settingsView.style.display = "flex";
+        syncUIFilters();
     });
 
     // البحث السريع
@@ -1379,16 +1504,27 @@ function setupNativePanel(forceRebuild = false) {
     const optFilterServers = document.getElementById("fcvl-opt-filter-servers") as HTMLInputElement;
     const optServerIds = document.getElementById("fcvl-opt-server-ids") as HTMLInputElement;
 
-    const handleFilterChange = () => {
-        activeFilters.masterEnabled = optMaster.checked;
-        activeFilters.trackOnlyFriends = optFriendsOnly.checked;
-        activeFilters.enableTargetUsers = optEnableTarget.checked;
-        activeFilters.targetUserIds = optTargetIds.value;
-        activeFilters.notifyTargetUsers = optNotifyTargets.checked;
-        activeFilters.filterSpecificServers = optFilterServers.checked;
-        activeFilters.specificServerIds = optServerIds.value;
-
+    if (optMaster) optMaster.checked = activeFilters.masterEnabled;
+    if (optFriendsOnly) optFriendsOnly.checked = activeFilters.trackOnlyFriends;
+    if (optEnableTarget) optEnableTarget.checked = activeFilters.enableTargetUsers;
+    if (optTargetIds) optTargetIds.value = activeFilters.targetUserIds || "";
+    if (optNotifyTargets) optNotifyTargets.checked = activeFilters.notifyTargetUsers;
+    if (optFilterServers) optFilterServers.checked = activeFilters.filterSpecificServers;
+    if (optServerIds) {
+        optServerIds.value = activeFilters.specificServerIds || "";
         optServerIds.disabled = !activeFilters.filterSpecificServers;
+    }
+
+    const handleFilterChange = () => {
+        if (optMaster) activeFilters.masterEnabled = optMaster.checked;
+        if (optFriendsOnly) activeFilters.trackOnlyFriends = optFriendsOnly.checked;
+        if (optEnableTarget) activeFilters.enableTargetUsers = optEnableTarget.checked;
+        if (optTargetIds) activeFilters.targetUserIds = optTargetIds.value;
+        if (optNotifyTargets) activeFilters.notifyTargetUsers = optNotifyTargets.checked;
+        if (optFilterServers) activeFilters.filterSpecificServers = optFilterServers.checked;
+        if (optServerIds) activeFilters.specificServerIds = optServerIds.value;
+
+        if (optServerIds) optServerIds.disabled = !activeFilters.filterSpecificServers;
 
         const countBadge = document.getElementById("fcvl-count-badge");
         if (countBadge) {
@@ -1408,9 +1544,13 @@ function setupNativePanel(forceRebuild = false) {
     optFriendsOnly?.addEventListener("change", handleFilterChange);
     optEnableTarget?.addEventListener("change", handleFilterChange);
     optTargetIds?.addEventListener("input", handleFilterChange);
+    optTargetIds?.addEventListener("change", handleFilterChange);
+    optTargetIds?.addEventListener("blur", handleFilterChange);
     optNotifyTargets?.addEventListener("change", handleFilterChange);
     optFilterServers?.addEventListener("change", handleFilterChange);
     optServerIds?.addEventListener("input", handleFilterChange);
+    optServerIds?.addEventListener("change", handleFilterChange);
+    optServerIds?.addEventListener("blur", handleFilterChange);
 }
 
 function toggleLogsPanel(forceState?: boolean) {
@@ -1434,6 +1574,8 @@ function toggleLogsPanel(forceState?: boolean) {
 
         if (currentTab === "logs") {
             renderLogs();
+        } else {
+            syncUIFilters();
         }
     } else {
         panel.style.display = "none";
@@ -1584,8 +1726,8 @@ function LogsHeaderButton() {
 
 export default definePlugin({
     name: "VoiceLogger",
-    description: "سجل متقدم للرومات الصوتية، مدمج كلياً بثيم ديسكورد، ينزل من الأعلى، مع إمكانية فتح البروفايلات وإشعارات المستخدمين المستهدفين ودعم اللغتين العربية والإنجليزية.",
-    authors: [{ name: "FAN", id: 0n }],
+    description: "Advanced voice room activity logger with member join/leave logs, filters, notifications, and search.",
+    authors: [Devs.FAN],
     dependencies: ["HeaderBarAPI"],
     enabledByDefault: false,
     settings,
@@ -1600,6 +1742,7 @@ export default definePlugin({
     },
 
     keyHandler: null as ((e: KeyboardEvent) => void) | null,
+    beforeUnloadHandler: null as (() => void) | null,
 
     flux: {
         VOICE_STATE_UPDATES(event: any) {
@@ -1802,9 +1945,20 @@ export default definePlugin({
             }
         };
         window.addEventListener("keydown", this.keyHandler);
+
+        this.beforeUnloadHandler = () => {
+            saveFilters();
+        };
+        window.addEventListener("beforeunload", this.beforeUnloadHandler);
     },
 
     stop() {
+        if (this.beforeUnloadHandler) {
+            window.removeEventListener("beforeunload", this.beforeUnloadHandler);
+            this.beforeUnloadHandler = null;
+        }
+        saveFilters();
+
         if (this.keyHandler) {
             window.removeEventListener("keydown", this.keyHandler);
             this.keyHandler = null;

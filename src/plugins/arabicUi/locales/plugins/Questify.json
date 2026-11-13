@@ -1,5 +1,13 @@
 {
     "name": "Questify",
-    "description": "تحكّم بكويستات دسكورد: خصّصها أو عطّل اللي يضايقك.",
-    "settings": {}
+    "description": "تحكّم بكويستات ومهمات ديسكورد: إكمال تلقائي للمهمات، تخصيص زر المهمات، وإخفاء البنرات والإعلانات الترويجية.",
+    "settings": {
+        "settingsSearch": "البحث في إعدادات وخيارات Questify",
+        "questFeatures": "تحديد ميزات المهمات والكويستات المطلوب تعطيلها",
+        "disableQuestsEverything": "تعطيل كافة ميزات المهمات والكويستات في ديسكورد كلياً",
+        "autoCompleteQuestsSimultaneously": "إكمال مهمات متعددة في نفس الوقت بشكل تلقائي متزامن",
+        "completeVideoQuestsQuicker": "تسريع إكمال مهمات الفيديو",
+        "preventVideoQuestsPausing": "منع إيقاف تشغيل مهمات الفيديو عند تبديل النوافذ",
+        "notifyOnQuestComplete": "إرسال إشعار فوري عند اكتمال أي مهمة بنجاح"
+    }
 }

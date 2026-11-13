@@ -8,6 +8,7 @@ import { FormSwitch } from "@components/FormSwitch";
 import { Heading } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
 import ArabicUI from "@plugins/arabicUi";
+import { writeEsharqPref } from "@utils/esharqPrefs";
 import { Margins } from "@utils/margins";
 import { promptToRestart } from "@utils/promptToRestart";
 import { React } from "@webpack/common";
@@ -39,6 +40,7 @@ export function ArabicSettings() {
                 onChange={v => {
                     Settings.plugins.ArabicUI ??= {} as any;
                     Settings.plugins.ArabicUI.enabled = v;
+                    writeEsharqPref("pluginsArabic", v);
                     promptToRestart();
                 }}
                 description="تعريب شامل لواجهة ديسكورد، إعدادات السيرفرات، الرومات، وإضافات FanCord."

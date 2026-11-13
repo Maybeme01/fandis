@@ -139,6 +139,10 @@ function read(key: PrefKey): unknown {
 
 /** تعريب أسماء/أوصاف الإضافات ولوحة إشراق. */
 export function readPluginsArabic(): boolean {
+    const arabicUI = (PlainSettings.plugins as PluginStore)?.ArabicUI?.enabled ?? (Settings.plugins as PluginStore)?.ArabicUI?.enabled;
+    if (typeof arabicUI === "boolean") {
+        return arabicUI;
+    }
     return read("pluginsArabic") === true;
 }
 

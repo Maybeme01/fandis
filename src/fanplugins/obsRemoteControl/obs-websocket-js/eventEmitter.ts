@@ -4,16 +4,17 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-export class EventEmitter<T> {
+export class EventEmitter<Events extends Record<string, any> = Record<string, any>> {
     events: {
-        [key: string]: ((val: T) => void)[];
+        [key: string]: ((val?: any) => void)[];
     };
 
     constructor() {
         this.events = {};
     }
 
-    on(eventName: string, callback: (val: T) => void) {
+    on<K extends string & keyof Events>(eventName: K, callback: (val: Events[K]) => void): void;
+    on(eventName: string, callback: (val: any) => void): void {
         if (!this.events[eventName]) {
             this.events[eventName] = [];
         }
@@ -21,17 +22,22 @@ export class EventEmitter<T> {
         this.events[eventName].push(callback);
     }
 
-    emit(eventName: string, val: T) {
+    emit<K extends string & keyof Events>(
+        eventName: K,
+        ...args: Events[K] extends void ? [val?: undefined] : [val: Events[K]]
+    ): void;
+    emit(eventName: string, ...args: [val?: any]): void {
         if (!this.events[eventName]) {
             return;
         }
 
         this.events[eventName].forEach(callback => {
-            callback(val);
+            callback(args[0]);
         });
     }
 
-    off(eventName: string, callback: (val: T) => void) {
+    off<K extends string & keyof Events>(eventName: K, callback: (val: Events[K]) => void): void;
+    off(eventName: string, callback: (val: any) => void): void {
         if (!this.events[eventName]) {
             return;
         }
@@ -45,8 +51,9 @@ export class EventEmitter<T> {
         this.events = {};
     }
 
-    once(eventName: string, callback: (val: T) => void) {
-        const onceCallback = (val: T) => {
+    once<K extends string & keyof Events>(eventName: K, callback: (val: Events[K]) => void): void;
+    once(eventName: string, callback: (val: any) => void): void {
+        const onceCallback = (val: any) => {
             callback(val);
             this.off(eventName, onceCallback);
         };

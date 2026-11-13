@@ -1,9 +1,10 @@
 ﻿/*
- * TikTok Native Docked Panel for FanCord
- * Located in: src/fanplugins/tikTokViewer/native.ts
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { BrowserWindow, app } from "electron";
+import { app,BrowserWindow } from "electron";
 import fs from "fs";
 import path from "path";
 

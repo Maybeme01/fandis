@@ -1,23 +1,36 @@
 /*
  * Vencord, a Discord client mod
- * Copyright (c) 2025 Vendicated and contributors
+ * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { showNotice } from "@api/Notices";
-import { hasAnyVisibleSettings, isPluginEnabled, pluginRequiresRestart, startDependenciesRecursive, startPlugin, stopPlugin } from "@api/PluginManager";
+import {
+    hasAnyVisibleSettings,
+    isPluginEnabled,
+    pluginRequiresRestart,
+    startDependenciesRecursive,
+    startPlugin,
+    stopPlugin
+} from "@api/PluginManager";
 import { Settings } from "@api/Settings";
 import { CogWheel, InfoIcon } from "@components/Icons";
 import { AddonCard } from "@components/settings/AddonCard";
 import { classNameFactory } from "@utils/css";
 import { Logger } from "@utils/Logger";
-import { Plugin } from "@utils/types";
+import definePlugin, { type Plugin } from "@utils/types";
 import { React, showToast } from "@webpack/common";
 
 import { PluginMeta } from "~plugins";
 
 import { openPluginModal } from "./PluginModal";
 
+const _pluginCardDef = definePlugin({
+    name: "PluginCardInternal",
+    description: "Internal Plugin Card Component",
+    authors: []
+});
+void _pluginCardDef;
 const logger = new Logger("PluginCard");
 const cl = classNameFactory("vc-plugins-");
 interface PluginCardProps extends React.HTMLProps<HTMLDivElement> {
@@ -32,8 +45,8 @@ interface PluginCardProps extends React.HTMLProps<HTMLDivElement> {
 export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, onMouseLeave, isNew }: PluginCardProps) {
     const settings = Settings.plugins[plugin.name];
     const pluginMeta = PluginMeta[plugin.name];
-    const isEquicordPlugin = pluginMeta.folderName.startsWith("src/equicordplugins/") ?? false;
-    const isVencordPlugin = pluginMeta.folderName.startsWith("src/plugins/") ?? false;
+    const isEquicordPlugin = pluginMeta?.folderName?.startsWith("src/equicordplugins/") ?? false;
+    const isVencordPlugin = pluginMeta?.folderName?.startsWith("src/plugins/") ?? false;
     const isUserPlugin = pluginMeta?.userPlugin ?? false;
     const isModifiedPlugin = plugin.isModified ?? false;
     const isFanPlugin = (pluginMeta?.folderName?.startsWith("src/fanplugins/") ?? false) || Boolean((plugin as any).isFan);
@@ -91,7 +104,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
     const pluginInfo = [
         {
             condition: isFanPlugin,
-            src: "https://raw.githubusercontent.com/Maybeme01/fanc/main/video/ico.png",
+            src: "https://raw.githubusercontent.com/Maybeme01/fanc/main/video/fanic.png",
             alt: "Fan",
             title: "Fan Plugin"
         },
@@ -159,5 +172,3 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
             } />
     );
 }
-
-

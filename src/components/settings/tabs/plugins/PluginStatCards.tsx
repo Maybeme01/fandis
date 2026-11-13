@@ -36,7 +36,7 @@ export function UserPluginsCard({ totalUserPlugins, enabledUserPlugins }) {
                         <BaseText size="md" weight="semibold">Total Userplugins</BaseText>
                         <Tooltip
                             text={
-                                <img onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
+                                <img onError={e => { (e.target as HTMLElement).style.display = "none"; }}
                                     src="https://discord.com/assets/ab6835d2922224154ddf.svg"
                                     style={{ width: "40px", height: "40px" }}
                                 />

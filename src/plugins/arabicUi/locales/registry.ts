@@ -63,6 +63,8 @@ import F8Break from "./plugins/F8Break.json";
 import FakeDeafen from "./plugins/FakeDeafen.json";
 import FakeNitro from "./plugins/FakeNitro.json";
 import FakeProfileThemes from "./plugins/FakeProfileThemes.json";
+import FanToolsAll from "./plugins/FanToolsAll.json";
+import FastPing from "./plugins/FastPing.json";
 import FavoriteEmojiFirst from "./plugins/FavoriteEmojiFirst.json";
 import FavoriteGifSearch from "./plugins/FavoriteGifSearch.json";
 import FixCodeblockGap from "./plugins/FixCodeblockGap.json";
@@ -116,6 +118,7 @@ import NoSystemBadge from "./plugins/NoSystemBadge.json";
 import NotificationVolume from "./plugins/NotificationVolume.json";
 import NoTypingAnimation from "./plugins/NoTypingAnimation.json";
 import NoUnblockToJump from "./plugins/NoUnblockToJump.json";
+import OBSRemoteControl from "./plugins/OBSRemoteControl.json";
 import oneko from "./plugins/oneko.json";
 import OnePingPerDM from "./plugins/OnePingPerDM.json";
 import OpenInApp from "./plugins/OpenInApp.json";
@@ -171,6 +174,7 @@ import SuperReactionTweaks from "./plugins/SuperReactionTweaks.json";
 import TenorGifSearch from "./plugins/TenorGifSearch.json";
 import TextReplace from "./plugins/TextReplace.json";
 import ThemeAttributes from "./plugins/ThemeAttributes.json";
+import TikTokViewer from "./plugins/TikTokViewer.json";
 import Translate from "./plugins/Translate.json";
 import TypingIndicator from "./plugins/TypingIndicator.json";
 import TypingTweaks from "./plugins/TypingTweaks.json";
@@ -190,7 +194,9 @@ import VoiceChannelBlacklist from "./plugins/VoiceChannelBlacklist.json";
 import VoiceChatDoubleClick from "./plugins/VoiceChatDoubleClick.json";
 import VoiceChatUtilities from "./plugins/VoiceChatUtilities.json";
 import VoiceDownload from "./plugins/VoiceDownload.json";
+import VoiceLogger from "./plugins/VoiceLogger.json";
 import VoiceMessages from "./plugins/VoiceMessages.json";
+import VoiceRoomRecorder from "./plugins/VoiceRoomRecorder.json";
 import VolumeBooster from "./plugins/VolumeBooster.json";
 import WebContextMenus from "./plugins/WebContextMenus.json";
 import WebKeybinds from "./plugins/WebKeybinds.json";
@@ -394,4 +400,10 @@ export const pluginPacks: Record<string, PluginLocalePack> = {
     WhosWatching: WhosWatching as PluginLocalePack,
     XSOverlay: XSOverlay as PluginLocalePack,
     YoutubeAdblock: YoutubeAdblock as PluginLocalePack,
+    FanToolsAll: FanToolsAll as PluginLocalePack,
+    FastPing: FastPing as PluginLocalePack,
+    "OBS Remote Control": OBSRemoteControl as PluginLocalePack,
+    TikTokViewer: TikTokViewer as PluginLocalePack,
+    VoiceLogger: VoiceLogger as PluginLocalePack,
+    VoiceRoomRecorder: VoiceRoomRecorder as PluginLocalePack,
 };

@@ -64,7 +64,7 @@ function ContributorModal({ user, modalProps }: { user: User; modalProps: Render
             {...modalProps}
             title={
                 <div className={cl("header")}>
-                    <img onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
+                    <img onError={e => { (e.target as HTMLElement).style.display = "none"; }}
                         className={cl("avatar")}
                         src={user.getAvatarURL(void 0, 512, true)}
                         alt=""

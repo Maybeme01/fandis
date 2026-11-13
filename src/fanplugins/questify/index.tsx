@@ -7,7 +7,7 @@
 import { addServerListElement, removeServerListElement, ServerListRenderPosition } from "@api/ServerList";
 import { PlainSettings, Settings } from "@api/Settings";
 import { ErrorBoundary } from "@components/index";
-import { Devs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { StartAt } from "@utils/types";
 import { findComponentByCodeLazy, onceReady } from "@webpack";
 import type { JSX } from "react";
@@ -102,7 +102,7 @@ function wrapOrbsBalance(balance: String): JSX.Element {
 export default definePlugin({
     name: "Questify",
     description: "Enhance specific Quest features, disable annoyances, or completely remove Quests.",
-    authors: [Devs.Etorix],
+    authors: [Devs.FAN, EquicordDevs.Etorix],
     dependencies: ["ServerListAPI"],
     startAt: StartAt.Init, // Needed in order to beat Read All Messages to inserting above the server list.
     managedStyle,

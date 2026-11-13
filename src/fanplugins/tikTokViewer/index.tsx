@@ -1,9 +1,11 @@
 /*
- * TikTok Viewer Plugin for FanCord
- * Located in: src/fanplugins/tikTokViewer/index.tsx
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { HeaderBarButton } from "@api/HeaderBar";
+import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { React } from "@webpack/common";
 
@@ -38,7 +40,7 @@ function TikTokHeaderButton() {
     return (
         <HeaderBarButton
             icon={TikTokIcon}
-            tooltip="تيك توك المدمج (TikTok)"
+            tooltip="TikTok"
             onClick={handleToggle}
         />
     );
@@ -46,8 +48,8 @@ function TikTokHeaderButton() {
 
 export default definePlugin({
     name: "TikTokViewer",
-    description: "لوحة جانبية مدمجة لتصفح تيك توك داخل نافذة ديسكورد مباشرة مع حفظ الحساب",
-    authors: [{ name: "FAN", id: 0n }],
+    description: "Embedded sidebar to browse TikTok directly within Discord with persistent account login",
+    authors: [Devs.FAN],
     enabledByDefault: false,
 
     headerBarButton: {
@@ -77,4 +79,3 @@ export default definePlugin({
         Native?.closeTikTok?.();
     }
 });
-

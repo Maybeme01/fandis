@@ -68,6 +68,14 @@ export interface Dev {
  * If you are fine with attribution but don't want the badge, add badge: false
  */
 export const Devs = /* #__PURE__*/ Object.freeze({
+    FAN: {
+        name: "ff9o",
+        id: 365952206777876484n
+    },
+    ff9o: {
+        name: "ff9o",
+        id: 365952206777876484n
+    },
     viciouscal: {
         name: "viciouscal",
         id: 0n
@@ -734,6 +742,17 @@ export const Devs = /* #__PURE__*/ Object.freeze({
     NiNoX: {
         name: "NiNoX",
         id: 123435354958200833n
+    }
+} satisfies Record<string, Dev>);
+
+export const FanDevs = Object.freeze({
+    FAN: {
+        name: "ff9o",
+        id: 365952206777876484n
+    },
+    ff9o: {
+        name: "ff9o",
+        id: 365952206777876484n
     }
 } satisfies Record<string, Dev>);
 

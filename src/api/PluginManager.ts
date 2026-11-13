@@ -40,6 +40,7 @@ import { patches } from "@webpack/patcher";
 
 import Plugins from "~plugins";
 export { Plugins as plugins };
+export type { Plugin };
 
 import { addAudioProcessor, removeAudioProcessor } from "./AudioPlayer";
 import { addChannelToolbarButton, addHeaderBarButton, removeChannelToolbarButton, removeHeaderBarButton } from "./HeaderBar";
