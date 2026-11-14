@@ -5,14 +5,17 @@
  */
 
 import { Settings } from "@api/Settings";
-import { FolderIcon, PaintbrushIcon, PencilIcon, PlusIcon, RestartIcon } from "@components/Icons";
+import { ColorPaletteIcon, FolderIcon, PaintbrushIcon, PencilIcon, PlusIcon, RestartIcon } from "@components/Icons";
 import { QuickAction, QuickActionCard } from "@components/settings";
 import { openPluginModal } from "@components/settings/tabs/plugins/PluginModal";
+import { t } from "@utils/esharqI18n";
 import { findLazy } from "@webpack";
 import { React } from "@webpack/common";
 import type { ComponentType, Ref, SyntheticEvent } from "react";
 
 import Plugins from "~plugins";
+
+import { openThemeCreatorModal } from "./ThemeCreatorModal";
 
 type FileInputType = ComponentType<{
     ref: Ref<HTMLInputElement>;
@@ -32,6 +35,11 @@ export interface QuickActionsSectionProps {
 export function QuickActionsSection({ fileInputRef, onFileUpload, refreshLocalThemes }: QuickActionsSectionProps) {
     return (
         <QuickActionCard>
+            <QuickAction
+                text={t("تخصيص ثيم جديد", "Theme Creator")}
+                action={() => openThemeCreatorModal()}
+                Icon={ColorPaletteIcon}
+            />
             {IS_WEB ? (
                 <QuickAction
                     text={

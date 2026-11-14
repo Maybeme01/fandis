@@ -24,7 +24,7 @@ import { debounce } from "@shared/debounce";
 import { IpcEvents } from "@shared/IpcEvents";
 import { app, BrowserWindow, dialog, ipcMain, nativeTheme, shell, systemPreferences } from "electron";
 import { FSWatcher, mkdirSync, readFileSync, watch, writeFileSync } from "fs";
-import { open, readdir, readFile, unlink } from "fs/promises";
+import { open, readdir, readFile, unlink, writeFile } from "fs/promises";
 import { release } from "os";
 import { join } from "path";
 
@@ -94,6 +94,11 @@ ipcMain.handle(IpcEvents.DELETE_THEME, (_, fileName) => {
     const safePath = ensureSafePath(THEMES_DIR, fileName);
     if (!safePath) return Promise.reject(`Unsafe path ${fileName}`);
     return unlink(safePath);
+});
+ipcMain.handle(IpcEvents.UPLOAD_THEME, (_, fileName, fileData) => {
+    const safePath = ensureSafePath(THEMES_DIR, fileName);
+    if (!safePath) return Promise.reject(`Unsafe path ${fileName}`);
+    return writeFile(safePath, fileData, "utf-8");
 });
 ipcMain.handle(IpcEvents.GET_THEME_SYSTEM_VALUES, () => {
     let accentColor = systemPreferences.getAccentColor?.() ?? "";

@@ -66,7 +66,7 @@ async function toggle(isEnabled: boolean) {
 // for cleanup
 let previousThemeBlobObjectURLs = [] as string[];
 
-async function initThemes() {
+export async function initThemes() {
     themesStyle ??= createAndAppendStyle("vencord-themes", userStyleRootNode);
 
     const { enabledThemeLinks, enabledThemes } = Settings;

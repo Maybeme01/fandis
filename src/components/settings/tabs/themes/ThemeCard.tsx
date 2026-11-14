@@ -6,7 +6,7 @@
 
 import type { ThemeActivationMode } from "@api/Settings";
 import { Flex } from "@components/Flex";
-import { CogWheel, DeleteIcon, FolderIcon, PinIcon } from "@components/Icons";
+import { CogWheel, ColorPaletteIcon, DeleteIcon, FolderIcon, PinIcon } from "@components/Icons";
 import { Link } from "@components/Link";
 import { OnlineThemeCard } from "@components/settings/OnlineThemeCard";
 import { UserThemeHeader } from "@main/themes";
@@ -15,6 +15,8 @@ import { openInviteModal } from "@utils/discord";
 import { findComponentByCodeLazy } from "@webpack";
 import { Menu, React, showToast, Tooltip, useState } from "@webpack/common";
 import { ContextMenuApi } from "@webpack/common/menu";
+
+import { openThemeCreatorModal, parseThemeCssToConfig } from "./ThemeCreatorModal";
 
 const HomeIcon = findComponentByCodeLazy("m2.4 8.4 8.38-6.46a2");
 const RefreshIcon = findComponentByCodeLazy("M21 2a1 1 0 0 1 1 1v6");
@@ -170,6 +172,27 @@ export function ThemeCard({ theme, enabled, onChange, onDelete, showDeleteButton
                         label="Refresh"
                         icon={RefreshIcon}
                         action={onRefresh}
+                    />
+                )}
+                {isLocal && (
+                    <Menu.MenuItem
+                        id="edit-in-theme-studio"
+                        label="تعديل في استوديو الثيمات"
+                        icon={ColorPaletteIcon}
+                        action={async () => {
+                            try {
+                                const data = await VencordNative.themes.getThemeData(theme.fileName);
+                                const parsed = parseThemeCssToConfig(data || "");
+                                openThemeCreatorModal({
+                                    ...parsed,
+                                    name: theme.name || parsed.name || theme.fileName.replace(/\.theme\.css$/, "")
+                                });
+                            } catch {
+                                openThemeCreatorModal({
+                                    name: theme.name || theme.fileName.replace(/\.theme\.css$/, "")
+                                });
+                            }
+                        }}
                     />
                 )}
                 {(IS_WEB || showDeleteButton) && onDelete && (

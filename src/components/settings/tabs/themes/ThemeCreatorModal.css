@@ -1,0 +1,1705 @@
+/* FanCord Theme Creator Styles */
+
+/* Expand Discord Native Modal wrapper to Studio Widescreen */
+div:has(> * > .fancord-tc-modal-root),
+div:has(> * > * > .fancord-tc-modal-root),
+[role="dialog"]:has(.fancord-tc-modal-root),
+[class*="root_"]:has(.fancord-tc-modal-root),
+[class*="root__"]:has(.fancord-tc-modal-root),
+[class*="modal_"]:has(.fancord-tc-modal-root),
+[class*="modal__"]:has(.fancord-tc-modal-root),
+div[class*="layer_"]:has(.fancord-tc-modal-root) [role="dialog"],
+div[class*="layer_"]:has(.fancord-tc-modal-root) [class*="root_"],
+div[class*="focusLock_"]:has(.fancord-tc-modal-root) > div {
+    width: 96vw !important;
+    max-width: 1760px !important;
+    min-width: 1100px !important;
+    height: 94vh !important;
+    max-height: 96vh !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+}
+
+[role="dialog"]:has(.fancord-tc-modal-root) [class*="content_"],
+[role="dialog"]:has(.fancord-tc-modal-root) [class*="content__"],
+[role="dialog"]:has(.fancord-tc-modal-root) [class*="modalContent_"],
+[role="dialog"]:has(.fancord-tc-modal-root) [class*="scrollerBase_"],
+[class*="root_"]:has(.fancord-tc-modal-root) [class*="content_"],
+[class*="root_"]:has(.fancord-tc-modal-root) [class*="modalContent_"] {
+    padding: 0 !important;
+    height: 100% !important;
+    max-height: none !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+}
+
+.fancord-tc-modal-root {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: var(--background-primary, #1e1f22) !important;
+    box-shadow: 0 24px 70px rgb(0 0 0 / 85%) !important;
+}
+
+.fancord-theme-creator-modal {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    height: 100%;
+    width: 100%;
+}
+
+.fancord-tc-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 14px;
+    flex: 1;
+    overflow: hidden;
+    height: 100%;
+}
+
+/* Preset Themes Row */
+.fancord-tc-presets-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--background-secondary, #2b2d31);
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 8%));
+    flex-shrink: 0;
+}
+
+.fancord-tc-presets-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--header-secondary, #b5bac1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fancord-tc-presets-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.fancord-tc-preset-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--background-tertiary, #1e1f22);
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 10%));
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-normal, #dbdee1);
+    transition: all 0.18s ease;
+}
+
+.fancord-tc-preset-pill:hover {
+    background: var(--background-modifier-hover, rgb(255 255 255 / 8%));
+    border-color: var(--brand-experiment, #5865f2);
+    transform: translateY(-1px);
+}
+
+.fancord-tc-preset-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid rgb(255 255 255 / 40%);
+    flex-shrink: 0;
+}
+
+/* Navigation Tabs */
+.fancord-tc-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--background-secondary-alt, #1e1f22);
+    padding: 3px;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.fancord-tc-tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted, #949ba4);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.fancord-tc-tab-btn:hover {
+    color: var(--text-normal, #dbdee1);
+    background: var(--background-modifier-hover, rgb(255 255 255 / 5%));
+}
+
+.fancord-tc-tab-btn.active {
+    background: var(--brand-experiment, #5865f2);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 2px 10px rgb(88 101 242 / 45%);
+}
+
+/* Main Split View: Settings + Live Preview */
+.fancord-tc-main-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(460px, 0.75fr);
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+@media (width <= 1100px) {
+    .fancord-tc-main-split {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Settings Column */
+.fancord-tc-settings-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    padding-right: 8px;
+    height: 100%;
+}
+
+.fancord-tc-card {
+    background: var(--background-secondary, #2b2d31);
+    border-radius: 10px;
+    padding: 14px;
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 6%));
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fancord-tc-card-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--header-primary, #f2f3f5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Color Pickers Grid */
+.fancord-tc-color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 8px;
+}
+
+.fancord-tc-color-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: var(--background-tertiary, #1e1f22);
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 5%));
+    transition: all 0.2s ease;
+}
+
+.fancord-tc-color-item:hover,
+.fancord-tc-color-item:focus-within {
+    border-color: var(--brand-experiment, #5865f2);
+    background: rgb(88 101 242 / 5%);
+}
+
+.fancord-tc-color-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.fancord-tc-color-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted, #949ba4);
+}
+
+.fancord-tc-target-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgb(255 255 255 / 8%);
+    color: var(--text-normal, #dbdee1);
+}
+
+.fancord-tc-color-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fancord-tc-color-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 2px solid rgb(255 255 255 / 20%);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.fancord-tc-native-color {
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.fancord-tc-hex-input {
+    background: var(--background-secondary, #2b2d31);
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 10%));
+    border-radius: 6px;
+    color: var(--text-normal, #dbdee1);
+    padding: 6px 10px;
+    font-size: 12px;
+    font-family: monospace;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.fancord-tc-hex-input:focus {
+    border-color: var(--brand-experiment, #5865f2);
+}
+
+/* Sliders */
+.fancord-tc-slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 10px;
+    background: var(--background-tertiary, #1e1f22);
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 5%));
+    transition: all 0.2s ease;
+}
+
+.fancord-tc-slider-row:hover,
+.fancord-tc-slider-row:focus-within {
+    border-color: var(--brand-experiment, #5865f2);
+    background: rgb(88 101 242 / 5%);
+}
+
+.fancord-tc-slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted, #949ba4);
+}
+
+.fancord-tc-slider-val {
+    color: var(--text-normal, #dbdee1);
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.fancord-tc-range {
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--background-secondary, #2b2d31);
+    outline: none;
+}
+
+.fancord-tc-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--brand-experiment, #5865f2);
+    cursor: pointer;
+    box-shadow: 0 0 6px rgb(88 101 242 / 50%);
+    transition: transform 0.15s ease;
+}
+
+.fancord-tc-range::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* Image / GIF Upload Row */
+.fancord-tc-image-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.fancord-tc-url-input {
+    flex: 1;
+    background: var(--background-tertiary, #1e1f22);
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 10%));
+    border-radius: 6px;
+    color: var(--text-normal, #dbdee1);
+    padding: 8px 12px;
+    font-size: 13px;
+    outline: none;
+}
+
+.fancord-tc-url-input:focus {
+    border-color: var(--brand-experiment, #5865f2);
+}
+
+.fancord-tc-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--brand-experiment, #5865f2);
+    color: #fff;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s ease;
+    white-space: nowrap;
+}
+
+.fancord-tc-upload-btn:hover {
+    opacity: 0.9;
+}
+
+/* GIF Presets Row */
+.fancord-tc-gif-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.fancord-tc-gif-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: var(--background-tertiary, #1e1f22);
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 10%));
+    border-radius: 14px;
+    font-size: 11.5px;
+    color: var(--text-normal, #dbdee1);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.fancord-tc-gif-pill:hover {
+    border-color: #f472b6;
+    background: rgb(244 114 182 / 10%);
+    transform: translateY(-1px);
+}
+
+.fancord-tc-gif-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 12px;
+    animation: fancord-pulse 2s infinite ease-in-out;
+}
+
+@keyframes fancord-pulse {
+    0%, 100% {
+        opacity: 0.9;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.03);
+    }
+}
+
+/* Interactive Preview Column */
+.fancord-tc-preview-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+}
+
+.fancord-tc-preview-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fancord-tc-preview-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--header-secondary, #b5bac1);
+}
+
+/* Mockup View Switcher (Chat | Settings | Popout) */
+.fancord-tc-mockup-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--background-secondary, #2b2d31);
+    padding: 3px;
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 8%));
+}
+
+.fancord-tc-mockup-tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 5px 6px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted, #949ba4);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.fancord-tc-mockup-tab-btn:hover {
+    color: var(--text-normal, #dbdee1);
+    background: var(--background-modifier-hover, rgb(255 255 255 / 5%));
+}
+
+.fancord-tc-mockup-tab-btn.active {
+    background: var(--brand-experiment, #5865f2);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgb(88 101 242 / 35%);
+}
+
+/* Live Targeted Modifier Indicator Bar */
+.fancord-tc-indicator-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--background-secondary, #2b2d31);
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 8%));
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-normal, #dbdee1);
+    min-height: 32px;
+    transition: all 0.2s ease;
+}
+
+.fancord-tc-indicator-bar.active {
+    border-color: var(--brand-experiment, #5865f2);
+    background: rgb(88 101 242 / 12%);
+    color: #fff;
+}
+
+.fancord-tc-mockup-wrapper {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid var(--background-modifier-accent, rgb(255 255 255 / 10%));
+    box-shadow: 0 10px 30px rgb(0 0 0 / 50%);
+    flex: 1;
+    min-height: 480px;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+}
+
+.fancord-tc-mockup-bg {
+    position: absolute !important;
+    inset: 0 !important;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 1 !important;
+    pointer-events: none !important;
+    overflow: hidden;
+}
+
+.fancord-tc-mockup-tint {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 2 !important;
+    pointer-events: none !important;
+}
+
+.fancord-tc-mockup-app {
+    position: relative !important;
+    z-index: 3 !important;
+    display: grid;
+    grid-template-columns: 46px 115px 1fr 94px;
+    flex: 1;
+    height: 100%;
+    width: 100%;
+}
+
+/* Target Elements Highlighting in Mockup */
+.fancord-tc-mock-element {
+    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative;
+}
+
+.fancord-tc-mock-element.highlighted {
+    outline: 2.5px solid #00f5ff !important;
+    box-shadow: inset 0 0 16px rgb(0 245 255 / 30%), 0 0 16px rgb(0 245 255 / 80%) !important;
+    z-index: 10 !important;
+    animation: fancord-pulse-border 1.5s infinite ease-in-out;
+}
+
+@keyframes fancord-pulse-border {
+    0%, 100% {
+        outline-color: #00f5ff;
+        box-shadow: inset 0 0 12px rgb(0 245 255 / 30%), 0 0 14px rgb(0 245 255 / 70%);
+    }
+
+    50% {
+        outline-color: #5865f2;
+        box-shadow: inset 0 0 20px rgb(88 101 242 / 40%), 0 0 22px rgb(88 101 242 / 90%);
+    }
+}
+
+.fancord-tc-mock-guilds {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    border-right: 1px solid rgb(255 255 255 / 5%);
+}
+
+.fancord-tc-mock-guild-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: default;
+    transition: border-radius 0.2s ease;
+}
+
+.fancord-tc-mock-guild-icon.active {
+    border-radius: 14px;
+}
+
+.fancord-tc-mock-channels {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 8px;
+    border-right: 1px solid rgb(255 255 255 / 5%);
+}
+
+.fancord-tc-mock-header {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 8px 10px;
+    border-bottom: 1px solid rgb(255 255 255 / 6%);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fancord-tc-mock-channel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: default;
+}
+
+.fancord-tc-mock-chat {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px;
+    position: relative;
+}
+
+.fancord-tc-mock-chat-header {
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.fancord-tc-mock-messages {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: hidden;
+}
+
+.fancord-tc-mock-msg {
+    display: flex;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.fancord-tc-mock-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.fancord-tc-mock-msg-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fancord-tc-mock-author-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.fancord-tc-mock-author-name {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.fancord-tc-mock-author-time {
+    font-size: 10px;
+}
+
+.fancord-tc-mock-text {
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.fancord-tc-mock-sample-btn {
+    align-self: flex-start;
+    padding: 4px 10px;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: default;
+    margin-top: 4px;
+}
+
+.fancord-tc-mock-input {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+/* Members List Mockup */
+.fancord-tc-mock-members {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 8px;
+    border-left: 1px solid rgb(255 255 255 / 5%);
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.fancord-tc-mock-member-category {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.fancord-tc-mock-member-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fancord-tc-mock-member-avatar {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.fancord-tc-mock-online-dot {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 7px;
+    height: 7px;
+    background-color: #23a55a;
+    border-radius: 50%;
+    border: 1.5px solid #1e1f22;
+}
+
+.fancord-tc-mock-mention-pill {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: default;
+    display: inline-block;
+}
+
+/* VIEW 2: Settings Window Frosted Glass Mockup */
+.fancord-tc-mock-settings-view {
+    position: relative;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    height: 100%;
+    width: 100%;
+    cursor: pointer;
+}
+
+.fancord-tc-mock-settings-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 14px 8px;
+    border-right: 1px solid rgb(255 255 255 / 6%);
+}
+
+.fancord-tc-mock-settings-item {
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 500;
+}
+
+.fancord-tc-mock-settings-content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fancord-tc-mock-settings-card {
+    border-radius: 8px;
+}
+
+/* VIEW 3: Popouts & User Profile Card Mockup */
+.fancord-tc-mock-popout-view {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    height: 100%;
+    width: 100%;
+    cursor: pointer;
+}
+
+.fancord-tc-mock-popout-card {
+    width: 280px;
+    overflow: hidden;
+    position: relative;
+}
+
+.fancord-tc-mock-popout-banner {
+    height: 60px;
+    width: 100%;
+}
+
+.fancord-tc-mock-popout-body {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: relative;
+}
+
+.fancord-tc-mock-popout-avatar {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    margin-top: -34px;
+    margin-bottom: 6px;
+    border: 3px solid rgb(0 0 0 / 40%);
+}
+
+/* Floating Mockup Overlays for Settings & Profile Popout inside Discord Mockup */
+.fancord-tc-mock-floating-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 290px;
+    z-index: 15;
+    overflow: hidden;
+    pointer-events: auto;
+    box-shadow: 0 16px 40px rgb(0 0 0 / 75%);
+}
+
+.fancord-tc-mock-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+}
+
+.fancord-tc-mock-modal-body {
+    display: grid;
+    grid-template-columns: 85px 1fr;
+    min-height: 115px;
+}
+
+.fancord-tc-mock-modal-sidebar {
+    padding: 8px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.fancord-tc-mock-modal-item {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+
+.fancord-tc-mock-modal-content {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.fancord-tc-mock-floating-popout {
+    position: absolute;
+    bottom: 50px;
+    right: 14px;
+    width: 220px;
+    z-index: 15;
+    overflow: hidden;
+    pointer-events: auto;
+    box-shadow: 0 16px 40px rgb(0 0 0 / 75%);
+}
+
+/* Guide / Overview Tab Styles */
+.fancord-tc-guide-card {
+    background: var(--background-secondary, #2b2d31);
+    border-radius: 10px;
+    padding: 16px;
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 8%));
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fancord-tc-guide-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--header-primary, #f2f3f5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fancord-tc-guide-text {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-normal, #dbdee1);
+}
+
+.fancord-tc-guide-tips {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.fancord-tc-guide-tip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--background-tertiary, #1e1f22);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+.fancord-tc-guide-tip-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+/* Footer Action Bar */
+.fancord-tc-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 8%));
+    flex-shrink: 0;
+}
+
+.fancord-tc-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.fancord-tc-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fancord-tc-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s ease;
+}
+
+.fancord-tc-btn-secondary {
+    background: var(--background-secondary, #2b2d31);
+    color: var(--text-normal, #dbdee1);
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 10%));
+}
+
+.fancord-tc-btn-secondary:hover {
+    background: var(--background-modifier-hover, rgb(255 255 255 / 8%));
+    color: #fff;
+}
+
+.fancord-tc-btn-primary {
+    background: var(--brand-experiment, #5865f2);
+    color: #fff;
+    box-shadow: 0 2px 8px rgb(88 101 242 / 40%);
+}
+
+.fancord-tc-btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Live Preview Banner in Title */
+.fancord-tc-live-banner {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgb(35 165 90 / 15%);
+    border: 1px solid rgb(35 165 90 / 40%);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #23a55a;
+}
+
+.fancord-tc-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #23a55a;
+    box-shadow: 0 0 8px #23a55a;
+    animation: fancord-pulse-dot 1.5s infinite;
+}
+
+@keyframes fancord-pulse-dot {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.3);
+        opacity: 0.6;
+    }
+}
+
+/* Showcase Complete Aesthetics Grid */
+.fancord-tc-showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 6px;
+}
+
+@media (width <= 1400px) {
+    .fancord-tc-showcase-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (width <= 1100px) {
+    .fancord-tc-showcase-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.fancord-tc-showcase-card {
+    background: var(--background-tertiary, #1e1f22);
+    border-radius: 9px;
+    padding: 9px 11px;
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 8%));
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.fancord-tc-showcase-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgb(0 0 0 / 35%);
+    border-color: rgb(255 255 255 / 20%);
+}
+
+.fancord-tc-showcase-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fancord-tc-showcase-name {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--header-primary, #f2f3f5);
+}
+
+.fancord-tc-badge {
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.fancord-tc-showcase-desc {
+    font-size: 11px;
+    color: var(--text-muted, #949ba4);
+    line-height: 1.35;
+    margin: 0;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.fancord-tc-showcase-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2px;
+}
+
+.fancord-tc-mini-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 1px solid rgb(255 255 255 / 20%);
+}
+
+.fancord-tc-showcase-btn {
+    padding: 3px 8px;
+    border-radius: 5px;
+    border: none;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Custom Fonts Selector Grid */
+.fancord-tc-fonts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.fancord-tc-font-card {
+    background: var(--background-tertiary, #1e1f22);
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 8%));
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.fancord-tc-font-card:hover {
+    border-color: rgb(255 255 255 / 25%);
+    background: rgb(255 255 255 / 4%);
+}
+
+.fancord-tc-font-card.active {
+    border-color: var(--brand-experiment, #5865f2);
+    background: rgb(88 101 242 / 10%);
+}
+
+.fancord-tc-font-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--header-primary, #f2f3f5);
+}
+
+.fancord-tc-font-desc {
+    font-size: 11px;
+    color: var(--text-muted, #949ba4);
+}
+
+.fancord-tc-font-sample {
+    font-size: 12.5px;
+    color: var(--text-normal, #dbdee1);
+    margin-top: 4px;
+    padding: 6px 8px;
+    background: rgb(0 0 0 / 20%);
+    border-radius: 4px;
+}
+
+/* Toggle Rows */
+.fancord-tc-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--background-tertiary, #1e1f22);
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 6%));
+    gap: 14px;
+}
+
+.fancord-tc-toggle-row strong {
+    font-size: 13px;
+    color: var(--header-primary, #f2f3f5);
+}
+
+.fancord-tc-mockup-bg,
+.fancord-tc-mock-guilds,
+.fancord-tc-mock-channels,
+.fancord-tc-mock-chat,
+.fancord-tc-mock-input {
+    cursor: pointer;
+}
+
+/* Wallpaper Target Scope Grid */
+.fancord-tc-scope-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.fancord-tc-scope-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--background-secondary, #2b2d31);
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 8%));
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: start;
+    transition: all 0.2s ease;
+    color: var(--text-normal, #dbdee1);
+}
+
+.fancord-tc-scope-btn:hover {
+    border-color: rgb(255 255 255 / 25%);
+    background: rgb(255 255 255 / 4%);
+}
+
+.fancord-tc-scope-btn.active {
+    border-color: var(--brand-experiment, #5865f2);
+    background: rgb(88 101 242 / 12%);
+}
+
+.fancord-tc-scope-btn span {
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.fancord-tc-scope-btn strong {
+    display: block;
+    font-size: 12.5px;
+    color: var(--header-primary, #f2f3f5);
+}
+
+.fancord-tc-scope-btn p {
+    margin: 2px 0 0;
+    font-size: 11px;
+    color: var(--text-muted, #949ba4);
+    line-height: 1.4;
+}
+
+/* Upload Custom Font Card */
+.fancord-tc-upload-font-card {
+    background: var(--background-tertiary, #1e1f22);
+    border: 1.5px dashed var(--brand-experiment, #5865f2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 8px;
+}
+
+/* Sliders Grid */
+.fancord-tc-sliders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 8px 10px;
+}
+
+.fancord-tc-mock-folder {
+    width: 32px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgb(255 255 255 / 12%);
+}
+
+.fancord-tc-mock-folder:hover {
+    transform: scale(1.05);
+    border-color: rgb(255 255 255 / 35%);
+}
+
+.fancord-tc-mockup-voice-view {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+/* Mockup Scope Positioning */
+.fancord-tc-mockup-bg.scope-chat,
+.fancord-tc-mockup-tint.scope-chat {
+    inset: 0 94px 0 161px !important;
+}
+
+.fancord-tc-mockup-bg.scope-chatAndSidebar,
+.fancord-tc-mockup-tint.scope-chatAndSidebar {
+    inset: 0 94px 0 46px !important;
+}
+
+.fancord-tc-mockup-bg.scope-sidebar,
+.fancord-tc-mockup-tint.scope-sidebar {
+    inset: 0 auto 0 46px !important;
+    width: 115px !important;
+}
+
+.fancord-tc-mockup-bg.scope-full,
+.fancord-tc-mockup-tint.scope-full {
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Master Wallpaper Toggle & Status Pill */
+.fancord-tc-master-switch-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--background-secondary, #2b2d31);
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 8%));
+    border-radius: 10px;
+    padding: 12px 16px;
+    gap: 16px;
+    transition: all 0.2s ease;
+}
+
+.fancord-tc-master-switch-card.active {
+    border-color: var(--brand-experiment, #5865f2);
+    background: rgb(88 101 242 / 6%);
+}
+
+.fancord-tc-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+.fancord-tc-status-pill.active {
+    background: rgb(46 204 113 / 15%);
+    color: #2ecc71;
+    border: 1px solid rgb(46 204 113 / 35%);
+}
+
+.fancord-tc-status-pill.inactive {
+    background: rgb(255 255 255 / 6%);
+    color: var(--text-muted, #949ba4);
+    border: 1px solid rgb(255 255 255 / 8%);
+}
+
+/* Master Toggle Switch */
+.fancord-tc-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.fancord-tc-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.fancord-tc-slider-toggle {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #4e5058;
+    transition: 0.25s;
+    border-radius: 24px;
+}
+
+.fancord-tc-slider-toggle::before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.25s;
+    border-radius: 50%;
+}
+
+.fancord-tc-switch input:checked + .fancord-tc-slider-toggle {
+    background-color: var(--brand-experiment, #5865f2);
+}
+
+.fancord-tc-switch input:checked + .fancord-tc-slider-toggle::before {
+    transform: translateX(20px);
+}
+
+/* Active Image / GIF Bar */
+.fancord-tc-active-img-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--background-tertiary, #1e1f22);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 8%));
+}
+
+.fancord-tc-thumb-preview {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgb(255 255 255 / 15%);
+    flex-shrink: 0;
+}
+
+/* GIF Presets Gallery Grid */
+.fancord-tc-gif-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.fancord-tc-gif-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--background-tertiary, #1e1f22);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 8%));
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.fancord-tc-gif-card:hover {
+    border-color: rgb(255 255 255 / 30%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgb(0 0 0 / 40%);
+}
+
+.fancord-tc-gif-card.active {
+    border-color: var(--brand-experiment, #5865f2);
+    box-shadow: 0 0 14px rgb(88 101 242 / 50%);
+}
+
+.fancord-tc-gif-card-thumb {
+    height: 82px;
+    width: 100%;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.fancord-tc-gif-pill-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgb(0 0 0 / 70%);
+    backdrop-filter: blur(4px);
+    color: #00f5ff;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgb(0 245 255 / 40%);
+}
+
+.fancord-tc-gif-active-badge {
+    position: absolute;
+    bottom: 6px;
+    left: 6px;
+    background: var(--brand-experiment, #5865f2);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 50%);
+}
+
+.fancord-tc-gif-card-info {
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fancord-tc-gif-card-info strong {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--header-primary, #f2f3f5);
+}
+
+.fancord-tc-gif-card-info p {
+    margin: 0;
+    font-size: 10.5px;
+    color: var(--text-muted, #949ba4);
+    line-height: 1.3;
+}
+
+/* VIEW 0: Dedicated Fullscreen Wallpaper & Animated GIF Showcase */
+.fancord-tc-mock-wallpaper-view {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 14px;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.fancord-tc-mock-empty-wp {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    gap: 8px;
+    padding: 24px;
+    color: var(--text-muted, #949ba4);
+}
+
+.fancord-tc-mock-wp-overlay-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    position: relative;
+    z-index: 4;
+}
+
+.fancord-tc-mock-wp-header-badges {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.fancord-tc-wp-badge-pill {
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 40%);
+}
+
+.fancord-tc-wp-badge-pill.scope {
+    background: rgb(0 0 0 / 70%);
+    color: #00f5ff;
+    border: 1px solid rgb(0 245 255 / 35%);
+}
+
+.fancord-tc-wp-badge-pill.gif {
+    background: rgb(138 92 246 / 80%);
+    color: #fff;
+    border: 1px solid rgb(138 92 246 / 60%);
+}
+
+.fancord-tc-mock-wp-floating-card {
+    padding: 12px 14px;
+    box-shadow: 0 16px 36px rgb(0 0 0 / 60%);
+    margin-top: auto;
+}
+
+.fancord-tc-mockup-img-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Interactive Floating Scope Banner on Mockup */
+.fancord-tc-mock-scope-banner {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    z-index: 8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 10px;
+    background: rgb(10 10 15 / 85%);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgb(0 245 255 / 35%);
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #e0f7fa;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 40%);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.fancord-tc-mock-scope-banner:hover {
+    border-color: #00f5ff;
+    background: rgb(15 20 30 / 95%);
+    transform: translateY(-1px);
+}
+
+.fancord-tc-mock-scope-banner strong {
+    font-size: 10.5px;
+    color: #00f5ff;
+    font-weight: 800;
+}
+
+/* Micro Section Badges inside Mockup */
+.fancord-tc-mock-col-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgb(255 255 255 / 8%);
+    color: var(--text-muted, #949ba4);
+    border: 1px solid rgb(255 255 255 / 8%);
+    margin-bottom: 4px;
+    pointer-events: none;
+    align-self: center;
+}
+
+.fancord-tc-mock-col-badge.chat {
+    margin-bottom: 0;
+    background: rgb(88 101 242 / 15%);
+    color: var(--brand-experiment, #5865f2);
+    border-color: rgb(88 101 242 / 30%);
+}
+
+.fancord-tc-mock-col-badge.input-badge {
+    font-size: 8.5px;
+    padding: 1px 4px;
+    background: rgb(255 255 255 / 6%);
+}
+
+.fancord-tc-mock-element.highlighted .fancord-tc-mock-col-badge {
+    background: #00f5ff !important;
+    color: #000 !important;
+    font-weight: 900 !important;
+    box-shadow: 0 0 8px #00f5ff !important;
+}
+
+
