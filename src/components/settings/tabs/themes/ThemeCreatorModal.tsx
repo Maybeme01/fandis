@@ -937,19 +937,21 @@ export function generateThemeCss(config: ThemeConfig): string {
             imageCss = [
                 "",
                 "/* ── Fullscreen Wallpaper & Transparency Engine ── */",
-                "html, body, #app-mount {",
+                "html {",
                 "    background: transparent !important;",
                 "    background-color: transparent !important;",
                 "}",
                 "",
-                "/* Paint directly onto Discord's native background canvas: #app-mount [class*='bg_'] */",
-                "#app-mount [class*=\"bg_\"],",
-                ".bg__960e4 {",
+                "html::before,",
+                "body::before {",
+                '    content: "" !important;',
                 "    position: fixed !important;",
                 "    top: 0 !important;",
                 "    left: 0 !important;",
                 "    right: 0 !important;",
                 "    bottom: 0 !important;",
+                "    width: 100vw !important;",
+                "    height: 100vh !important;",
                 `    background-image: url("${url}") !important;`,
                 `    background-size: ${fit} !important;`,
                 "    background-position: center center !important;",
@@ -958,60 +960,44 @@ export function generateThemeCss(config: ThemeConfig): string {
                 `    filter: blur(${config.bgBlur}px) brightness(${config.bgBrightness}%) !important;`,
                 "    opacity: 1 !important;",
                 "    visibility: visible !important;",
-                "    z-index: 0 !important;",
                 "    pointer-events: none !important;",
+                "    z-index: -1 !important;",
                 "}",
                 "",
-                "#app-mount [class*=\"bg_\"]::before,",
-                ".bg__960e4::before {",
-                '    content: "" !important;',
-                "    position: fixed !important;",
-                "    inset: 0 !important;",
-                `    background-color: rgba(0, 0, 0, ${config.overlayOpacity}) !important;`,
-                "    pointer-events: none !important;",
-                "    z-index: 1 !important;",
-                "}",
-                "",
-                "/* Root Fallbacks */",
-                "body::before,",
-                "#app-mount::before {",
-                '    content: "" !important;',
-                "    position: fixed !important;",
-                "    inset: 0 !important;",
-                `    background-image: url("${url}") !important;`,
-                `    background-size: ${fit} !important;`,
-                "    background-position: center center !important;",
-                `    background-repeat: ${repeat} !important;`,
-                "    background-attachment: fixed !important;",
-                `    filter: blur(${config.bgBlur}px) brightness(${config.bgBrightness}%) !important;`,
-                "    pointer-events: none !important;",
-                "    z-index: -2 !important;",
-                "}",
-                "",
+                "html::after,",
                 "body::after {",
                 '    content: "" !important;',
                 "    position: fixed !important;",
-                "    inset: 0 !important;",
+                "    top: 0 !important;",
+                "    left: 0 !important;",
+                "    right: 0 !important;",
+                "    bottom: 0 !important;",
+                "    width: 100vw !important;",
+                "    height: 100vh !important;",
                 `    background-color: rgba(0, 0, 0, ${config.overlayOpacity}) !important;`,
                 "    pointer-events: none !important;",
                 "    z-index: -1 !important;",
                 "}",
                 "",
                 "/* Clear Discord's Opaque Containers */",
-                '[class*="appMount_"],',
+                "body,",
+                "#app-mount,",
+                '[class*="appDevToolsWrapper_"],',
                 '[class*="app_"],',
+                '[class*="visualRefresh_"],',
                 '[class*="layers_"],',
                 '[class*="layer_"],',
                 '[class*="base_"],',
+                '[class*="container_"],',
                 '[class*="chat_"],',
                 '[class*="chatContent_"],',
+                '[class*="content_"],',
+                '[class*="pageWrapper_"],',
                 '[class*="messagesWrapper_"],',
                 '[class*="scrollerContent_"],',
                 '[class*="scrollerInner_"],',
                 'main[class*="chatContent_"],',
-                '[class*="pageWrapper_"],',
-                '[class*="container_"] > [class*="content_"],',
-                '[class*="sidebar_"] > [class*="container_"],',
+                '[class*="bg_"],',
                 '[class*="guilds_"] [class*="scroller_"],',
                 '[class*="guilds_"] [class*="tree_"],',
                 '[class*="guilds_"] nav,',
@@ -1067,15 +1053,20 @@ export function generateThemeCss(config: ThemeConfig): string {
                 "}",
                 "",
                 "/* Voice Channels, Video Calls, Screenshare & Lounge Containers */",
+                '[class*="chat_"] [class*="wrapper_"],',
+                '[class*="chat_"] [class*="content_"],',
+                '[class*="chat_"] > [class*="content_"],',
                 '[class*="callContainer_"],',
-                '[class*="wrapper_"][class*="callContainer_"],',
+                '[class*="wrapper_"]:has([class*="callContainer_"]),',
+                '[class*="wrapper_"]:has([class*="videoGrid_"]),',
                 '[class*="root_"][class*="callContainer_"],',
-                '[class*="gradientContainer_"],',
-                '[class*="gradientBackground_"],',
-                '[class*="videoGrid_"],',
                 '[class*="videoGridWrapper_"],',
+                '[class*="videoGrid_"],',
                 '[class*="container_"][class*="grid_"],',
                 '[class*="tileRow_"],',
+                '[class*="row_"][class*="tileRow_"],',
+                '[class*="gradientContainer_"],',
+                '[class*="gradientBackground_"],',
                 '[class*="stageSection_"],',
                 '[class*="stageContainer_"],',
                 '[class*="wrapper_"][class*="stage_"],',
@@ -1087,7 +1078,6 @@ export function generateThemeCss(config: ThemeConfig): string {
                 '[class*="videoControls_"],',
                 '[class*="container_"][class*="panels_"] [class*="connection_"],',
                 '[class*="container_"][class*="panels_"] [class*="container_"],',
-                '[class*="container_"][class*="chat_"] > [class*="content_"],',
                 '[class*="container_"][class*="floating_"],',
                 '[class*="callWrapper_"] {',
                 "    background: transparent !important;",
@@ -1096,11 +1086,12 @@ export function generateThemeCss(config: ThemeConfig): string {
                 "",
                 "/* Voice & Video Tiles Glassmorphism */",
                 '[class*="tile_"],',
-                '[class*="root_"][class*="tile_"],',
+                '[class*="tileRow_"] > div,',
+                '[class*="videoGrid_"] [class*="tile_"],',
                 '[class*="container_"][class*="mainCard_"],',
                 '[class*="card_"][class*="voiceChannelCard_"] {',
                 `    background-color: ${voiceCallBgTrans} !important;`,
-                `    border-radius: ${config.borderRadius || 8}px !important;`,
+                `    border-radius: ${config.borderRadius || 12}px !important;`,
                 "    border: 1px solid rgba(255, 255, 255, 0.08) !important;",
                 ...(config.glassBlur > 0 ? [
                     `    backdrop-filter: blur(${Math.max(4, config.glassBlur)}px) saturate(120%) !important;`,
@@ -1169,12 +1160,17 @@ export function generateThemeCss(config: ThemeConfig): string {
                 "",
                 "/* ── Chat-Only Wallpaper Engine ── */",
                 '[class*="chatContent_"],',
+                '[class*="chat_"] > [class*="content_"],',
+                '[class*="chat_"] [class*="wrapper_"],',
+                '[class*="callContainer_"],',
                 'main[class*="chatContent_"] {',
                 "    position: relative !important;",
                 "    background: transparent !important;",
                 "}",
                 "",
                 '[class*="chatContent_"]::before,',
+                '[class*="chat_"] > [class*="content_"]::before,',
+                '[class*="callContainer_"]::before,',
                 '[class*="messagesWrapper_"]::before {',
                 '    content: "" !important;',
                 "    position: absolute !important;",
@@ -1628,7 +1624,20 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
             await VencordNative.themes.uploadTheme(safeFileName, cssContent);
 
             // Disable any conflicting local black or template themes so transparency & wallpaper take full effect
-            const conflictingPresets = ["أسود.theme.css", "سايبربنك.theme.css", "صقيع.theme.css", "Cosmic Deep Space.theme.css"];
+            const conflictingPresets = [
+                "أسود.theme.css",
+                "سايبربنك.theme.css",
+                "صقيع.theme.css",
+                "Cosmic Deep Space.theme.css",
+                "OLED Obsidian Stealth.theme.css",
+                "My-Custom-Theme.theme.css",
+                "Anime Sakura.theme.css",
+                "Cyberpunk 2077.theme.css",
+                "Lo-Fi Chill Rain.theme.css",
+                "Emerald Zen Forest.theme.css",
+                "Royal Crimson Blood.theme.css",
+                "Nordic Arctic Frost.theme.css"
+            ];
             const currentEnabled = Settings.enabledThemes ?? [];
             const cleanList = currentEnabled.filter(t => t !== safeFileName && !conflictingPresets.includes(t));
 
@@ -1751,7 +1760,7 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
             }}
             size="xxl"
             title={
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", paddingRight: 48, boxSizing: "border-box" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <span style={{ fontSize: 24 }}>🎨</span>
                         <div>
@@ -1761,7 +1770,7 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                         </div>
                     </div>
                     {livePreviewActive && (
-                        <div className="fancord-tc-live-banner">
+                        <div className="fancord-tc-live-banner" style={{ flexShrink: 0 }}>
                             <span className="fancord-tc-live-dot" />
                             <span>{t("المعاينة الحية نشطة على كامل ديسكورد", "Discord Live Preview Active")}</span>
                         </div>
@@ -3100,41 +3109,46 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                         type="button"
                                         className={`fancord-tc-mockup-tab-btn ${mockupView === "chat" ? "active" : ""}`}
                                         onClick={() => setMockupView("chat")}
+                                        title={t("معاينة واجهة ديسكورد والشات المتكاملة", "Full Discord App Preview")}
                                     >
                                         <span>💬</span>
-                                        {t("ديسكورد المتكامل", "Discord App")}
+                                        {t("ديسكورد", "Discord")}
                                     </button>
                                     <button
                                         type="button"
                                         className={`fancord-tc-mockup-tab-btn ${mockupView === "voice" ? "active" : ""}`}
                                         onClick={() => setMockupView("voice")}
+                                        title={t("معاينة مكالمات الصوت والفيديو والرومات", "Voice & Video Calls Preview")}
                                     >
                                         <span>🔊</span>
-                                        {t("مكالمات الصوت والرومات", "Voice & Calls")}
+                                        {t("المكالمات", "Voice & Calls")}
                                     </button>
                                     <button
                                         type="button"
                                         className={`fancord-tc-mockup-tab-btn ${mockupView === "settings" ? "active" : ""}`}
                                         onClick={() => setMockupView("settings")}
+                                        title={t("معاينة نافذة الإعدادات", "Settings Windows Preview")}
                                     >
                                         <span>⚙️</span>
-                                        {t("نافذة الإعدادات", "Settings")}
+                                        {t("الإعدادات", "Settings")}
                                     </button>
                                     <button
                                         type="button"
                                         className={`fancord-tc-mockup-tab-btn ${mockupView === "popout" ? "active" : ""}`}
                                         onClick={() => setMockupView("popout")}
+                                        title={t("معاينة القوائم المنبثقة والبروفايل", "Popouts & Menus Preview")}
                                     >
                                         <span>👤</span>
-                                        {t("البروفايل والقوائم", "Popouts")}
+                                        {t("القوائم", "Popouts")}
                                     </button>
                                     <button
                                         type="button"
                                         className={`fancord-tc-mockup-tab-btn ${mockupView === "wallpaper" ? "active" : ""}`}
                                         onClick={() => setMockupView("wallpaper")}
+                                        title={t("معاينة الخلفية أو صورة الـ GIF بالكامل", "Full Wallpaper & GIF Preview")}
                                     >
                                         <span>🖼️</span>
-                                        {t("الخلفية بالكامل", "Full Wallpaper")}
+                                        {t("الخلفية", "Wallpaper")}
                                     </button>
                                 </div>
 
@@ -3963,9 +3977,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                 type="button"
                                 className="fancord-tc-action-btn fancord-tc-btn-primary"
                                 onClick={handleSaveAndApply}
+                                title={t("حفظ وتفعيل الثيم فوراً على ديسكورد", "Save & Apply Theme immediately to Discord")}
                             >
                                 <span>💾</span>
-                                {t("حفظ وتفعيل الثيم فوراً", "Save & Apply Theme")}
+                                {t("حفظ وتفعيل الثيم", "Save & Apply")}
                             </button>
                         </div>
                     </div>
