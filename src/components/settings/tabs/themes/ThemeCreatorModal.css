@@ -1,6 +1,34 @@
 /* FanCord Theme Creator Styles */
 
-/* Expand Discord Native Modal wrapper to Studio Widescreen */
+/* Expand Discord Native Modal wrapper to Studio Widescreen - Viewport Centered */
+div[class*="layer_"]:has(.fancord-tc-modal-root),
+div[class*="focusLock_"]:has(.fancord-tc-modal-root) {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 1000 !important;
+}
+
+/* Modal Backdrop Dimmer covering entire screen */
+div[class*="backdrop_"]:has(~ [class*="focusLock_"] .fancord-tc-modal-root),
+[class*="backdrop_"]:has(~ * .fancord-tc-modal-root) {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgb(0 0 0 / 75%) !important;
+    backdrop-filter: blur(8px) !important;
+    z-index: 999 !important;
+}
+
 div:has(> * > .fancord-tc-modal-root),
 div:has(> * > * > .fancord-tc-modal-root),
 [role="dialog"]:has(.fancord-tc-modal-root),
@@ -11,24 +39,20 @@ div:has(> * > * > .fancord-tc-modal-root),
 div[class*="layer_"]:has(.fancord-tc-modal-root) [role="dialog"],
 div[class*="layer_"]:has(.fancord-tc-modal-root) [class*="root_"],
 div[class*="focusLock_"]:has(.fancord-tc-modal-root) > div {
-    width: 96vw !important;
-    max-width: 1840px !important;
+    position: fixed !important;
+    inset: 0 !important;
+    margin: auto !important;
+    width: calc(100vw - 80px) !important;
+    max-width: 1820px !important;
     min-width: 1100px !important;
-    height: 92vh !important;
-    max-height: 94vh !important;
+    height: calc(100vh - 60px) !important;
+    max-height: 92vh !important;
     border-radius: 20px !important;
     overflow: hidden !important;
-    margin: auto !important;
     border: 1px solid rgb(255 255 255 / 14%) !important;
     box-shadow: 0 28px 80px rgb(0 0 0 / 90%) !important;
     background: #111216 !important;
-}
-
-/* Modal Backdrop Dimmer */
-div[class*="backdrop_"]:has(~ [class*="focusLock_"] .fancord-tc-modal-root),
-[class*="backdrop_"]:has(~ * .fancord-tc-modal-root) {
-    background: rgb(0 0 0 / 75%) !important;
-    backdrop-filter: blur(8px) !important;
+    z-index: 1001 !important;
 }
 
 [role="dialog"]:has(.fancord-tc-modal-root) [class*="content_"],

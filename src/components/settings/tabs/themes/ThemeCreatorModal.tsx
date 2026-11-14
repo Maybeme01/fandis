@@ -1947,17 +1947,35 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
         ) as HTMLElement | null;
 
         if (dialogEl) {
-            dialogEl.style.setProperty("width", "96vw", "important");
-            dialogEl.style.setProperty("max-width", "1840px", "important");
+            dialogEl.style.setProperty("position", "fixed", "important");
+            dialogEl.style.setProperty("inset", "0", "important");
+            dialogEl.style.setProperty("margin", "auto", "important");
+            dialogEl.style.setProperty("width", "calc(100vw - 80px)", "important");
+            dialogEl.style.setProperty("max-width", "1820px", "important");
             dialogEl.style.setProperty("min-width", "1100px", "important");
-            dialogEl.style.setProperty("height", "92vh", "important");
-            dialogEl.style.setProperty("max-height", "94vh", "important");
+            dialogEl.style.setProperty("height", "calc(100vh - 60px)", "important");
+            dialogEl.style.setProperty("max-height", "92vh", "important");
             dialogEl.style.setProperty("border-radius", "20px", "important");
             dialogEl.style.setProperty("overflow", "hidden", "important");
-            dialogEl.style.setProperty("margin", "auto", "important");
             dialogEl.style.setProperty("background", "#111216", "important");
             dialogEl.style.setProperty("border", "1px solid rgba(255, 255, 255, 0.14)", "important");
             dialogEl.style.setProperty("box-shadow", "0 28px 80px rgba(0, 0, 0, 0.9)", "important");
+            dialogEl.style.setProperty("z-index", "1001", "important");
+        }
+
+        // Also ensure the layer and focusLock span the entire viewport
+        const layerEl = rootEl.closest('[class*="layer_"]') as HTMLElement | null;
+        if (layerEl) {
+            layerEl.style.setProperty("position", "fixed", "important");
+            layerEl.style.setProperty("inset", "0", "important");
+            layerEl.style.setProperty("width", "100vw", "important");
+            layerEl.style.setProperty("height", "100vh", "important");
+            layerEl.style.setProperty("display", "flex", "important");
+            layerEl.style.setProperty("align-items", "center", "important");
+            layerEl.style.setProperty("justify-content", "center", "important");
+            layerEl.style.setProperty("margin", "0px", "important");
+            layerEl.style.setProperty("padding", "0px", "important");
+            layerEl.style.setProperty("z-index", "1000", "important");
         }
 
         // Unclamp all Discord intermediate containers and scrollers
