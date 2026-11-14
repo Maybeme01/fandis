@@ -699,6 +699,42 @@ function hexToRgba(hex: string, alpha: number): string {
     return `rgba(0, 0, 0, ${alpha})`;
 }
 
+export const STUDIO_STORAGE_KEY = "fancord_theme_studio_saved_config";
+
+export function getSavedStudioConfig(): Partial<ThemeConfig> | null {
+    try {
+        const raw = localStorage.getItem(STUDIO_STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+            return parsed;
+        }
+    } catch {
+        // ignore
+    }
+    return null;
+}
+
+export function saveStudioConfig(cfg: ThemeConfig): void {
+    try {
+        localStorage.setItem(STUDIO_STORAGE_KEY, JSON.stringify(cfg));
+    } catch {
+        // In case localStorage throws QuotaExceededError (e.g. huge data:image/gif URL)
+        try {
+            const fallback = { ...cfg };
+            if (fallback.imageUrl && fallback.imageUrl.startsWith("data:") && fallback.imageUrl.length > 500000) {
+                delete (fallback as any).imageUrl;
+            }
+            if (fallback.customFontData && fallback.customFontData.length > 500000) {
+                delete (fallback as any).customFontData;
+            }
+            localStorage.setItem(STUDIO_STORAGE_KEY, JSON.stringify(fallback));
+        } catch {
+            // ignore
+        }
+    }
+}
+
 export function parseThemeCssToConfig(cssText: string): Partial<ThemeConfig> {
     const trimmed = (cssText || "").trim();
     const newCfg: Partial<ThemeConfig> = {};
@@ -708,6 +744,19 @@ export function parseThemeCssToConfig(cssText: string): Partial<ThemeConfig> {
     if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
         try {
             return JSON.parse(trimmed);
+        } catch {
+            // fallthrough
+        }
+    }
+
+    // Check for embedded @fancord-config JSON comment
+    const configMatch = trimmed.match(/\/\*\s*@fancord-config:\s*(\{[\s\S]*?\})\s*\*\//);
+    if (configMatch) {
+        try {
+            const parsed = JSON.parse(configMatch[1]);
+            if (parsed && typeof parsed === "object") {
+                return parsed;
+            }
         } catch {
             // fallthrough
         }
@@ -764,6 +813,8 @@ export function generateThemeCss(config: ThemeConfig): string {
         ` * @version ${config.version.trim() || "1.0.0"}`,
         " * @source FanCord Theme Creator",
         " */",
+        "",
+        `/* @fancord-config: ${JSON.stringify(config)} */`,
         ""
     ].join("\n");
 
@@ -1504,68 +1555,108 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
     const defaultConfig: ThemeConfig = {
         name: "My-Custom-Theme",
         author: defaultAuthor,
-        description: "A personalized custom theme created with FanCord Theme Studio.",
+        description: "Original Discord Default Theme.",
         version: "1.0.0",
 
-        useImage: true,
-        imageUrl: "https://media.giphy.com/media/3oKIPnAiaMCws8nOsE/giphy.gif",
+        useImage: false,
+        imageUrl: "",
         bgFit: "cover",
         bgPosition: "center center",
         bgBlur: 0,
         bgBrightness: 100,
         bgContrast: 100,
         bgSaturation: 100,
-        overlayOpacity: 0.35,
-        glassBlur: 8,
+        overlayOpacity: 0,
+        glassBlur: 0,
         wallpaperScope: "full",
 
-        chatOpacity: 0.25,
-        sidebarOpacity: 0.45,
-        serversOpacity: 0.6,
-        headerOpacity: 0.75,
-        inputOpacity: 0.7,
-        settingsOpacity: 0.85,
-        membersOpacity: 0.45,
-        popoutsOpacity: 0.85,
-        foldersOpacity: 0.65,
-        voiceCallOpacity: 0.35,
-        profilePanelOpacity: 0.75,
-        loungeOpacity: 0.35,
-        friendsOpacity: 0.15,
-        nowPlayingOpacity: 0.25,
+        chatOpacity: 1,
+        sidebarOpacity: 1,
+        serversOpacity: 1,
+        headerOpacity: 1,
+        inputOpacity: 1,
+        settingsOpacity: 1,
+        membersOpacity: 1,
+        popoutsOpacity: 1,
+        foldersOpacity: 1,
+        voiceCallOpacity: 1,
+        profilePanelOpacity: 1,
+        loungeOpacity: 1,
+        friendsOpacity: 1,
+        nowPlayingOpacity: 1,
 
-        accentColor: "#8a5cf6",
-        chatBg: "#120e1e",
-        sidebarBg: "#0d0a15",
-        serversBg: "#08060e",
-        headerBg: "#161124",
-        inputBg: "#1e1730",
-        primaryText: "#f3e8ff",
-        mutedText: "#a78bfa",
-        hoverBg: "rgba(138, 92, 246, 0.15)",
+        accentColor: "#5865f2",
+        chatBg: "#313338",
+        sidebarBg: "#2b2d31",
+        serversBg: "#1e1f22",
+        headerBg: "#313338",
+        inputBg: "#383a40",
+        primaryText: "#dbdee1",
+        mutedText: "#949ba4",
+        hoverBg: "rgba(255, 255, 255, 0.07)",
         borderRadius: 8,
         speakerGlowColor: "#23a55a",
-        mentionColor: "#8a5cf6",
+        mentionColor: "#5865f2",
 
         fontFamily: "default",
-        customFontName: "MyCustomFont",
+        customFontName: "",
         customFontData: "",
-        neonGlow: true,
-        neonIntensity: 14,
-        glassBorders: true,
-        customScrollbars: true,
+        neonGlow: false,
+        neonIntensity: 0,
+        glassBorders: false,
+        customScrollbars: false,
         compactMessages: false
     };
 
-    const [config, setConfig] = useState<ThemeConfig>({
-        ...defaultConfig,
-        ...(initialConfig ?? {})
+    const [config, setConfig] = useState<ThemeConfig>(() => {
+        const saved = getSavedStudioConfig();
+        return {
+            ...defaultConfig,
+            ...(saved ?? {}),
+            ...(initialConfig ?? {})
+        };
     });
 
-    const isGif = config.imageUrl.startsWith("data:image/gif")
-        || config.imageUrl.toLowerCase().includes(".gif")
-        || config.imageUrl.includes("giphy.com")
-        || config.imageUrl.includes("tenor.com");
+    // Auto-save any configuration change instantly to localStorage
+    React.useEffect(() => {
+        saveStudioConfig(config);
+    }, [config]);
+
+    // On mount, load active theme from disk if user specifically requested to edit it or if it is currently enabled in Settings
+    React.useEffect(() => {
+        async function loadThemeFromDisk() {
+            try {
+                if (typeof VencordNative === "undefined" || !VencordNative.themes?.getThemeData) return;
+                const rawName = initialConfig?.name || config.name || "My-Custom-Theme";
+                const safeFileName = rawName.replace(/[/\\?%*:|"<>]/g, "-") + ".theme.css";
+
+                const isEnabled = Settings.enabledThemes?.includes(safeFileName);
+                if (!initialConfig && !isEnabled) return;
+
+                const data = await VencordNative.themes.getThemeData(safeFileName);
+                if (data) {
+                    const diskCfg = parseThemeCssToConfig(data);
+                    if (diskCfg && Object.keys(diskCfg).length > 0) {
+                        setConfig(prev => ({
+                            ...prev,
+                            ...diskCfg
+                        }));
+                    }
+                }
+            } catch {
+                // ignore
+            }
+        }
+        loadThemeFromDisk();
+    }, []);
+
+    const isGif = Boolean(
+        config.imageUrl
+        && (config.imageUrl.startsWith("data:image/gif")
+            || config.imageUrl.toLowerCase().includes(".gif")
+            || config.imageUrl.includes("giphy.com")
+            || config.imageUrl.includes("tenor.com"))
+    );
 
     const getHighlightLabel = (key: string | null) => {
         if (key) {
@@ -1836,6 +1927,7 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
 
     const handleSaveAndApply = async () => {
         try {
+            saveStudioConfig(config);
             const rawName = config.name.trim() || "My-Custom-Theme";
             const safeFileName = rawName.replace(/[/\\?%*:|"<>]/g, "-") + ".theme.css";
             const cssContent = generateThemeCss(config);
@@ -1916,11 +2008,59 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
         );
     };
 
-    const handleResetDefaults = () => {
+    const handleResetDefaults = async () => {
+        // 1. Reset state in Theme Studio to pure clean Discord default
         setConfig(defaultConfig);
+        saveStudioConfig(defaultConfig);
+
+        // 2. Remove all live previews and custom styling from the DOM immediately
+        document.getElementById("fancord-theme-live-preview")?.remove();
+        document.getElementById("fancord-custom-font-preview")?.remove();
+        document.getElementById("fancord-active-custom-theme")?.remove();
+
+        // 3. Unload and delete any custom studio theme from Settings.enabledThemes & disk
+        try {
+            const rawName = config.name.trim() || "My-Custom-Theme";
+            const safeFileName = rawName.replace(/[/\\?%*:|"<>]/g, "-") + ".theme.css";
+            const currentEnabled = Settings.enabledThemes ?? [];
+            const customThemeFiles = [
+                safeFileName,
+                "My-Custom-Theme.theme.css",
+                "أسود.theme.css",
+                "سايبربنك.theme.css",
+                "صقيع.theme.css",
+                "Cosmic Deep Space.theme.css",
+                "OLED Obsidian Stealth.theme.css",
+                "Anime Sakura.theme.css",
+                "Cyberpunk 2077.theme.css",
+                "Lo-Fi Chill Rain.theme.css",
+                "Emerald Zen Forest.theme.css",
+                "Royal Crimson Blood.theme.css",
+                "Nordic Arctic Frost.theme.css"
+            ];
+            Settings.enabledThemes = currentEnabled.filter(t => !customThemeFiles.includes(t));
+
+            // Delete theme file from disk
+            if (typeof VencordNative !== "undefined" && VencordNative.themes?.deleteTheme) {
+                await VencordNative.themes.deleteTheme(safeFileName);
+                if (safeFileName !== "My-Custom-Theme.theme.css") {
+                    await VencordNative.themes.deleteTheme("My-Custom-Theme.theme.css");
+                }
+            }
+        } catch {
+            // ignore
+        }
+
+        // 4. Trigger internal theme reload to restore standard native Discord
+        try {
+            await initThemes();
+        } catch {
+            // ignore
+        }
+
         showToast({
-            text: t("تمت استعادة الإعدادات الافتراضية بنجاح.", "Restored default theme settings."),
-            variant: "default"
+            text: t("✨ تمت استعادة ثيم ديسكورد الأصلي بالكامل وإلغاء جميع التخصيصات والشفافية!", "✨ Successfully restored Discord default theme and removed all customizations!"),
+            variant: "success"
         });
     };
 
@@ -4451,10 +4591,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                 type="button"
                                 className="fancord-tc-action-btn fancord-tc-btn-secondary"
                                 onClick={handleResetDefaults}
-                                title={t("استعادة الإعدادات الافتراضية", "Reset Defaults")}
+                                title={t("استعادة ثيم ديسكورد الأصلي وإلغاء جميع التخصيصات والشفافية", "Restore default Discord theme & remove all customizations")}
                             >
                                 <span>🔄</span>
-                                {t("استعادة", "Reset")}
+                                {t("استعادة ديسكورد الأصلي (Reset)", "Reset to Default")}
                             </button>
 
                             <button
