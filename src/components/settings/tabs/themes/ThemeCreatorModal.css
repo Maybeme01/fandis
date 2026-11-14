@@ -12,12 +12,23 @@ div[class*="layer_"]:has(.fancord-tc-modal-root) [role="dialog"],
 div[class*="layer_"]:has(.fancord-tc-modal-root) [class*="root_"],
 div[class*="focusLock_"]:has(.fancord-tc-modal-root) > div {
     width: 96vw !important;
-    max-width: 1760px !important;
+    max-width: 1840px !important;
     min-width: 1100px !important;
-    height: 94vh !important;
-    max-height: 96vh !important;
-    border-radius: 16px !important;
+    height: 92vh !important;
+    max-height: 94vh !important;
+    border-radius: 20px !important;
     overflow: hidden !important;
+    margin: auto !important;
+    border: 1px solid rgb(255 255 255 / 14%) !important;
+    box-shadow: 0 28px 80px rgb(0 0 0 / 90%) !important;
+    background: #111216 !important;
+}
+
+/* Modal Backdrop Dimmer */
+div[class*="backdrop_"]:has(~ [class*="focusLock_"] .fancord-tc-modal-root),
+[class*="backdrop_"]:has(~ * .fancord-tc-modal-root) {
+    background: rgb(0 0 0 / 75%) !important;
+    backdrop-filter: blur(8px) !important;
 }
 
 [role="dialog"]:has(.fancord-tc-modal-root) [class*="content_"],
@@ -41,12 +52,12 @@ div[class*="focusLock_"]:has(.fancord-tc-modal-root) > div {
     min-width: 0 !important;
     height: 100% !important;
     max-height: 100% !important;
-    border-radius: 16px !important;
+    border-radius: 20px !important;
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
-    background: var(--background-primary, #1e1f22) !important;
-    box-shadow: 0 24px 70px rgb(0 0 0 / 85%) !important;
+    background: #111216 !important;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%) !important;
 }
 
 .fancord-theme-creator-modal {
@@ -62,10 +73,11 @@ div[class*="focusLock_"]:has(.fancord-tc-modal-root) > div {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 8px 24px 10px;
+    padding: 12px 24px 14px;
     flex: 1;
     overflow: hidden;
     height: 100%;
+    width: 100%;
     box-sizing: border-box;
 }
 
@@ -167,10 +179,11 @@ div[class*="focusLock_"]:has(.fancord-tc-modal-root) > div {
 /* Main Split View: Settings + Live Preview */
 .fancord-tc-main-split {
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(510px, 0.85fr);
-    gap: 20px;
+    grid-template-columns: minmax(0, 1.25fr) minmax(430px, 0.75fr);
+    gap: 18px;
     flex: 1;
     min-height: 0;
+    min-width: 0;
     overflow: hidden;
 }
 
@@ -185,9 +198,10 @@ div[class*="focusLock_"]:has(.fancord-tc-modal-root) > div {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    overflow-y: auto;
+    overflow: hidden auto;
     padding-right: 8px;
     height: 100%;
+    min-width: 0;
 }
 
 .fancord-tc-card {
@@ -457,6 +471,8 @@ div[class*="focusLock_"]:has(.fancord-tc-modal-root) > div {
     flex-direction: column;
     gap: 8px;
     height: 100%;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .fancord-tc-preview-header {
@@ -538,10 +554,10 @@ div[class*="focusLock_"]:has(.fancord-tc-modal-root) > div {
 
 .fancord-tc-mockup-wrapper {
     position: relative;
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
-    border: 2px solid var(--background-modifier-accent, rgb(255 255 255 / 10%));
-    box-shadow: 0 10px 30px rgb(0 0 0 / 50%);
+    border: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 12%));
+    box-shadow: 0 10px 30px rgb(0 0 0 / 50%), inset 0 0 0 1px rgb(255 255 255 / 6%);
     flex: 1;
     min-height: 480px;
     background: #000;
@@ -571,10 +587,11 @@ div[class*="focusLock_"]:has(.fancord-tc-modal-root) > div {
     position: relative !important;
     z-index: 3 !important;
     display: grid;
-    grid-template-columns: 46px 115px 1fr 94px;
+    grid-template-columns: 42px 108px 1fr 88px;
     flex: 1;
     height: 100%;
     width: 100%;
+    overflow: hidden;
 }
 
 /* Target Elements Highlighting in Mockup */
@@ -743,26 +760,29 @@ div[class*="focusLock_"]:has(.fancord-tc-modal-root) > div {
 .fancord-tc-mock-members {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 10px 8px;
+    gap: 5px;
+    padding: 8px 6px;
     border-left: 1px solid rgb(255 255 255 / 5%);
     overflow: hidden;
     cursor: pointer;
 }
 
 .fancord-tc-mock-member-category {
-    font-size: 9.5px;
+    font-size: 8.5px;
     font-weight: 800;
     letter-spacing: 0.5px;
     text-transform: uppercase;
     margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .fancord-tc-mock-member-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 11px;
+    gap: 5px;
+    font-size: 10.5px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -990,6 +1010,8 @@ div[class*="focusLock_"]:has(.fancord-tc-modal-root) > div {
     padding-top: 8px;
     border-top: 1px solid var(--background-modifier-accent, rgb(255 255 255 / 8%));
     flex-shrink: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .fancord-tc-footer-left {
@@ -1003,15 +1025,16 @@ div[class*="focusLock_"]:has(.fancord-tc-modal-root) > div {
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+    flex-wrap: nowrap;
 }
 
 .fancord-tc-action-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 12px;
+    gap: 5px;
+    padding: 6px 11px;
+    border-radius: 7px;
+    font-size: 11.5px;
     font-weight: 600;
     cursor: pointer;
     border: none;

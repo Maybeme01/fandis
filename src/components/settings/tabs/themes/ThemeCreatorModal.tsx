@@ -22,8 +22,11 @@ export interface ThemeConfig {
     useImage: boolean;
     imageUrl: string;
     bgFit: "cover" | "contain" | "repeat" | "center";
+    bgPosition?: "center center" | "top center" | "bottom center";
     bgBlur: number;
     bgBrightness: number;
+    bgContrast?: number;
+    bgSaturation?: number;
     overlayOpacity: number;
     glassBlur: number;
     wallpaperScope: "full" | "chat" | "chatAndSidebar" | "sidebar";
@@ -39,6 +42,10 @@ export interface ThemeConfig {
     popoutsOpacity: number;
     foldersOpacity?: number;
     voiceCallOpacity?: number;
+    profilePanelOpacity?: number;
+    loungeOpacity?: number;
+    friendsOpacity?: number;
+    nowPlayingOpacity?: number;
 
     // Colors
     accentColor: string;
@@ -51,12 +58,15 @@ export interface ThemeConfig {
     mutedText: string;
     hoverBg: string;
     borderRadius: number;
+    speakerGlowColor?: string;
+    mentionColor?: string;
 
     // Visual Flair & Typography
     fontFamily: string;
     customFontName: string;
     customFontData: string;
     neonGlow: boolean;
+    neonIntensity?: number;
     glassBorders: boolean;
     customScrollbars: boolean;
     compactMessages: boolean;
@@ -790,6 +800,8 @@ export function generateThemeCss(config: ThemeConfig): string {
     const popoutsBgTrans = config.useImage ? hexToRgba(config.headerBg, config.popoutsOpacity ?? 0.85) : config.headerBg;
     const foldersBgTrans = config.useImage ? hexToRgba(config.serversBg, config.foldersOpacity ?? 0.65) : config.serversBg;
     const voiceCallBgTrans = config.useImage ? hexToRgba(config.chatBg, config.voiceCallOpacity ?? 0.35) : config.chatBg;
+    const friendsBgTrans = config.useImage ? hexToRgba(config.chatBg, config.friendsOpacity ?? 0.15) : config.chatBg;
+    const nowPlayingBgTrans = config.useImage ? hexToRgba(config.sidebarBg, config.nowPlayingOpacity ?? 0.25) : config.sidebarBg;
 
     const coreVars = [
         ":root, .theme-dark, .theme-light {",
@@ -861,17 +873,18 @@ export function generateThemeCss(config: ThemeConfig): string {
 
     // Neon Glow
     if (config.neonGlow) {
+        const glowPx = config.neonIntensity || 14;
         visualEffectsCss += `
 /* Neon Accent Glow */
 [class*="selected_"][class*="channel_"] [class*="link_"],
 [class*="interactive_"]:focus-within,
 [class*="button_"][class*="lookFilled_"][class*="colorBrand_"],
 .fancord-neon-glow {
-    box-shadow: 0 0 12px ${hexToRgba(config.accentColor, 0.55)} !important;
+    box-shadow: 0 0 ${glowPx}px ${hexToRgba(config.accentColor, 0.55)} !important;
 }
 [class*="modeSelected_"] [class*="link_"] {
     border-right: 3px solid ${config.accentColor} !important;
-    box-shadow: inset 0 0 12px ${hexToRgba(config.accentColor, 0.25)} !important;
+    box-shadow: inset 0 0 ${Math.round(glowPx * 0.8)}px ${hexToRgba(config.accentColor, 0.25)} !important;
 }
 `;
     }
@@ -954,10 +967,10 @@ export function generateThemeCss(config: ThemeConfig): string {
                 "    height: 100vh !important;",
                 `    background-image: url("${url}") !important;`,
                 `    background-size: ${fit} !important;`,
-                "    background-position: center center !important;",
+                `    background-position: ${config.bgPosition || "center center"} !important;`,
                 `    background-repeat: ${repeat} !important;`,
                 "    background-attachment: fixed !important;",
-                `    filter: blur(${config.bgBlur}px) brightness(${config.bgBrightness}%) !important;`,
+                `    filter: blur(${config.bgBlur}px) brightness(${config.bgBrightness}%) contrast(${config.bgContrast ?? 100}%) saturate(${config.bgSaturation ?? 100}%) !important;`,
                 "    opacity: 1 !important;",
                 "    visibility: visible !important;",
                 "    pointer-events: none !important;",
@@ -1065,6 +1078,14 @@ export function generateThemeCss(config: ThemeConfig): string {
                 '[class*="container_"][class*="grid_"],',
                 '[class*="tileRow_"],',
                 '[class*="row_"][class*="tileRow_"],',
+                '[class*="tileContainer_"],',
+                '[class*="videoWrapper_"],',
+                '[class*="border_"][class*="video_"],',
+                '[class*="video_"],',
+                '[class*="idle_"],',
+                '[class*="minimum_"],',
+                '[class*="normal_"],',
+                '[class*="fullScreen_"],',
                 '[class*="gradientContainer_"],',
                 '[class*="gradientBackground_"],',
                 '[class*="stageSection_"],',
@@ -1073,21 +1094,51 @@ export function generateThemeCss(config: ThemeConfig): string {
                 '[class*="scroller_"][class*="camera_"],',
                 '[class*="voiceEffects_"],',
                 '[class*="wrapper_"][class*="voiceChannelEffect_"],',
+                '[class*="wrapper_"][class*="voiceChannel_"],',
                 '[class*="channelBottomBarArea_"],',
                 '[class*="bottomControls_"],',
                 '[class*="videoControls_"],',
                 '[class*="container_"][class*="panels_"] [class*="connection_"],',
                 '[class*="container_"][class*="panels_"] [class*="container_"],',
                 '[class*="container_"][class*="floating_"],',
-                '[class*="callWrapper_"] {',
+                '[class*="callWrapper_"],',
+                '[class*="stageWrapper_"],',
+                '[class*="gradient_"],',
+                '[class*="root_"][class*="idle_"],',
+                '[class*="root_"][class*="noChat_"] {',
                 "    background: transparent !important;",
                 "    background-color: transparent !important;",
+                "    background-image: none !important;",
+                "}",
+                "",
+                "/* Remove Discord Voice & Stage Gradient Pseudo-Elements */",
+                '[class*="gradientContainer_"]::before,',
+                '[class*="gradientContainer_"]::after,',
+                '[class*="gradientBackground_"]::before,',
+                '[class*="gradientBackground_"]::after,',
+                '[class*="stageSection_"]::before,',
+                '[class*="stageSection_"]::after,',
+                '[class*="stageContainer_"]::before,',
+                '[class*="stageContainer_"]::after,',
+                '[class*="stageWrapper_"]::before,',
+                '[class*="stageWrapper_"]::after,',
+                '[class*="callContainer_"]::before,',
+                '[class*="callContainer_"]::after,',
+                '[class*="wrapper_"][class*="voiceChannel_"]::before,',
+                '[class*="wrapper_"][class*="voiceChannel_"]::after,',
+                '[class*="wrapper_"][class*="stage_"]::before,',
+                '[class*="wrapper_"][class*="stage_"]::after {',
+                "    background: transparent !important;",
+                "    background-image: none !important;",
+                "    display: none !important;",
                 "}",
                 "",
                 "/* Voice & Video Tiles Glassmorphism */",
                 '[class*="tile_"],',
+                '[class*="tileChild_"],',
                 '[class*="tileRow_"] > div,',
                 '[class*="videoGrid_"] [class*="tile_"],',
+                '[class*="videoGrid_"] [class*="tileChild_"],',
                 '[class*="container_"][class*="mainCard_"],',
                 '[class*="card_"][class*="voiceChannelCard_"] {',
                 `    background-color: ${voiceCallBgTrans} !important;`,
@@ -1097,6 +1148,130 @@ export function generateThemeCss(config: ThemeConfig): string {
                     `    backdrop-filter: blur(${Math.max(4, config.glassBlur)}px) saturate(120%) !important;`,
                     `    -webkit-backdrop-filter: blur(${Math.max(4, config.glassBlur)}px) saturate(120%) !important;`
                 ] : []),
+                "}",
+                "",
+                "/* Screen Share & Voice Tile Hover Blackout Eliminator */",
+                '[class*="callContainer_"] [class*="overlay_"],',
+                '[class*="callContainer_"] [class*="overlayContainer_"],',
+                '[class*="callContainer_"] [class*="gradientContainer_"],',
+                '[class*="callContainer_"] [class*="gradientBackground_"],',
+                '[class*="callContainer_"] [class*="videoControls_"],',
+                '[class*="callContainer_"] [class*="videoBottomControls_"],',
+                '[class*="callContainer_"] [class*="videoTopControls_"],',
+                '[class*="callContainer_"] [class*="streamHidden_"],',
+                '[class*="tileChild_"] > [class*="video_"],',
+                '[class*="tileChild_"] [class*="overlay_"],',
+                '[class*="tileChild_"] [class*="overlayContainer_"],',
+                '[class*="tile_"] [class*="overlay_"],',
+                '[class*="tile_"] [class*="overlayContainer_"],',
+                '[class*="tile_"] [class*="videoContainer_"],',
+                '[class*="tile_"] [class*="videoWrapper_"],',
+                '[class*="videoWrapper_"] [class*="overlay_"],',
+                '[class*="videoWrapper_"] [class*="overlayContainer_"],',
+                '[class*="tileChild_"]:hover,',
+                '[class*="tileChild_"]:hover [class*="overlay_"],',
+                '[class*="tileChild_"]:hover [class*="overlayContainer_"],',
+                '[class*="tile_"]:hover,',
+                '[class*="tile_"]:hover [class*="overlay_"],',
+                '[class*="tile_"]:hover [class*="overlayContainer_"],',
+                '[class*="videoWrapper_"]:hover,',
+                '[class*="videoWrapper_"]:hover [class*="overlay_"],',
+                '[class*="callContainer_"]:hover {',
+                "    background: transparent !important;",
+                "    background-color: transparent !important;",
+                "    background-image: none !important;",
+                "}",
+                "",
+                "/* Active Speaking Tile Glow */",
+                '[class*="tile_"]:has([class*="speaking_"]),',
+                '[class*="tileChild_"]:has([class*="speaking_"]),',
+                '[class*="border_"][class*="speaking_"],',
+                '[class*="tile_"][class*="speaking_"],',
+                '[class*="tileChild_"][class*="speaking_"] {',
+                `    border-color: ${config.speakerGlowColor || "#23a55a"} !important;`,
+                `    box-shadow: 0 0 16px ${hexToRgba(config.speakerGlowColor || "#23a55a", 0.6)} !important;`,
+                "}",
+                "",
+                "/* Voice Channel In-Call Chat Sidebar & Thread Panels */",
+                '[class*="chat_"][class*="threadSidebarFloating_"],',
+                '[class*="threadSidebar_"],',
+                'aside[class*="chat_"],',
+                '[class*="channelChatWrapper_"],',
+                '[class*="chatSidebar_"],',
+                '[class*="chat_"]:has([class*="channelBottomBarArea_"]),',
+                '[class*="chat_"]:not(:first-child),',
+                '[class*="chat_"] > [class*="chat_"],',
+                'section[class*="chat_"] [class*="content_"] {',
+                `    background-color: ${chatBgTrans} !important;`,
+                "    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;",
+                "}",
+                "",
+                '[class*="channelChatWrapper_"] [class*="chatContent_"],',
+                '[class*="channelChatWrapper_"] [class*="messagesWrapper_"],',
+                'aside[class*="chat_"] [class*="chatContent_"],',
+                'aside[class*="chat_"] [class*="messagesWrapper_"] {',
+                "    background: transparent !important;",
+                "    background-color: transparent !important;",
+                "}",
+                "",
+                "/* User Profile Panels & Sidebar in DMs and Servers */",
+                '[class*="userProfilePanel_"],',
+                '[class*="profilePanel_"],',
+                '[class*="profilePanelInner_"],',
+                '[class*="userPanel_"],',
+                'aside[class*="profilePanel_"],',
+                '[class*="userProfileOuter_"],',
+                '[class*="userProfileInner_"],',
+                '[class*="userProfileThemeWrapper_"],',
+                '[class*="biteSize_"],',
+                '[class*="fullSize_"],',
+                '[class*="userProfilePanel_"] [class*="overlay_"],',
+                '[class*="profilePanel_"] [class*="overlay_"],',
+                '[class*="userProfileOuter_"] [class*="overlay_"] {',
+                `    background-color: ${hexToRgba(config.chatBg, config.profilePanelOpacity ?? 0.75)} !important;`,
+                "    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;",
+                ...(config.glassBlur > 0 ? [
+                    `    backdrop-filter: blur(${Math.max(4, config.glassBlur)}px) !important;`,
+                    `    -webkit-backdrop-filter: blur(${Math.max(4, config.glassBlur)}px) !important;`
+                ] : []),
+                "}",
+                "",
+                '[class*="profilePanel_"] [class*="scroller_"],',
+                '[class*="userProfilePanel_"] [class*="scroller_"],',
+                '[class*="profilePanel_"] [class*="wrapper_"],',
+                '[class*="userProfilePanel_"] [class*="wrapper_"],',
+                '[class*="userPanelInner_"],',
+                '[class*="userProfileOuterUnthemed_"],',
+                '[class*="userProfileInner_"] > div {',
+                "    background: transparent !important;",
+                "    background-color: transparent !important;",
+                "}",
+                "",
+                "/* Friends List Page, Direct Messages Home & Active Now */",
+                '[class*="peopleColumn_"],',
+                '[class*="peopleList_"],',
+                '[class*="tabBody_"],',
+                '[class*="container_"]:has([class*="peopleColumn_"]),',
+                'main[class*="peopleColumn_"] {',
+                `    background-color: ${friendsBgTrans} !important;`,
+                "    background: transparent !important;",
+                "}",
+                "",
+                '[class*="nowPlayingColumn_"],',
+                '[class*="nowPlayingColumn_"] [class*="container_"],',
+                '[class*="nowPlayingColumn_"] [class*="scroller_"] {',
+                `    background-color: ${nowPlayingBgTrans} !important;`,
+                "    background: transparent !important;",
+                "}",
+                "",
+                '[class*="nowPlayingColumn_"] [class*="itemCard_"],',
+                '[class*="nowPlayingColumn_"] [class*="outer_"] {',
+                `    background-color: ${hexToRgba(config.chatBg, 0.4)} !important;`,
+                "    border: 1px solid rgba(255, 255, 255, 0.06) !important;",
+                "}",
+                "",
+                '[class*="peopleListItem_"]:hover {',
+                `    background-color: ${config.hoverBg} !important;`,
                 "}",
                 "",
                 "/* Settings Windows Translucency */",
@@ -1127,6 +1302,37 @@ export function generateThemeCss(config: ThemeConfig): string {
                 `    background-color: ${sidebarBgTrans} !important;`,
                 "}",
                 "",
+                "/* WhosWatching Plugin & Stream Activity Panels Glass */",
+                ".vc-whos-watching-screenshare-panel,",
+                ".vc-whos-watching-spectating-panel,",
+                ".vc-whos-watching-content,",
+                '[class*="activityPanel_"],',
+                '[class*="panel_"][class*="activityPanel_"],',
+                '[class*="panels_"] [class*="activityPanel_"],',
+                '[class*="panels_"] [class*="panel_"],',
+                '[class*="panels_"] > [class*="wrapper_"],',
+                '[class*="panels_"] > [class*="panel_"],',
+                '[class*="wrapper_"][class*="panel_"]:has(.vc-whos-watching-screenshare-panel),',
+                '[class*="wrapper_"][class*="panel_"]:has([class*="activityPanel_"]) {',
+                `    background-color: ${sidebarBgTrans} !important;`,
+                `    background: ${sidebarBgTrans} !important;`,
+                "    border: 1px solid rgba(255, 255, 255, 0.08) !important;",
+                "    border-radius: 8px !important;",
+                ...(config.glassBlur > 0 ? [
+                    `    backdrop-filter: blur(${Math.max(4, config.glassBlur)}px) !important;`,
+                    `    -webkit-backdrop-filter: blur(${Math.max(4, config.glassBlur)}px) !important;`
+                ] : []),
+                "}",
+                "",
+                ".vc-whos-watching-screenshare-panel > div,",
+                ".vc-whos-watching-spectating-panel,",
+                '[class*="activityPanel_"] > div,',
+                '[class*="activityPanel_"] [class*="body_"],',
+                '[class*="activityPanel_"] [class*="actions_"] {',
+                "    background: transparent !important;",
+                "    background-color: transparent !important;",
+                "}",
+                "",
                 "/* Channel Top Title Header */",
                 '[class*="title_"][class*="themed_"],',
                 '[class*="subtitleContainer_"] {',
@@ -1148,6 +1354,10 @@ export function generateThemeCss(config: ThemeConfig): string {
                     '[class*="membersWrap_"],',
                     '[class*="standardSidebarView_"],',
                     '[class*="panels_"],',
+                    '[class*="peopleColumn_"],',
+                    '[class*="nowPlayingColumn_"],',
+                    'aside[class*="chat_"],',
+                    '[class*="channelChatWrapper_"],',
                     '[class*="callContainer_"] {',
                     `    backdrop-filter: blur(${config.glassBlur}px) saturate(120%) !important;`,
                     `    -webkit-backdrop-filter: blur(${config.glassBlur}px) saturate(120%) !important;`,
@@ -1177,10 +1387,10 @@ export function generateThemeCss(config: ThemeConfig): string {
                 "    inset: 0 !important;",
                 `    background-image: url("${url}") !important;`,
                 `    background-size: ${fit} !important;`,
-                "    background-position: center center !important;",
+                `    background-position: ${config.bgPosition || "center center"} !important;`,
                 `    background-repeat: ${repeat} !important;`,
                 "    background-attachment: fixed !important;",
-                `    filter: blur(${config.bgBlur}px) brightness(${config.bgBrightness}%) !important;`,
+                `    filter: blur(${config.bgBlur}px) brightness(${config.bgBrightness}%) contrast(${config.bgContrast ?? 100}%) saturate(${config.bgSaturation ?? 100}%) !important;`,
                 "    z-index: 0 !important;",
                 "    pointer-events: none !important;",
                 "}",
@@ -1232,10 +1442,10 @@ export function generateThemeCss(config: ThemeConfig): string {
                 "    inset: 0 !important;",
                 `    background-image: url("${url}") !important;`,
                 `    background-size: ${fit} !important;`,
-                "    background-position: center center !important;",
+                `    background-position: ${config.bgPosition || "center center"} !important;`,
                 `    background-repeat: ${repeat} !important;`,
                 "    background-attachment: fixed !important;",
-                `    filter: blur(${config.bgBlur}px) brightness(${config.bgBrightness}%) !important;`,
+                `    filter: blur(${config.bgBlur}px) brightness(${config.bgBrightness}%) contrast(${config.bgContrast ?? 100}%) saturate(${config.bgSaturation ?? 100}%) !important;`,
                 "    z-index: 0 !important;",
                 "    pointer-events: none !important;",
                 "}",
@@ -1300,8 +1510,11 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
         useImage: true,
         imageUrl: "https://media.giphy.com/media/3oKIPnAiaMCws8nOsE/giphy.gif",
         bgFit: "cover",
+        bgPosition: "center center",
         bgBlur: 0,
         bgBrightness: 100,
+        bgContrast: 100,
+        bgSaturation: 100,
         overlayOpacity: 0.35,
         glassBlur: 8,
         wallpaperScope: "full",
@@ -1316,6 +1529,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
         popoutsOpacity: 0.85,
         foldersOpacity: 0.65,
         voiceCallOpacity: 0.35,
+        profilePanelOpacity: 0.75,
+        loungeOpacity: 0.35,
+        friendsOpacity: 0.15,
+        nowPlayingOpacity: 0.25,
 
         accentColor: "#8a5cf6",
         chatBg: "#120e1e",
@@ -1327,11 +1544,14 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
         mutedText: "#a78bfa",
         hoverBg: "rgba(138, 92, 246, 0.15)",
         borderRadius: 8,
+        speakerGlowColor: "#23a55a",
+        mentionColor: "#8a5cf6",
 
         fontFamily: "default",
         customFontName: "MyCustomFont",
         customFontData: "",
         neonGlow: true,
+        neonIntensity: 14,
         glassBorders: true,
         customScrollbars: true,
         compactMessages: false
@@ -1728,12 +1948,16 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
 
         if (dialogEl) {
             dialogEl.style.setProperty("width", "96vw", "important");
-            dialogEl.style.setProperty("max-width", "1760px", "important");
+            dialogEl.style.setProperty("max-width", "1840px", "important");
             dialogEl.style.setProperty("min-width", "1100px", "important");
-            dialogEl.style.setProperty("height", "94vh", "important");
-            dialogEl.style.setProperty("max-height", "96vh", "important");
-            dialogEl.style.setProperty("border-radius", "16px", "important");
+            dialogEl.style.setProperty("height", "92vh", "important");
+            dialogEl.style.setProperty("max-height", "94vh", "important");
+            dialogEl.style.setProperty("border-radius", "20px", "important");
             dialogEl.style.setProperty("overflow", "hidden", "important");
+            dialogEl.style.setProperty("margin", "auto", "important");
+            dialogEl.style.setProperty("background", "#111216", "important");
+            dialogEl.style.setProperty("border", "1px solid rgba(255, 255, 255, 0.14)", "important");
+            dialogEl.style.setProperty("box-shadow", "0 28px 80px rgba(0, 0, 0, 0.9)", "important");
         }
 
         // Unclamp all Discord intermediate containers and scrollers
@@ -1937,7 +2161,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                             <span>🎯</span>
                                             {t("تخصيص ألوان الواجهة", "Interface Colors")}
                                         </span>
-                                        <div className="fancord-tc-color-grid">
+                                        <div
+                                            className="fancord-tc-color-grid"
+                                            onMouseEnter={() => setMockupView("chat")}
+                                        >
                                             {/* Accent Color */}
                                             <div
                                                 className="fancord-tc-color-item"
@@ -2240,7 +2467,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                             {/* Chat Opacity */}
                                             <div
                                                 className="fancord-tc-slider-row"
-                                                onMouseEnter={() => setHighlightedElement("chat")}
+                                                onMouseEnter={() => {
+                                                    setHighlightedElement("chat");
+                                                    setMockupView("chat");
+                                                }}
                                                 onMouseLeave={() => setHighlightedElement(null)}
                                             >
                                                 <div className="fancord-tc-slider-header">
@@ -2255,7 +2485,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                                     className="fancord-tc-range"
                                                     value={config.chatOpacity ?? 0.25}
                                                     onChange={e => setConfig(p => ({ ...p, chatOpacity: Number(e.target.value) }))}
-                                                    onFocus={() => setHighlightedElement("chat")}
+                                                    onFocus={() => {
+                                                        setHighlightedElement("chat");
+                                                        setMockupView("chat");
+                                                    }}
                                                     onBlur={() => setHighlightedElement(null)}
                                                 />
                                             </div>
@@ -2263,7 +2496,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                             {/* Sidebar Opacity */}
                                             <div
                                                 className="fancord-tc-slider-row"
-                                                onMouseEnter={() => setHighlightedElement("sidebar")}
+                                                onMouseEnter={() => {
+                                                    setHighlightedElement("sidebar");
+                                                    setMockupView("chat");
+                                                }}
                                                 onMouseLeave={() => setHighlightedElement(null)}
                                             >
                                                 <div className="fancord-tc-slider-header">
@@ -2278,7 +2514,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                                     className="fancord-tc-range"
                                                     value={config.sidebarOpacity ?? 0.45}
                                                     onChange={e => setConfig(p => ({ ...p, sidebarOpacity: Number(e.target.value) }))}
-                                                    onFocus={() => setHighlightedElement("sidebar")}
+                                                    onFocus={() => {
+                                                        setHighlightedElement("sidebar");
+                                                        setMockupView("chat");
+                                                    }}
                                                     onBlur={() => setHighlightedElement(null)}
                                                 />
                                             </div>
@@ -2286,7 +2525,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                             {/* Servers Opacity */}
                                             <div
                                                 className="fancord-tc-slider-row"
-                                                onMouseEnter={() => setHighlightedElement("servers")}
+                                                onMouseEnter={() => {
+                                                    setHighlightedElement("servers");
+                                                    setMockupView("chat");
+                                                }}
                                                 onMouseLeave={() => setHighlightedElement(null)}
                                             >
                                                 <div className="fancord-tc-slider-header">
@@ -2301,7 +2543,68 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                                     className="fancord-tc-range"
                                                     value={config.serversOpacity ?? 0.6}
                                                     onChange={e => setConfig(p => ({ ...p, serversOpacity: Number(e.target.value) }))}
-                                                    onFocus={() => setHighlightedElement("servers")}
+                                                    onFocus={() => {
+                                                        setHighlightedElement("servers");
+                                                        setMockupView("chat");
+                                                    }}
+                                                    onBlur={() => setHighlightedElement(null)}
+                                                />
+                                            </div>
+
+                                            {/* Friends Page Opacity */}
+                                            <div
+                                                className="fancord-tc-slider-row"
+                                                onMouseEnter={() => {
+                                                    setHighlightedElement("chat");
+                                                    setMockupView("chat");
+                                                }}
+                                                onMouseLeave={() => setHighlightedElement(null)}
+                                            >
+                                                <div className="fancord-tc-slider-header">
+                                                    <span>🎯 {t("عتامة صفحة وقائمة الأصدقاء", "Friends Page Opacity")}</span>
+                                                    <span className="fancord-tc-slider-val">{Math.round((config.friendsOpacity ?? 0.15) * 100)}%</span>
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min={0.0}
+                                                    max={1.0}
+                                                    step={0.05}
+                                                    className="fancord-tc-range"
+                                                    value={config.friendsOpacity ?? 0.15}
+                                                    onChange={e => setConfig(p => ({ ...p, friendsOpacity: Number(e.target.value) }))}
+                                                    onFocus={() => {
+                                                        setHighlightedElement("chat");
+                                                        setMockupView("chat");
+                                                    }}
+                                                    onBlur={() => setHighlightedElement(null)}
+                                                />
+                                            </div>
+
+                                            {/* Active Now Sidebar Opacity */}
+                                            <div
+                                                className="fancord-tc-slider-row"
+                                                onMouseEnter={() => {
+                                                    setHighlightedElement("sidebar");
+                                                    setMockupView("chat");
+                                                }}
+                                                onMouseLeave={() => setHighlightedElement(null)}
+                                            >
+                                                <div className="fancord-tc-slider-header">
+                                                    <span>🎯 {t("عتامة شريط النشاط الآن بالأصدقاء", "Active Now Sidebar Opacity")}</span>
+                                                    <span className="fancord-tc-slider-val">{Math.round((config.nowPlayingOpacity ?? 0.25) * 100)}%</span>
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min={0.0}
+                                                    max={1.0}
+                                                    step={0.05}
+                                                    className="fancord-tc-range"
+                                                    value={config.nowPlayingOpacity ?? 0.25}
+                                                    onChange={e => setConfig(p => ({ ...p, nowPlayingOpacity: Number(e.target.value) }))}
+                                                    onFocus={() => {
+                                                        setHighlightedElement("sidebar");
+                                                        setMockupView("chat");
+                                                    }}
                                                     onBlur={() => setHighlightedElement(null)}
                                                 />
                                             </div>
@@ -2309,7 +2612,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                             {/* Settings Windows Opacity */}
                                             <div
                                                 className="fancord-tc-slider-row"
-                                                onMouseEnter={() => setHighlightedElement("settings")}
+                                                onMouseEnter={() => {
+                                                    setHighlightedElement("settings");
+                                                    setMockupView("settings");
+                                                }}
                                                 onMouseLeave={() => setHighlightedElement(null)}
                                             >
                                                 <div className="fancord-tc-slider-header">
@@ -2324,7 +2630,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                                     className="fancord-tc-range"
                                                     value={config.settingsOpacity ?? 0.85}
                                                     onChange={e => setConfig(p => ({ ...p, settingsOpacity: Number(e.target.value) }))}
-                                                    onFocus={() => setHighlightedElement("settings")}
+                                                    onFocus={() => {
+                                                        setHighlightedElement("settings");
+                                                        setMockupView("settings");
+                                                    }}
                                                     onBlur={() => setHighlightedElement(null)}
                                                 />
                                             </div>
@@ -2332,7 +2641,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                             {/* Members List Opacity */}
                                             <div
                                                 className="fancord-tc-slider-row"
-                                                onMouseEnter={() => setHighlightedElement("members")}
+                                                onMouseEnter={() => {
+                                                    setHighlightedElement("members");
+                                                    setMockupView("chat");
+                                                }}
                                                 onMouseLeave={() => setHighlightedElement(null)}
                                             >
                                                 <div className="fancord-tc-slider-header">
@@ -2347,7 +2659,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                                     className="fancord-tc-range"
                                                     value={config.membersOpacity ?? 0.45}
                                                     onChange={e => setConfig(p => ({ ...p, membersOpacity: Number(e.target.value) }))}
-                                                    onFocus={() => setHighlightedElement("members")}
+                                                    onFocus={() => {
+                                                        setHighlightedElement("members");
+                                                        setMockupView("chat");
+                                                    }}
                                                     onBlur={() => setHighlightedElement(null)}
                                                 />
                                             </div>
@@ -2355,7 +2670,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                             {/* Popouts & Menus Opacity */}
                                             <div
                                                 className="fancord-tc-slider-row"
-                                                onMouseEnter={() => setHighlightedElement("popouts")}
+                                                onMouseEnter={() => {
+                                                    setHighlightedElement("popouts");
+                                                    setMockupView("popout");
+                                                }}
                                                 onMouseLeave={() => setHighlightedElement(null)}
                                             >
                                                 <div className="fancord-tc-slider-header">
@@ -2370,7 +2688,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                                     className="fancord-tc-range"
                                                     value={config.popoutsOpacity ?? 0.85}
                                                     onChange={e => setConfig(p => ({ ...p, popoutsOpacity: Number(e.target.value) }))}
-                                                    onFocus={() => setHighlightedElement("popouts")}
+                                                    onFocus={() => {
+                                                        setHighlightedElement("popouts");
+                                                        setMockupView("popout");
+                                                    }}
                                                     onBlur={() => setHighlightedElement(null)}
                                                 />
                                             </div>
@@ -2378,7 +2699,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                             {/* Message Input Opacity */}
                                             <div
                                                 className="fancord-tc-slider-row"
-                                                onMouseEnter={() => setHighlightedElement("input")}
+                                                onMouseEnter={() => {
+                                                    setHighlightedElement("input");
+                                                    setMockupView("chat");
+                                                }}
                                                 onMouseLeave={() => setHighlightedElement(null)}
                                             >
                                                 <div className="fancord-tc-slider-header">
@@ -2393,7 +2717,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                                     className="fancord-tc-range"
                                                     value={config.inputOpacity ?? 0.7}
                                                     onChange={e => setConfig(p => ({ ...p, inputOpacity: Number(e.target.value) }))}
-                                                    onFocus={() => setHighlightedElement("input")}
+                                                    onFocus={() => {
+                                                        setHighlightedElement("input");
+                                                        setMockupView("chat");
+                                                    }}
                                                     onBlur={() => setHighlightedElement(null)}
                                                 />
                                             </div>
@@ -2401,7 +2728,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                             {/* Server Folders & Rail Opacity */}
                                             <div
                                                 className="fancord-tc-slider-row"
-                                                onMouseEnter={() => setHighlightedElement("folders")}
+                                                onMouseEnter={() => {
+                                                    setHighlightedElement("folders");
+                                                    setMockupView("chat");
+                                                }}
                                                 onMouseLeave={() => setHighlightedElement(null)}
                                             >
                                                 <div className="fancord-tc-slider-header">
@@ -2416,7 +2746,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                                     className="fancord-tc-range"
                                                     value={config.foldersOpacity ?? 0.65}
                                                     onChange={e => setConfig(p => ({ ...p, foldersOpacity: Number(e.target.value) }))}
-                                                    onFocus={() => setHighlightedElement("folders")}
+                                                    onFocus={() => {
+                                                        setHighlightedElement("folders");
+                                                        setMockupView("chat");
+                                                    }}
                                                     onBlur={() => setHighlightedElement(null)}
                                                 />
                                             </div>
@@ -2453,10 +2786,71 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                                 />
                                             </div>
 
+                                            {/* Profile Panels Opacity */}
+                                            <div
+                                                className="fancord-tc-slider-row"
+                                                onMouseEnter={() => {
+                                                    setHighlightedElement("popouts");
+                                                    setMockupView("popout");
+                                                }}
+                                                onMouseLeave={() => setHighlightedElement(null)}
+                                            >
+                                                <div className="fancord-tc-slider-header">
+                                                    <span>🎯 {t("عتامة لوحة البروفايل بالخاص والسيرفرات", "User Profile Panel Opacity")}</span>
+                                                    <span className="fancord-tc-slider-val">{Math.round((config.profilePanelOpacity ?? 0.75) * 100)}%</span>
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min={0.0}
+                                                    max={1.0}
+                                                    step={0.05}
+                                                    className="fancord-tc-range"
+                                                    value={config.profilePanelOpacity ?? 0.75}
+                                                    onChange={e => setConfig(p => ({ ...p, profilePanelOpacity: Number(e.target.value) }))}
+                                                    onFocus={() => {
+                                                        setHighlightedElement("popouts");
+                                                        setMockupView("popout");
+                                                    }}
+                                                    onBlur={() => setHighlightedElement(null)}
+                                                />
+                                            </div>
+
+                                            {/* Voice Lounge & Stage Opacity */}
+                                            <div
+                                                className="fancord-tc-slider-row"
+                                                onMouseEnter={() => {
+                                                    setHighlightedElement("voice");
+                                                    setMockupView("voice");
+                                                }}
+                                                onMouseLeave={() => setHighlightedElement(null)}
+                                            >
+                                                <div className="fancord-tc-slider-header">
+                                                    <span>🎯 {t("عتامة صالات ومسرح الصوت (Lounge & Stage)", "Voice Lounge & Stage Opacity")}</span>
+                                                    <span className="fancord-tc-slider-val">{Math.round((config.loungeOpacity ?? 0.35) * 100)}%</span>
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min={0.0}
+                                                    max={1.0}
+                                                    step={0.05}
+                                                    className="fancord-tc-range"
+                                                    value={config.loungeOpacity ?? 0.35}
+                                                    onChange={e => setConfig(p => ({ ...p, loungeOpacity: Number(e.target.value) }))}
+                                                    onFocus={() => {
+                                                        setHighlightedElement("voice");
+                                                        setMockupView("voice");
+                                                    }}
+                                                    onBlur={() => setHighlightedElement(null)}
+                                                />
+                                            </div>
+
                                             {/* Roundness / Border Radius */}
                                             <div
                                                 className="fancord-tc-slider-row"
-                                                onMouseEnter={() => setHighlightedElement("radius")}
+                                                onMouseEnter={() => {
+                                                    setHighlightedElement("radius");
+                                                    setMockupView("chat");
+                                                }}
                                                 onMouseLeave={() => setHighlightedElement(null)}
                                             >
                                                 <div className="fancord-tc-slider-header">
@@ -2471,7 +2865,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                                     className="fancord-tc-range"
                                                     value={config.borderRadius}
                                                     onChange={e => setConfig(p => ({ ...p, borderRadius: Number(e.target.value) }))}
-                                                    onFocus={() => setHighlightedElement("radius")}
+                                                    onFocus={() => {
+                                                        setHighlightedElement("radius");
+                                                        setMockupView("chat");
+                                                    }}
                                                     onBlur={() => setHighlightedElement(null)}
                                                 />
                                             </div>
@@ -2484,7 +2881,10 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                             {activeTab === "image" && (
                                 <div
                                     className="fancord-tc-card"
-                                    onMouseEnter={() => setHighlightedElement("wallpaper")}
+                                    onMouseEnter={() => {
+                                        setHighlightedElement("wallpaper");
+                                        setMockupView("chat");
+                                    }}
                                     onMouseLeave={() => setHighlightedElement(null)}
                                 >
                                     {/* Master Wallpaper / GIF Switch Card */}
@@ -2746,6 +3146,44 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                                     onBlur={() => setHighlightedElement(null)}
                                                 />
                                             </div>
+
+                                            {/* Wallpaper Contrast Slider */}
+                                            <div className="fancord-tc-slider-row">
+                                                <div className="fancord-tc-slider-header">
+                                                    <span>🎯 {t("درجة التباين والحدة (Contrast)", "Image Contrast")}</span>
+                                                    <span className="fancord-tc-slider-val">{config.bgContrast ?? 100}%</span>
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min={50}
+                                                    max={150}
+                                                    step={5}
+                                                    className="fancord-tc-range"
+                                                    value={config.bgContrast ?? 100}
+                                                    onChange={e => setConfig(p => ({ ...p, useImage: true, bgContrast: Number(e.target.value) }))}
+                                                    onFocus={() => setHighlightedElement("wallpaper")}
+                                                    onBlur={() => setHighlightedElement(null)}
+                                                />
+                                            </div>
+
+                                            {/* Wallpaper Saturation Slider */}
+                                            <div className="fancord-tc-slider-row">
+                                                <div className="fancord-tc-slider-header">
+                                                    <span>🎯 {t("تشبع وحيوية الألوان (Saturation)", "Color Saturation")}</span>
+                                                    <span className="fancord-tc-slider-val">{config.bgSaturation ?? 100}%</span>
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min={0}
+                                                    max={200}
+                                                    step={5}
+                                                    className="fancord-tc-range"
+                                                    value={config.bgSaturation ?? 100}
+                                                    onChange={e => setConfig(p => ({ ...p, useImage: true, bgSaturation: Number(e.target.value) }))}
+                                                    onFocus={() => setHighlightedElement("wallpaper")}
+                                                    onBlur={() => setHighlightedElement(null)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
@@ -2770,12 +3208,41 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                             ))}
                                         </div>
                                     </div>
+
+                                    {/* Background Alignment Position */}
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+                                        <label className="fancord-tc-color-label">{t("موضع وتمركز الخلفية (Alignment)", "Wallpaper Alignment")}</label>
+                                        <div style={{ display: "flex", gap: 8 }}>
+                                            {[
+                                                { id: "center center", name: t("المنتصف", "Center") },
+                                                { id: "top center", name: t("أعلى", "Top") },
+                                                { id: "bottom center", name: t("أسفل", "Bottom") }
+                                            ].map(pos => (
+                                                <button
+                                                    key={pos.id}
+                                                    type="button"
+                                                    className={`fancord-tc-preset-pill ${(config.bgPosition || "center center") === pos.id ? "active" : ""}`}
+                                                    style={{
+                                                        borderColor: (config.bgPosition || "center center") === pos.id ? "var(--brand-experiment)" : undefined,
+                                                        background: (config.bgPosition || "center center") === pos.id ? "var(--brand-experiment)" : undefined,
+                                                        color: (config.bgPosition || "center center") === pos.id ? "#fff" : undefined
+                                                    }}
+                                                    onClick={() => setConfig(p => ({ ...p, useImage: true, bgPosition: pos.id as any }))}
+                                                >
+                                                    {pos.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
                             {/* TAB 3: FONTS, UPLOAD CUSTOM FONT & FLAIR */}
                             {activeTab === "effects" && (
-                                <div className="fancord-tc-card">
+                                <div
+                                    className="fancord-tc-card"
+                                    onMouseEnter={() => setMockupView("chat")}
+                                >
                                     <span className="fancord-tc-card-title">
                                         <span>🔤</span>
                                         {t("الخطوط وتنسيق النصوص ورفع خط خاص (Typography)", "Custom Fonts & Custom Upload")}
@@ -2884,6 +3351,23 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                                 onChange={e => setConfig(p => ({ ...p, neonGlow: e.target.checked }))}
                                             />
                                         </div>
+
+                                        {config.neonGlow && (
+                                            <div className="fancord-tc-slider-row" style={{ paddingLeft: 12, paddingRight: 12, borderLeft: "3px solid var(--brand-experiment, #5865f2)" }}>
+                                                <div className="fancord-tc-slider-header">
+                                                    <span>{t("✨ شدة إشعاع النيون (Glow Intensity)", "Neon Glow Intensity")}</span>
+                                                    <span className="fancord-tc-slider-val">{config.neonIntensity || 14}px</span>
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min="6"
+                                                    max="32"
+                                                    step="2"
+                                                    value={config.neonIntensity || 14}
+                                                    onChange={e => setConfig(p => ({ ...p, neonIntensity: Number(e.target.value) }))}
+                                                />
+                                            </div>
+                                        )}
 
                                         {/* Frosted Acrylic Borders */}
                                         <div className="fancord-tc-toggle-row">
@@ -3952,25 +4436,27 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                 title={t("استعادة الإعدادات الافتراضية", "Reset Defaults")}
                             >
                                 <span>🔄</span>
-                                {t("استعادة الافتراضي", "Reset")}
+                                {t("استعادة", "Reset")}
                             </button>
 
                             <button
                                 type="button"
                                 className="fancord-tc-action-btn fancord-tc-btn-secondary"
                                 onClick={handleCopyCss}
+                                title={t("نسخ كود CSS إلى الحافظة", "Copy CSS to Clipboard")}
                             >
                                 <span>📋</span>
-                                {t("نسخ الكود", "Copy CSS")}
+                                {t("نسخ", "Copy")}
                             </button>
 
                             <button
                                 type="button"
                                 className="fancord-tc-action-btn fancord-tc-btn-secondary"
                                 onClick={handleExportFile}
+                                title={t("تصدير وتحميل ملف الثيم (.theme.css)", "Export & Download Theme file (.theme.css)")}
                             >
                                 <span>📤</span>
-                                {t("تصدير (.theme.css)", "Export File")}
+                                {t("تصدير", "Export")}
                             </button>
 
                             <button
@@ -3980,7 +4466,7 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                                 title={t("حفظ وتفعيل الثيم فوراً على ديسكورد", "Save & Apply Theme immediately to Discord")}
                             >
                                 <span>💾</span>
-                                {t("حفظ وتفعيل الثيم", "Save & Apply")}
+                                {t("حفظ وتفعيل", "Save & Apply")}
                             </button>
                         </div>
                     </div>
