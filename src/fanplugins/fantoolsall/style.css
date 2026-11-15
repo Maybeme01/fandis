@@ -47,7 +47,7 @@
     fill: #f23f43 !important;
 }
 
-/* 2. Red FAKE badge next to user name */
+/* 2. Red FAKE badge strictly to the left of the avatar */
 .fc-fake-deafen-badge {
     display: inline-flex;
     align-items: center;
@@ -57,9 +57,9 @@
     font-size: 10px;
     font-weight: 750;
     line-height: 1;
-    padding: 2px 6px;
+    padding: 2px 5px;
     border-radius: 4px;
-    margin-inline-start: 5px;
+    margin-inline: 2px 6px;
     border: 1px solid rgb(242 63 67 / 60%);
     letter-spacing: 0.6px;
     user-select: none;
@@ -67,7 +67,9 @@
     animation: fc-fake-pulse 2.2s infinite ease-in-out;
     cursor: pointer;
     transition: transform 0.15s ease, background-color 0.15s ease;
-    z-index: 10;
+    z-index: 2;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .fc-fake-deafen-badge:hover {
@@ -75,20 +77,7 @@
     transform: scale(1.05);
 }
 
-/* 3. Highlighted voice user row */
-[data-fake-deafen="true"] {
-    position: relative;
-}
-
-[data-fake-deafen="true"]::before {
-    content: "";
-    position: absolute;
-    inset-inline-start: 0;
-    top: 4px;
-    bottom: 4px;
-    width: 3px;
-    background: #f23f43;
-    border-radius: 2px;
-    box-shadow: 0 0 6px #f23f43;
-    pointer-events: none;
+/* Ensure voice row content never wraps */
+[class*="voiceUser"] [class*="content"] {
+    flex-wrap: nowrap;
 }

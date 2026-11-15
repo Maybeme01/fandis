@@ -205,8 +205,20 @@ export function updateVoiceDOM() {
     isUpdatingDOM = true;
 
     try {
+        // Clean up any stray badges or attributes outside voice user rows
+        document.querySelectorAll(".fc-fake-deafen-badge").forEach(b => {
+            if (!b.closest("[class*='voiceUser'], [class*='VoiceUser']")) {
+                b.remove();
+            }
+        });
+        document.querySelectorAll("[data-fake-deafen]").forEach(el => {
+            if (!el.matches("[class*='voiceUser'], [class*='VoiceUser']")) {
+                el.removeAttribute("data-fake-deafen");
+            }
+        });
+
         const voiceRows = document.querySelectorAll(
-            "[class*='voiceUser'], [class*='VoiceUser'], [class*='tile_'], [class*='tileBase_'], [class*='videoWrapper_'], [class*='callContainer_'], [data-dnd-name], [data-user-id]"
+            "[class*='voiceUser'], [class*='VoiceUser']"
         );
 
         voiceRows.forEach(row => {
@@ -227,18 +239,47 @@ export function updateVoiceDOM() {
                     row.setAttribute("data-fake-deafen", "true");
                 }
 
-                // If React patch didn't render badge, inject directly into DOM
-                if (settings.store.showFakeBadge && !row.querySelector(".fc-fake-deafen-badge")) {
-                    const nameContainer = row.querySelector(
-                        "[class*='username'], [class*='name_'], [class*='name__'], [class*='headerText'], [class*='title_'], [class*='title__'], [class*='overlayTitle'], [class*='status_']"
-                    ) || row;
-                    if (nameContainer) {
-                        const badge = document.createElement("span");
+                if (settings.store.showFakeBadge) {
+                    let badge = row.querySelector<HTMLElement>(".fc-fake-deafen-badge");
+                    if (!badge) {
+                        badge = document.createElement("span");
                         badge.className = "fc-fake-deafen-badge";
                         badge.textContent = "FAKE";
-                        const entry = detectedFakeDeafUsers.get(userId);
-                        badge.title = `${t("وضع الإصمام الوهمي مفعل Fake Deafen", "Fake Deafen Active")}${entry?.reasonText ? " (" + entry.reasonText + ")" : ""}`;
-                        nameContainer.appendChild(badge);
+                    }
+
+                    // Remove duplicate badges in the same row if any exist
+                    const allBadges = row.querySelectorAll(".fc-fake-deafen-badge");
+                    if (allBadges.length > 1) {
+                        for (let i = 1; i < allBadges.length; i++) {
+                            allBadges[i].remove();
+                        }
+                    }
+
+                    const entry = detectedFakeDeafUsers.get(userId);
+                    badge.title = `${t("وضع الإصمام الوهمي مفعل Fake Deafen", "Fake Deafen Active")}${entry?.reasonText ? " (" + entry.reasonText + ")" : ""}`;
+
+                    // Place the badge strictly to the left of the avatar
+                    const avatarImg = row.querySelector("img[src*='/avatars/'], img[src*='/users/'], [class*='avatar'], [class*='Avatar']");
+                    let avatarContainer: HTMLElement | null = avatarImg as HTMLElement;
+                    while (
+                        avatarContainer &&
+                        avatarContainer.parentElement &&
+                        avatarContainer.parentElement !== row &&
+                        !avatarContainer.parentElement.className.includes("content") &&
+                        !avatarContainer.parentElement.className.includes("Content")
+                    ) {
+                        avatarContainer = avatarContainer.parentElement;
+                    }
+
+                    if (avatarContainer && avatarContainer.parentElement) {
+                        if (avatarContainer.previousElementSibling !== badge) {
+                            avatarContainer.parentElement.insertBefore(badge, avatarContainer);
+                        }
+                    } else {
+                        const content = row.querySelector("[class*='content'], [class*='Content']") || row;
+                        if (content.firstElementChild !== badge) {
+                            content.prepend(badge);
+                        }
                     }
                 }
             } else {
@@ -599,25 +640,6 @@ export default definePlugin({
                 match: /(?<=GuildChannelUserContextMenu.{0,300})"data-dnd-name":\i/,
                 replace: "\"data-user-id\":arguments[0]?.user?.id,\"data-fake-deafen\":$self.isFakeDeafened(arguments[0]?.user?.id)?\"true\":void 0,$&"
             }
-        },
-        // Call avatars (DM / Group / Server voice grid & stage tiles)
-        {
-            find: ".VOICE_CHANNEL_TILE,children:",
-            replacement: {
-                match: /(?<=\.VOICE_USER,.{0,300})className:\i\.\i,onDoubleClick:\i,/,
-                replace: "\"data-user-id\":arguments[0]?.participantUserId,\"data-fake-deafen\":$self.isFakeDeafened(arguments[0]?.participantUserId)?\"true\":void 0,$&"
-            }
-        },
-        // Voice panel status icons: render red [FAKE] badge next to detected fake-deafened users
-        {
-            find: ".VOICE_PANEL}}",
-            predicate: () => settings.store.showFakeBadge,
-            replacement: [
-                {
-                    match: /\}\),children:\[(?=.{0,80}#{intl::PRIORITY_SPEAKER})/,
-                    replace: "$&$self.renderFakeDeafenBadge(arguments[0]?.user),"
-                }
-            ]
         }
     ],
 
