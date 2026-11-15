@@ -60,7 +60,6 @@ function getNative(): PluginNative<typeof import("./native")> | null {
     }
 }
 
-const FAN_AUTHOR_ID = String(Devs.FAN?.id ?? "365952206777876484");
 let cachedSelfId: string | null = null;
 
 export function getSelfUserId(): string | null {
@@ -85,7 +84,6 @@ export function isSelf(userId?: string | null): boolean {
     if (!userId) return false;
     try {
         const idStr = String(userId);
-        if (idStr === FAN_AUTHOR_ID) return true;
         const myId = getSelfUserId();
         if (myId && idStr === String(myId)) return true;
 
@@ -159,12 +157,15 @@ function extractUserIdFromDOM(row: Element): string | null {
         const fiberKey = Object.keys(row).find(k => k.startsWith("__reactFiber$") || k.startsWith("__reactInternalInstance$"));
         if (fiberKey) {
             let fiber = (row as any)[fiberKey];
-            for (let i = 0; i < 8 && fiber; i++) {
+            for (let i = 0; i < 12 && fiber; i++) {
                 const u = fiber.memoizedProps?.user?.id
                     || fiber.memoizedProps?.userId
+                    || fiber.memoizedProps?.participantUserId
                     || fiber.memoizedProps?.voiceState?.userId
                     || fiber.return?.memoizedProps?.user?.id
-                    || fiber.return?.memoizedProps?.userId;
+                    || fiber.return?.memoizedProps?.userId
+                    || fiber.return?.memoizedProps?.participantUserId
+                    || fiber.return?.memoizedProps?.voiceState?.userId;
                 if (u) return String(u);
                 fiber = fiber.return;
             }
@@ -205,7 +206,7 @@ export function updateVoiceDOM() {
 
     try {
         const voiceRows = document.querySelectorAll(
-            "[class*='voiceUser'], [class*='VoiceUser'], [class*='tile__']"
+            "[class*='voiceUser'], [class*='VoiceUser'], [class*='tile_'], [class*='tileBase_'], [class*='videoWrapper_'], [class*='callContainer_'], [data-dnd-name], [data-user-id]"
         );
 
         voiceRows.forEach(row => {
@@ -228,7 +229,9 @@ export function updateVoiceDOM() {
 
                 // If React patch didn't render badge, inject directly into DOM
                 if (settings.store.showFakeBadge && !row.querySelector(".fc-fake-deafen-badge")) {
-                    const nameContainer = row.querySelector("[class*='username'], [class*='name__'], [class*='headerText'], [class*='title__']") || row;
+                    const nameContainer = row.querySelector(
+                        "[class*='username'], [class*='name_'], [class*='name__'], [class*='headerText'], [class*='title_'], [class*='title__'], [class*='overlayTitle'], [class*='status_']"
+                    ) || row;
                     if (nameContainer) {
                         const badge = document.createElement("span");
                         badge.className = "fc-fake-deafen-badge";
@@ -321,23 +324,17 @@ function recordToggleTiming(userId: string, isDeaf: boolean) {
             userDeafenToggleTimestamps.set(userId, history);
         }
 
-        // Only record if state ACTUALLY toggled (prevent duplicate packet matches)
-        const last = history[history.length - 1];
-        if (last && last.isDeaf === isDeaf) {
-            return;
-        }
-
         history.push({ time: now, isDeaf });
         history = history.filter(h => now - h.time < 1500);
         userDeafenToggleTimestamps.set(userId, history);
 
         // Check for programmatic toggle pattern:
-        // 1) Double-toggle pulse: 2 rapid state toggles within 40ms - 450ms (the exact 250ms FakeDeafen double-toggle pulse)
-        // 2) Rapid pulse burst: 3+ toggles within 800ms
+        // 1) Double-toggle pulse: 2 rapid state updates within 40ms - 500ms (the exact 250ms FakeDeafen double-toggle pulse)
+        // 2) Rapid pulse burst: 3+ toggles within 1000ms
         if (history.length >= 2) {
             const spanLastTwo = history[history.length - 1].time - history[history.length - 2].time;
             const spanTotal = history[history.length - 1].time - history[0].time;
-            if ((spanLastTwo >= 40 && spanLastTwo <= 450) || (history.length >= 3 && spanTotal <= 800)) {
+            if ((spanLastTwo >= 40 && spanLastTwo <= 500) || (history.length >= 3 && spanTotal <= 1000)) {
                 markUserAsFake(
                     userId,
                     "toggle_timing_fingerprint",
@@ -584,6 +581,7 @@ const settings = definePluginSettings({
 });
 
 let domInterval: NodeJS.Timeout | null = null;
+let domObserver: MutationObserver | null = null;
 
 export default definePlugin({
     name: "FanToolsAll",
@@ -594,12 +592,20 @@ export default definePlugin({
     settings,
 
     patches: [
-        // Voice user rows: tag row with data-user-id and data-fake-deafen
+        // Voice user rows (sidebar channel list)
         {
             find: ".VOICE_USER],shouldShow:",
             replacement: {
-                match: /(?<=GuildChannelUserContextMenu.{0,150})"data-dnd-name":\i/,
+                match: /(?<=GuildChannelUserContextMenu.{0,300})"data-dnd-name":\i/,
                 replace: "\"data-user-id\":arguments[0]?.user?.id,\"data-fake-deafen\":$self.isFakeDeafened(arguments[0]?.user?.id)?\"true\":void 0,$&"
+            }
+        },
+        // Call avatars (DM / Group / Server voice grid & stage tiles)
+        {
+            find: ".VOICE_CHANNEL_TILE,children:",
+            replacement: {
+                match: /(?<=\.VOICE_USER,.{0,300})className:\i\.\i,onDoubleClick:\i,/,
+                replace: "\"data-user-id\":arguments[0]?.participantUserId,\"data-fake-deafen\":$self.isFakeDeafened(arguments[0]?.participantUserId)?\"true\":void 0,$&"
             }
         },
         // Voice panel status icons: render red [FAKE] badge next to detected fake-deafened users
@@ -608,7 +614,7 @@ export default definePlugin({
             predicate: () => settings.store.showFakeBadge,
             replacement: [
                 {
-                    match: /\}\),children:\[(?=.{0,50}#{intl::PRIORITY_SPEAKER})/,
+                    match: /\}\),children:\[(?=.{0,80}#{intl::PRIORITY_SPEAKER})/,
                     replace: "$&$self.renderFakeDeafenBadge(arguments[0]?.user),"
                 }
             ]
@@ -642,6 +648,70 @@ export default definePlugin({
             } catch {}
         },
 
+        // ── Vector 6B: Soundboard Activity While Deafened ──
+        GUILD_SOUNDBOARD_SOUND_PLAY({ userId }: { userId: string; }) {
+            try {
+                if (!settings.store.detectFakeDeafen) return;
+                if (!userId || isSelf(userId)) return;
+
+                const vsStore: any = findStore("VoiceStateStore") ?? VoiceStateStore;
+                const vs = vsStore?.getVoiceStateForUser?.(userId);
+                if (isBotOrServerDeaf(userId, vs)) return;
+
+                if (vs?.selfDeaf && !vs?.deaf) {
+                    markUserAsFake(
+                        userId,
+                        "soundboard_while_deafened",
+                        "تشغيل لوحة الأصوات وهو مصمت (Soundboard Active)!",
+                        "soundboard while deafened"
+                    );
+                }
+            } catch {}
+        },
+
+        // ── Vector 6C: Real-Time WebRTC Inbound RTP Stream Statistics ──
+        MEDIA_ENGINE_CONNECTION_STATS({ connectionStats }: { connectionStats: { context: string; stats: any; }[]; }) {
+            try {
+                if (!settings.store.detectFakeDeafen || !settings.store.detectRTPTraffic) return;
+                const stats = connectionStats?.find?.(c => c.context === "default")?.stats;
+                if (!stats) return;
+
+                const scStore: any = findStore("SelectedChannelStore") ?? SelectedChannelStore;
+                const channelId = scStore?.getVoiceChannelId?.();
+                if (!channelId) return;
+
+                const vsStore: any = findStore("VoiceStateStore") ?? VoiceStateStore;
+                const voiceStates = vsStore?.getVoiceStatesForChannel?.(channelId);
+                if (!voiceStates) return;
+
+                const inbound: Record<string, any[]> = stats.rtp?.inbound ?? {};
+                for (const [userId, state] of Object.entries(voiceStates as Record<string, any>)) {
+                    if (!userId || isSelf(userId) || isBotOrServerDeaf(userId, state)) continue;
+                    if (!state.selfDeaf || state.deaf) continue;
+
+                    const userStreams = inbound[userId];
+                    if (Array.isArray(userStreams)) {
+                        for (const stream of userStreams) {
+                            if (stream?.type === "audio") {
+                                const packets = Number(stream.packetsReceived ?? 0);
+                                const prev = userAudioPacketsHistory.get(userId) ?? 0;
+                                userAudioPacketsHistory.set(userId, packets);
+
+                                if (prev > 0 && packets > prev + 8) {
+                                    markUserAsFake(
+                                        userId,
+                                        "rtp_audio_packets",
+                                        "بث حزم صوتية نشطة وهو مصمت (WebRTC RTP Packet Flow)!",
+                                        "inbound audio packets while deafened"
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch {}
+        },
+
         // ── Vector 7: Voice State Gateway Updates ──
         VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: VoiceState[]; }) {
             try {
@@ -656,33 +726,34 @@ export default definePlugin({
                         continue;
                     }
 
-                    // If genuinely not self-deafened, unmark immediately
-                    if (!state.selfDeaf) {
-                        unmarkUser(state.userId);
-                        continue;
-                    }
-
-                    // 1. Record timing pulse
+                    // 1. Record timing pulse ALWAYS (regardless of deaf state to catch toggles)
                     if (settings.store.detectClientMods) {
                         recordToggleTiming(state.userId, Boolean(state.selfDeaf));
                     }
 
-                    // 2. Deafened but unmuted (verified with 2-second debounce to prevent false positives from normal UI clicks)
-                    if (state.selfDeaf && !state.deaf && !state.selfMute && !state.mute) {
+                    // If genuinely not self-deafened, wait a brief moment (600ms) before unmarking
+                    // so we don't accidentally unmark during the 250ms FakeDeafen toggle window!
+                    if (!state.selfDeaf) {
                         setTimeout(() => {
                             try {
                                 const vsStore: any = findStore("VoiceStateStore") ?? VoiceStateStore;
                                 const curVs = vsStore?.getVoiceStateForUser?.(state.userId);
-                                if (!isBotOrServerDeaf(state.userId, curVs) && curVs?.selfDeaf && !curVs?.deaf && !curVs?.selfMute && !curVs?.mute) {
-                                    markUserAsFake(
-                                        state.userId,
-                                        "unmuted_while_deafened",
-                                        "غير مكتوم وهو مصمت (تناقض بروتوكولي قطعي)!",
-                                        "unmuted while deafened"
-                                    );
+                                if (!curVs?.selfDeaf) {
+                                    unmarkUser(state.userId);
                                 }
                             } catch {}
-                        }, 2000);
+                        }, 600);
+                        continue;
+                    }
+
+                    // 2. Protocol Inconsistency: Deafened but unmuted!
+                    if (state.selfDeaf && !state.deaf && !state.selfMute && !state.mute) {
+                        markUserAsFake(
+                            state.userId,
+                            "unmuted_while_deafened",
+                            "غير مكتوم وهو مصمت (تناقض بروتوكولي قطعي)!",
+                            "unmuted while deafened"
+                        );
                     }
 
                     // 3. Watch Together while deafened
@@ -771,6 +842,15 @@ export default definePlugin({
         scanAllChannelUsers();
         void syncLocalNativeFaked();
 
+        // Real-time MutationObserver to inject [FAKE] badge instantly whenever DOM changes
+        if (typeof MutationObserver !== "undefined" && typeof document !== "undefined") {
+            const appMount = document.getElementById("app-mount") || document.body;
+            domObserver = new MutationObserver(() => {
+                scheduleVoiceDOMUpdate();
+            });
+            domObserver.observe(appMount, { childList: true, subtree: true });
+        }
+
         domInterval = setInterval(() => {
             const scStore: any = findStore("SelectedChannelStore") ?? SelectedChannelStore;
             if (!scStore?.getVoiceChannelId?.()) return;
@@ -778,10 +858,14 @@ export default definePlugin({
             scanRTPStreams();
             scanAllChannelUsers();
             void syncLocalNativeFaked();
-        }, 3000);
+        }, 2000);
     },
 
     stop() {
+        if (domObserver) {
+            domObserver.disconnect();
+            domObserver = null;
+        }
         if (domInterval) {
             clearInterval(domInterval);
             domInterval = null;
