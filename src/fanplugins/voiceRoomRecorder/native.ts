@@ -235,13 +235,13 @@ export async function startLoopbackCapture(
                     }
                 });
 
-                // Safety timeout: 2 seconds
+                // Safety timeout: 6 seconds (to allow virtual audio drivers like VoiceMeeter to initialize)
                 setTimeout(() => {
                     if (!resolved) {
                         resolved = true;
                         resolve({ success: Boolean(activeChild), port, sampleRate, deviceName });
                     }
-                }, 2000);
+                }, 6000);
             });
         } catch (err) {
             console.error("[VoiceRoomRecorder] Failed to start loopback server:", err);

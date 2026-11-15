@@ -31,10 +31,12 @@
 [data-fake-deafen="true"] [aria-label*="أصم" i] svg,
 [data-fake-deafen="true"] [aria-label*="إصمات" i] svg,
 [data-fake-deafen="true"] [aria-label*="كتم السماع" i] svg,
-[data-fake-deafen="true"] [class*="statusIcons"] [class*="icon__"][aria-label*="deafen" i] {
+[data-fake-deafen="true"] [aria-label*="مكتوم السماع" i] svg,
+[data-fake-deafen="true"] [class*="statusIcons"] [class*="icon__"][aria-label*="deafen" i],
+[data-fake-deafen="true"] [class*="statusIcons"] svg:not([aria-label*="mute" i], [aria-label*="مكتوم" i], [aria-label*="كتم الصوت" i]) {
     color: #f23f43 !important;
     fill: #f23f43 !important;
-    filter: drop-shadow(0 0 4px rgb(242 63 67 / 75%)) !important;
+    filter: drop-shadow(0 0 5px rgb(242 63 67 / 85%)) !important;
 }
 
 [data-fake-deafen="true"] svg path[d*="22.7"],

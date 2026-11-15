@@ -103,9 +103,9 @@ class VoiceRecorderEngine {
                 const devs = await native.getLoopbackDevices();
                 if (devs && devs.length > 0) {
                     for (const d of devs) {
-                        if (!seen.has(d.name)) {
-                            list.push({ deviceId: d.name, label: d.name });
-                            seen.add(d.name);
+                        if (!seen.has(d.id)) {
+                            list.push({ deviceId: d.id, label: d.name });
+                            seen.add(d.id);
                         }
                     }
                     return list;
@@ -122,17 +122,17 @@ class VoiceRecorderEngine {
 
             for (const [id, dev] of Object.entries(discordOutputs as Record<string, any>)) {
                 const name = dev.name || id;
-                if (id && id !== "default" && !seen.has(name)) {
-                    list.push({ deviceId: name, label: name });
-                    seen.add(name);
+                if (id && id !== "default" && !seen.has(id)) {
+                    list.push({ deviceId: id, label: name });
+                    seen.add(id);
                 }
             }
 
             for (const d of devices) {
-                if (d.kind === "audiooutput" && !seen.has(d.label)) {
+                if (d.kind === "audiooutput" && !seen.has(d.deviceId)) {
                     const label = d.label || `سماعة ${list.length + 1}`;
-                    list.push({ deviceId: label, label });
-                    seen.add(label);
+                    list.push({ deviceId: d.deviceId, label });
+                    seen.add(d.deviceId);
                 }
             }
 
@@ -375,16 +375,42 @@ class VoiceRecorderEngine {
                 const activeInputName = inputDevices[activeInputId]?.name || "";
 
                 let targetDeviceArg = "";
+                let nativeDevs: { name: string; id: string }[] = [];
+                if (native?.getLoopbackDevices) {
+                    try {
+                        nativeDevs = await native.getLoopbackDevices();
+                    } catch {}
+                }
+
                 // If user selected auto, OR if user mistakenly selected the mic device name as the room device:
                 if (!chosenRoomDevice || chosenRoomDevice === "auto" || (activeInputName && chosenRoomDevice === activeInputName)) {
-                    // Match Discord's active output device (e.g. SteelSeries Sonar - Chat)
-                    targetDeviceArg = (activeOutputId !== "default" && activeOutputName) ? activeOutputName : "";
+                    // Smart Auto: match Discord's active output device
+                    if (activeOutputId !== "default") {
+                        const matched = nativeDevs.find(d =>
+                            d.id === activeOutputId ||
+                            (activeOutputName && d.name.toLowerCase() === activeOutputName.toLowerCase()) ||
+                            (activeOutputName && (
+                                d.name.toLowerCase().includes(activeOutputName.toLowerCase()) ||
+                                activeOutputName.toLowerCase().includes(d.name.toLowerCase())
+                            ))
+                        );
+                        targetDeviceArg = matched ? matched.id : (activeOutputName || activeOutputId);
+                    } else {
+                        // Discord output set to "Default". On Windows, voice communications preferentially route to "communications" endpoint!
+                        targetDeviceArg = "communications";
+                    }
                 } else if (chosenRoomDevice === "communications") {
                     targetDeviceArg = "communications";
                 } else if (chosenRoomDevice === "default" || chosenRoomDevice === "loopback") {
                     targetDeviceArg = "";
                 } else {
-                    targetDeviceArg = chosenRoomDevice;
+                    const matched = nativeDevs.find(d =>
+                        d.id === chosenRoomDevice ||
+                        d.name === chosenRoomDevice ||
+                        d.name.toLowerCase().includes(chosenRoomDevice.toLowerCase()) ||
+                        chosenRoomDevice.toLowerCase().includes(d.name.toLowerCase())
+                    );
+                    targetDeviceArg = matched ? matched.id : chosenRoomDevice;
                 }
 
                 let loopbackActive = false;
@@ -509,19 +535,19 @@ class VoiceRecorderEngine {
                     }
 
                     if (chunk.length >= 4) {
-                        const floats = new Float32Array(
-                            chunk.buffer,
-                            chunk.byteOffset,
-                            chunk.byteLength / 4
-                        );
+                        // Ensure 4-byte buffer alignment to avoid RangeError in Float32Array
+                        const floats = (chunk.byteOffset % 4 === 0)
+                            ? new Float32Array(chunk.buffer, chunk.byteOffset, chunk.byteLength / 4)
+                            : new Float32Array(chunk.slice().buffer, 0, chunk.byteLength / 4);
+
                         for (let i = 0; i < floats.length; i++) {
                             ringBuffer[writeIdx] = floats[i];
                             writeIdx = (writeIdx + 1) % RING_SIZE;
                         }
                     }
                 }
-            } catch {
-                // Aborted or stream closed
+            } catch (err) {
+                console.warn("[VoiceRoomRecorder] Loopback stream stopped:", err);
             }
         })();
 

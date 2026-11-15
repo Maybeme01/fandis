@@ -155,10 +155,31 @@ function extractUserIdFromDOM(row: Element): string | null {
             || row.querySelector("[data-user-id]")?.getAttribute("data-user-id");
         if (id) return id;
 
-        const avatarImg = row.querySelector("img[src*='/avatars/'], img[src*='/users/']");
+        // Try React Fiber inspection for robust user ID extraction
+        const fiberKey = Object.keys(row).find(k => k.startsWith("__reactFiber$") || k.startsWith("__reactInternalInstance$"));
+        if (fiberKey) {
+            let fiber = (row as any)[fiberKey];
+            for (let i = 0; i < 8 && fiber; i++) {
+                const u = fiber.memoizedProps?.user?.id
+                    || fiber.memoizedProps?.userId
+                    || fiber.memoizedProps?.voiceState?.userId
+                    || fiber.return?.memoizedProps?.user?.id
+                    || fiber.return?.memoizedProps?.userId;
+                if (u) return String(u);
+                fiber = fiber.return;
+            }
+        }
+
+        const avatarImg = row.querySelector("img[src*='/avatars/'], img[src*='/users/'], img[src*='discord']");
         if (avatarImg) {
             const src = avatarImg.getAttribute("src") || "";
             const match = src.match(/(?:avatars|users)\/(\d{15,21})/);
+            if (match) return match[1];
+        }
+
+        const link = row.querySelector("a[href*='/users/']");
+        if (link) {
+            const match = link.getAttribute("href")?.match(/\/users\/(\d{15,21})/);
             if (match) return match[1];
         }
     } catch {}
@@ -194,6 +215,8 @@ export function updateVoiceDOM() {
                 if (row.getAttribute("data-fake-deafen") === "true") {
                     row.removeAttribute("data-fake-deafen");
                 }
+                const badge = row.querySelector(".fc-fake-deafen-badge");
+                if (badge) badge.remove();
                 return;
             }
 
@@ -202,10 +225,25 @@ export function updateVoiceDOM() {
                 if (row.getAttribute("data-fake-deafen") !== "true") {
                     row.setAttribute("data-fake-deafen", "true");
                 }
+
+                // If React patch didn't render badge, inject directly into DOM
+                if (settings.store.showFakeBadge && !row.querySelector(".fc-fake-deafen-badge")) {
+                    const nameContainer = row.querySelector("[class*='username'], [class*='name__'], [class*='headerText'], [class*='title__']") || row;
+                    if (nameContainer) {
+                        const badge = document.createElement("span");
+                        badge.className = "fc-fake-deafen-badge";
+                        badge.textContent = "FAKE";
+                        const entry = detectedFakeDeafUsers.get(userId);
+                        badge.title = `${t("وضع الإصمام الوهمي مفعل Fake Deafen", "Fake Deafen Active")}${entry?.reasonText ? " (" + entry.reasonText + ")" : ""}`;
+                        nameContainer.appendChild(badge);
+                    }
+                }
             } else {
                 if (row.getAttribute("data-fake-deafen") === "true") {
                     row.removeAttribute("data-fake-deafen");
                 }
+                const badge = row.querySelector(".fc-fake-deafen-badge");
+                if (badge) badge.remove();
             }
         });
     } catch {} finally {
@@ -290,13 +328,16 @@ function recordToggleTiming(userId: string, isDeaf: boolean) {
         }
 
         history.push({ time: now, isDeaf });
-        history = history.filter(h => now - h.time < 1200);
+        history = history.filter(h => now - h.time < 1500);
         userDeafenToggleTimestamps.set(userId, history);
 
-        // Require at least 3 rapid programmatic state toggles within 600ms (impossible for human clicking)
-        if (history.length >= 3) {
-            const span = history[history.length - 1].time - history[0].time;
-            if (span <= 600) {
+        // Check for programmatic toggle pattern:
+        // 1) Double-toggle pulse: 2 rapid state toggles within 40ms - 450ms (the exact 250ms FakeDeafen double-toggle pulse)
+        // 2) Rapid pulse burst: 3+ toggles within 800ms
+        if (history.length >= 2) {
+            const spanLastTwo = history[history.length - 1].time - history[history.length - 2].time;
+            const spanTotal = history[history.length - 1].time - history[0].time;
+            if ((spanLastTwo >= 40 && spanLastTwo <= 450) || (history.length >= 3 && spanTotal <= 800)) {
                 markUserAsFake(
                     userId,
                     "toggle_timing_fingerprint",
@@ -332,9 +373,46 @@ function scanUserPresence(userId: string) {
 
 // ── Vector 3: WebRTC Inbound RTP Audio Packets Flow (Filtered) ──
 function scanRTPStreams() {
-    // Disabled raw packet counting: Discord WebRTC SFU sends transport keepalives/silence
-    // packets to all peers, causing false positives on regular users and bots. Real detection
-    // is safely handled by gateway SPEAKING events and unmuted protocol inconsistencies.
+    if (!settings.store.detectRTPTraffic) return;
+    try {
+        const scStore: any = findStore("SelectedChannelStore") ?? SelectedChannelStore;
+        const channelId = scStore?.getVoiceChannelId?.();
+        if (!channelId) return;
+
+        const vsStore: any = findStore("VoiceStateStore") ?? VoiceStateStore;
+        const voiceStates = vsStore?.getVoiceStatesForChannel?.(channelId);
+        if (!voiceStates) return;
+
+        const rtcStore: any = findStore("RTCDebugStore") ?? RTCDebugStore;
+        const stats = rtcStore?.getAllStats?.("default")?.[0]?.rtp?.inbound;
+        if (!stats) return;
+
+        for (const [userId, state] of Object.entries(voiceStates as Record<string, any>)) {
+            if (!userId || isSelf(userId) || isBotOrServerDeaf(userId, state)) continue;
+            if (!state.selfDeaf || state.deaf) continue;
+
+            const userStreams = stats[userId];
+            if (Array.isArray(userStreams)) {
+                for (const stream of userStreams) {
+                    if (stream?.type === "audio") {
+                        const packets = Number(stream.packetsReceived ?? 0);
+                        const prev = userAudioPacketsHistory.get(userId) ?? 0;
+                        userAudioPacketsHistory.set(userId, packets);
+
+                        // If user is self-deafened (and not server-deafened), their client should NOT be transmitting packets
+                        if (prev > 0 && packets > prev + 15) {
+                            markUserAsFake(
+                                userId,
+                                "rtp_audio_packets",
+                                "بث حزم صوتية نشطة وهو مصمت (WebRTC RTP Packet Flow)!",
+                                "inbound audio packets while deafened"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    } catch {}
 }
 
 // ── Vector 4: Cross-Instance Local Native Sync (Shared Machine FanCord Bridge) ──
@@ -377,6 +455,7 @@ function scanAllChannelUsers() {
         if (!voiceStates) return;
 
         const now = Date.now();
+        const spkStore: any = findStore("SpeakingStore");
 
         for (const [userId, state] of Object.entries(voiceStates as Record<string, any>)) {
             if (!userId || isSelf(userId) || isBotOrServerDeaf(userId, state)) {
@@ -390,6 +469,16 @@ function scanAllChannelUsers() {
                 unmutedWhileDeafTimers.delete(userId);
                 unmarkUser(userId);
                 continue;
+            }
+
+            // Speaking while deafened (periodic check via SpeakingStore)
+            if (state.selfDeaf && !state.deaf && spkStore?.isSpeaking?.(userId)) {
+                markUserAsFake(
+                    userId,
+                    "speaking_while_deafened",
+                    "يتحدث وصوته يخرج وهو مصمت!",
+                    "speaking while deafened"
+                );
             }
 
             // Protocol Inconsistency: Self-deafened but unmuted!
