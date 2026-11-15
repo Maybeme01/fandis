@@ -2009,20 +2009,35 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
     };
 
     const handleResetDefaults = async () => {
-        // 1. Reset state in Theme Studio to pure clean Discord default
+        // 1. Immediately turn off live preview flag so no preview re-injection occurs
+        setLivePreviewActive(false);
+
+        // 2. Reset state in Theme Studio to pure clean Discord default & clear persistent storage
         setConfig(defaultConfig);
         saveStudioConfig(defaultConfig);
-
-        // 2. Remove all live previews and custom styling from the DOM immediately
-        document.getElementById("fancord-theme-live-preview")?.remove();
-        document.getElementById("fancord-custom-font-preview")?.remove();
-        document.getElementById("fancord-active-custom-theme")?.remove();
-
-        // 3. Unload and delete any custom studio theme from Settings.enabledThemes & disk
         try {
+            localStorage.removeItem(STUDIO_STORAGE_KEY);
+        } catch {
+            // ignore
+        }
+
+        // 3. Remove all live previews, fonts, and custom styling from the DOM immediately
+        document.querySelectorAll(
+            "#fancord-active-custom-theme, #fancord-theme-live-preview, #fancord-custom-font-preview, [id*='fancord-theme'], [id*='fancord-font'], link[href*='fonts.googleapis.com'], style[data-fancord]"
+        ).forEach(el => el.remove());
+
+        // Empty #vencord-themes immediately to stop any active CSS imports
+        const vThemes = document.getElementById("vencord-themes") as HTMLStyleElement | null;
+        if (vThemes) {
+            vThemes.textContent = "";
+        }
+
+        // 4. Completely disable all themes & links in settings so Discord is 100% native default
+        try {
+            const currentEnabled = Settings.enabledThemes ?? [];
             const rawName = config.name.trim() || "My-Custom-Theme";
             const safeFileName = rawName.replace(/[/\\?%*:|"<>]/g, "-") + ".theme.css";
-            const currentEnabled = Settings.enabledThemes ?? [];
+
             const customThemeFiles = [
                 safeFileName,
                 "My-Custom-Theme.theme.css",
@@ -2038,20 +2053,55 @@ export function ThemeCreatorModal({ onClose, transitionState, initialConfig }: {
                 "Royal Crimson Blood.theme.css",
                 "Nordic Arctic Frost.theme.css"
             ];
-            Settings.enabledThemes = currentEnabled.filter(t => !customThemeFiles.includes(t));
 
-            // Delete theme file from disk
-            if (typeof VencordNative !== "undefined" && VencordNative.themes?.deleteTheme) {
-                await VencordNative.themes.deleteTheme(safeFileName);
-                if (safeFileName !== "My-Custom-Theme.theme.css") {
-                    await VencordNative.themes.deleteTheme("My-Custom-Theme.theme.css");
+            // 100% wipe enabled themes & links
+            Settings.enabledThemes = [];
+            Settings.enabledThemeLinks = [];
+            Settings.themeActivationModes = {};
+
+            // Wipe FanCord theme files from disk
+            if (typeof VencordNative !== "undefined" && VencordNative.themes) {
+                try {
+                    const allLocalThemes = await VencordNative.themes.getThemesList?.();
+                    if (Array.isArray(allLocalThemes)) {
+                        for (const t of allLocalThemes) {
+                            const isFanCordTheme =
+                                t.source === "FanCord Theme Creator" ||
+                                t.description?.includes("FanCord") ||
+                                t.author === "FAN" ||
+                                customThemeFiles.includes(t.fileName) ||
+                                (currentEnabled && currentEnabled.includes(t.fileName));
+
+                            if (isFanCordTheme) {
+                                // Overwrite with empty comment first to break file locks/caching
+                                try {
+                                    await VencordNative.themes.uploadTheme(t.fileName, "/* Reset - Theme Cleared */");
+                                } catch {
+                                    // ignore
+                                }
+                                try {
+                                    await VencordNative.themes.deleteTheme(t.fileName);
+                                } catch {
+                                    // ignore
+                                }
+                            }
+                        }
+                    }
+                } catch {
+                    // ignore
                 }
+
+                // Explicit fallback deletion
+                try { await VencordNative.themes.uploadTheme(safeFileName, "/* Reset - Theme Cleared */"); } catch {}
+                try { await VencordNative.themes.uploadTheme("My-Custom-Theme.theme.css", "/* Reset - Theme Cleared */"); } catch {}
+                try { await VencordNative.themes.deleteTheme(safeFileName); } catch {}
+                try { await VencordNative.themes.deleteTheme("My-Custom-Theme.theme.css"); } catch {}
             }
         } catch {
             // ignore
         }
 
-        // 4. Trigger internal theme reload to restore standard native Discord
+        // 5. Trigger internal theme reload to restore standard native Discord
         try {
             await initThemes();
         } catch {
