@@ -1,4 +1,7 @@
 {
   "name": "CustomRPC",
-  "description": "إضافة حالة النشاط قابل للتخصيص بالكامل لملفك الشخصي"
+  "description": "إضافة حالة نشاط (Rich Presence) مخصصة بالكامل لملفك الشخصي في ديسكورد",
+  "settings": {
+    "enablePresence": "إظهار أو إخفاء حالة النشاط المخصصة (Rich Presence)"
+  }
 }

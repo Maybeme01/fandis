@@ -26,6 +26,7 @@ import { Heading } from "@components/Heading";
 import { Link } from "@components/Link";
 import { Paragraph } from "@components/Paragraph";
 import { Devs } from "@utils/constants";
+import { t } from "@utils/esharqI18n";
 import { isTruthy } from "@utils/guards";
 import { useAwaiter } from "@utils/react";
 import definePlugin, { OptionType } from "@utils/types";
@@ -81,7 +82,7 @@ export interface RpcConfig {
 export const settings = definePluginSettings({
     enablePresence: {
         type: OptionType.BOOLEAN,
-        description: "Whether to show the presence",
+        description: t("إظهار أو إخفاء حالة النشاط المخصصة (Rich Presence)", "Whether to show the presence"),
         default: true,
         onChange: v => setRpc(!v)
     },
@@ -261,7 +262,7 @@ function stopTimestampLoop() {
 
 export default definePlugin({
     name: "CustomRPC",
-    description: "Add a fully customisable Rich Presence (Game status) to your Discord profile",
+    description: t("إضافة حالة نشاط (Rich Presence) مخصصة بالكامل لملفك الشخصي في ديسكورد", "Add a fully customisable Rich Presence (Game status) to your Discord profile"),
     tags: ["Activity", "Customisation"],
     authors: [Devs.captain, Devs.AutumnVN, Devs.nin0dev, Devs.c0nnorgg],
     dependencies: ["UserSettingsAPI"],
@@ -275,7 +276,7 @@ export default definePlugin({
         return (
             <Menu.MenuCheckboxItem
                 id="custom-rpc-toggle-toolbox"
-                label="Show Custom RPC"
+                label={t("إظهار Custom RPC", "Show Custom RPC")}
                 checked={enablePresence}
                 action={() => {
                     settings.store.enablePresence = !enablePresence;
@@ -316,22 +317,22 @@ export default definePlugin({
                 {!enablePresence && (
                     <Card variant="warning">
                         <Flex flexDirection="column" gap=".5em" alignItems="flex-start">
-                            <Heading tag="h4" weight="bold">Custom RPC disabled</Heading>
-                            <Paragraph>The "Enable Presence" setting is disabled, so your presence won't show. If this was unintentional, enable it below.</Paragraph>
+                            <Heading tag="h4" weight="bold">{t("حالة Custom RPC معطلة", "Custom RPC disabled")}</Heading>
+                            <Paragraph>{t("خيار «تفعيل الحالة» معطّل، لذا لن تظهر حالتك للآخرين. إذا كان هذا غير مقصود، يمكنك تفعيله أدناه.", "The \"Enable Presence\" setting is disabled, so your presence won't show. If this was unintentional, enable it below.")}</Paragraph>
                         </Flex>
                     </Card>
                 )}
                 {!gameActivityEnabled && (
                     <Card variant="danger">
                         <Flex flexDirection="column" gap=".5em" alignItems="flex-start">
-                            <Heading tag="h4" weight="bold">Activity Sharing disabled</Heading>
-                            <Paragraph>Activity Sharing isn't enabled, so people won't be able to see your custom rich presence!</Paragraph>
+                            <Heading tag="h4" weight="bold">{t("مشاركة النشاط معطلة في ديسكورد", "Activity Sharing disabled")}</Heading>
+                            <Paragraph>{t("ميزة مشاركة النشاط غير مفعّلة في إعدادات ديسكورد، لذا لن يتمكن الآخرون من رؤية حالتك المخصصة!", "Activity Sharing isn't enabled, so people won't be able to see your custom rich presence!")}</Paragraph>
 
                             <Button
                                 variant="overlayPrimary"
                                 onClick={() => ShowCurrentGame.updateSetting(true)}
                             >
-                                Enable Activity Sharing
+                                {t("تفعيل مشاركة النشاط في ديسكورد", "Enable Activity Sharing")}
                             </Button>
                         </Flex>
                     </Card>
@@ -339,20 +340,40 @@ export default definePlugin({
 
                 <Flex flexDirection="column" gap=".5em">
                     <Paragraph>
-                        Go to the <Link href="https://discord.com/developers/applications">Discord Developer Portal</Link> to create an application and
-                        get the application ID.
+                        {t(
+                            "توجّه إلى بوابة مطوري ديسكورد لإنشاء تطبيق والحصول على معرّف التطبيق (Application ID):",
+                            "Go to the Discord Developer Portal to create an application and get the application ID."
+                        )}
+                        {" "}
+                        <Link href="https://discord.com/developers/applications">
+                            {t("بوابة مطوري ديسكورد (Developer Portal)", "Discord Developer Portal")}
+                        </Link>
                     </Paragraph>
                     <Paragraph>
-                        Upload images in the Rich Presence tab to get the image keys.
+                        {t(
+                            "ارفع الصور في تبويب Rich Presence داخل بوابة المطورين للحصول على أسماء/مفاتيح الصور (Image Keys).",
+                            "Upload images in the Rich Presence tab to get the image keys."
+                        )}
                     </Paragraph>
                     <Paragraph>
-                        If you want to use an image link, download your image and reupload the image to <Link href="https://imgur.com">Imgur</Link> and get the image link by right-clicking the image and selecting "Copy image address".
+                        {t(
+                            "إذا أردت استخدام رابط صورة خارجي، يمكنك رفع الصورة إلى Imgur ونسخ رابط الصورة المباشر بالنقر بزر الفأرة الأيمن واختيار \"نسخ عنوان الصورة\":",
+                            "If you want to use an image link, download your image and reupload the image to Imgur and get the image link by right-clicking the image and selecting \"Copy image address\"."
+                        )}
+                        {" "}
+                        <Link href="https://imgur.com">Imgur</Link>
                     </Paragraph>
                     <Paragraph>
-                        You can't see your own buttons on your profile, but everyone else can see it fine.
+                        {t(
+                            "لن تظهر الأزرار في ملفك الشخصي لنفسك (بسبب قيود ديسكورد)، ولكنها تظهر لجميع المستخدمين الآخرين بشكل طبيعي.",
+                            "You can't see your own buttons on your profile, but everyone else can see it fine."
+                        )}
                     </Paragraph>
                     <Paragraph>
-                        Some weird unicode text ("fonts" 𝖑𝖎𝖐𝖊 𝖙𝖍𝖎𝖘) may cause the rich presence to not show up, try using normal letters instead.
+                        {t(
+                            "بعض الخطوط والرموز الغريبة (مثل 𝖑𝖎𝖐𝖊 𝖙𝖍𝖎𝖘) قد تمنع ظهور النشاط، يُنصح باستخدام الأحرف والكلمات العادية.",
+                            "Some weird unicode text (\"fonts\" 𝖑𝖎𝖐𝖊 𝖙𝖍𝖎𝖘) may cause the rich presence to not show up, try using normal letters instead."
+                        )}
                     </Paragraph>
                 </Flex>
 

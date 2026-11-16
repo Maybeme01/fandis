@@ -11,7 +11,7 @@ import { addMessagePreSendListener, removeMessagePreSendListener } from "@api/Me
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings, migratePluginSettings, migratePluginToSettings } from "@api/Settings";
 import { ShieldIcon, WarningIcon } from "@components/Icons";
-import customRPC from "@plugins/customRPC";
+import customRPC from "@fanplugins/customRPC";
 import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { StandingState } from "@vencord/discord-types/enums";
